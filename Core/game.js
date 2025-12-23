@@ -1597,14 +1597,15 @@ actionsEl.appendChild(
     );
   }
   
-    // Realm & Council always accessible from the action bar (out of combat)
-  actionsEl.appendChild(
-    makeActionButton('Realm & Council', () => {
-      openGovernmentModal();
-    })
-  );
+      // Realm & Council: only visible while in town (village)
+  if (inVillage) {
+    actionsEl.appendChild(
+      makeActionButton('Realm & Council', () => {
+        openGovernmentModal();
+      })
+    );
+  }
 
-  
   actionsEl.appendChild(
     makeActionButton('Explore', () => {
       handleExploreClick();
