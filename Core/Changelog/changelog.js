@@ -2,6 +2,120 @@
 // ES6 module: structured changelog data for Pocket Quest
 
 export const CHANGELOG = [
+	{
+  version: "0.7.0",
+  title: "Court History, Audio Pass & In-Game Changelog",
+  sections: [
+    {
+      heading: "Added",
+      items: [
+        {
+          title: "Town Hall decree history & council lifecycle",
+          bullets: [
+            "Town Hall now records a full decree history: each enacted decree is stored with its title, start day, and expiry day.",
+            "The Town Hall view includes a collapsible “Prior Decrees” section that lists recent policies and whether they are still active.",
+            "Village councils no longer last forever: councillors can die, retire, or be recalled, with temporary recess periods and realm-appointed replacements filling empty seats.",
+            "Daily Town Hall ticks now run a dedicated membership step that can reshuffle the council and log notable changes in the court log."
+          ]
+        },
+        {
+          title: "Government overview: economy and court recap cards",
+          bullets: [
+            "The Government / Realm overview panel has a richer village card that explicitly shows the effective Prosperity, Trade, and Security values other systems actually read.",
+            "A new “Recent Decrees & Events” card summarizes the last few government history entries, including the day they occurred and a short description of what changed.",
+            "If no history exists yet, the government view explains that the royal scribes have not recorded any notable decrees, instead of leaving the card blank."
+          ]
+        },
+        {
+          title: "Basic audio & ambience (music + door SFX)",
+          bullets: [
+            "Introduced a lightweight audio controller with a looping daytime ambience track for Emberwood village.",
+            "A new updateAreaMusic helper runs on time advancement, swapping music based on current area and time of day (village mornings currently use the new ambience track).",
+            "Visiting the Tavern or Bank now plays a wooden door open sound effect, giving those screens a bit more tactile feedback."
+          ]
+        },
+        {
+          title: "In-game Changelog viewer",
+          bullets: [
+            "New Changelog modal wired off the main menu and in-game menu that renders the CHANGELOG data directly in-game.",
+            "Each version appears as a collapsible <details> block, with headings for Added / Changed / Fixed / Dev Notes and nested bullet lists.",
+            "The most recent entry opens by default so players immediately see what changed in the latest patch."
+          ]
+        },
+        {
+          title: "User Acceptance & Legal gating",
+          bullets: [
+            "Added a dedicated userAcceptance module that blocks play until the user accepts both a User Acceptance panel and a Legal Notice panel.",
+            "Each panel has its own scroll box and its own checkbox; checkboxes remain disabled until that panel has been scrolled to the bottom.",
+            "Acceptance is stored in local storage under a versioned key, and ACCEPTANCE_VERSION can be bumped to force re-acceptance after changing the text."
+          ]
+        },
+        {
+          title: "Character sheet & companion polish",
+          bullets: [
+            "The Character Sheet now includes a World Time line alongside Location, showing the current in-world day and time in a compact format.",
+            "New companion options such as Falcon, Familiar, and Mimic are available through the companion summon UI, rounding out the roster with more specialized flavors.",
+            "The Character Sheet is now formally accessible from combat via a dedicated Character button, making it easier to inspect stats mid-fight."
+          ]
+        }
+      ]
+    },
+    {
+      heading: "Changed",
+      items: [
+        {
+          title: "Save / load aware of government, village & merchants",
+          bullets: [
+            "Save data has been extended again to include village state, bank state, full time + villageEconomy blocks, kingdom government state, and persistent merchant stock / names.",
+            "Load logic restores all of these blocks when present and re-initializes time, economy, and government for older saves that pre-date the newer systems.",
+            "Combat, log entries, and the current log filter mode are all restored on load, with an explicit log line calling out which enemy you are currently fighting if you resume mid-battle."
+          ]
+        },
+        {
+          title: "Tavern, bank & realm tick integration",
+          bullets: [
+            "Tavern rest flows now call into the same daily tick pipeline used elsewhere, ensuring economy, government, Town Hall, and population all advance consistently when you sleep.",
+            "Bank visits continue to apply any pending weekly interest based on the in-game calendar and the current village economy, with updated rates reflecting active royal decrees.",
+            "Random wandering merchants now use a dedicated context when opening the merchant modal, allowing their prices and flavor text to diverge from the core village shop while still sharing the same stock logic."
+          ]
+        },
+        {
+          title: "Government & Town Hall UI clarity",
+          bullets: [
+            "Village entries in the government view now show both the crown’s influence modifiers and the raw economy numbers used by the rest of the simulation.",
+            "The Town Hall modal highlights active decrees separately from prior ones, making it easier to see which policies are currently shaping interest rates and rest prices.",
+            "Council and decree tooltips have been tuned to better explain how daily ticks, popularity, and ideology influence petition outcomes."
+          ]
+        }
+      ]
+    },
+    {
+      heading: "Fixed / Stability",
+      items: [
+        {
+          title: "Resilience for older saves",
+          bullets: [
+            "Loading saves created before the Town Hall, government, or merchant systems now safely backfills missing state blocks instead of failing silently.",
+            "Guard-turn and combat status fields are normalized on load to prevent edge cases where enemies could resume in a partially initialized state.",
+            "Log rendering after load replays the restored entries and filter correctly so the game log view always reflects what was persisted."
+          ]
+        }
+      ]
+    },
+    {
+      heading: "Dev Notes",
+      items: [
+        {
+          title: "Changelog + acceptance plumbing",
+          bullets: [
+            "The CHANGELOG array is now the single source of truth for both the external changelog file and the in-game Changelog modal; keep 0.7.0 at the top so it renders first.",
+            "ACCEPTANCE_VERSION in userAcceptance.js is currently set to 5.0.0; bump this when materially changing the User Acceptance or Legal Notice copy to force players to re-acknowledge."
+          ]
+        }
+      ]
+    }
+  ]
+},
 {
   version: "0.6.0",
   title: "Town Hall Petitions, Active Decrees & Population Mood",
