@@ -6392,15 +6392,24 @@ function initLogFilterChips() {
 
   // --- INITIAL SETUP & EVENT LISTENERS ------------------------------------------
 
-document.addEventListener('DOMContentLoaded', () => {
+function initUI() {
   // HUD: tap on name to open character sheet
   const hudName = document.getElementById('hud-name');
   if (hudName) {
     hudName.style.cursor = 'pointer';
-    hudName.addEventListener('click', () => {
-      if (state.player) openCharacterSheet();
-    });
+    hudName.addEventListener('click', () => openCharacterSheetModal());
   }
+
+  // ... EVERYTHING that is currently inside your DOMContentLoaded callback ...
+  // (all the button listeners, screen switching, initSettingsFromState(), etc.)
+}
+
+// ✅ Works whether game.js is loaded before or after DOMContentLoaded
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initUI, { once: true });
+} else {
+  initUI();
+}
   
   function setupCollapsingPanels() {
   const questBox = document.getElementById('questBox');
