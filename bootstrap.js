@@ -1,14 +1,9 @@
 // bootstrap.js (FULL, no placeholders)
 
 const VERSIONS = [
-  // ✅ If your main entry file is /game.js
-  { id: "main", label: "Main", src: "./game.js" },
-
-  // Optional: keep your old Core version if it exists
-  { id: "core", label: "Core", src: "./Core/game.js" },
-
-  // Optional: another dev build
-  { id: "dev", label: "Dev", src: "./game_v2.js" },
+  { id: "main", label: "Main", src: new URL("./game.js", import.meta.url).href },
+  { id: "core", label: "Core", src: new URL("./Core/game.js", import.meta.url).href },
+  { id: "dev",  label: "Dev",  src: new URL("./game_v2.js", import.meta.url).href },
 ];
 
 const STORAGE_KEY = "selected_game_version";
