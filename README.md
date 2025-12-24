@@ -1,4 +1,4 @@
-# Pocket Quest
+# Emberwood: The Blackbark Oath
 
 A single‑page, browser-based RPG + village sim where your **daily choices** (resting, shopping, banking, town politics, and even tavern gambling) ripple through a living settlement.
 
