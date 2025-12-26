@@ -1,8 +1,8 @@
 // bootstrap.js
 
 const VERSIONS = [
-  { id: "core", label: "Main", entry: "./Core/game.js" },
-  { id: "dev",  label: "Future Patch: V0.8.0",  entry: "./Core/game.audio_fixes.audio_toggles.js" },
+  { id: "core", label: "Main", entry: "./Core/Main.js" },
+  { id: "dev",  label: "Prior Patch V0.7.0",  entry: "./Core/Old.js" },
 ];
 
 const STORAGE_KEY = "selected_game_version";
