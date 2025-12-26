@@ -2,7 +2,7 @@
 
 A single‑page, browser-based RPG + village sim where your **daily choices** (resting, shopping, banking, town politics, and even tavern gambling) ripple through a living settlement.
 
-> Current patch: **v0.7.0** (see in-game Changelog modal / `changelog.js`)
+> Current patch: **v0.8.0** (see in-game Changelog modal / `changelog.js`)
 
 ---
 
