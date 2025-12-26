@@ -1699,6 +1699,7 @@ function cheatsEnabled() {
   const modalEl = document.getElementById('modal');
   const modalTitleEl = document.getElementById('modalTitle');
   const modalBodyEl = document.getElementById('modalBody');
+  let modalOnClose = null; // optional one-shot callback run when closeModal() is called
 
   // If we close one interior modal and immediately open another (e.g., Tavern → Gambling),
   // we don't want the interior music to stop/restart between those transitions.
@@ -1746,6 +1747,15 @@ function cheatsEnabled() {
   // Ensure close button is restored for non-skill modals
   const closeBtn = document.getElementById('modalClose');
   if (closeBtn) closeBtn.style.display = '';
+  
+    // Run any one-shot modal close hook (used by level-up auto skill distribution)
+  if (typeof modalOnClose === 'function') {
+    const fn = modalOnClose;
+    modalOnClose = null; // make it one-shot
+    try { fn(); } catch (err) { console.error(err); }
+  } else {
+    modalOnClose = null;
+  }
 
   // If we were inside the bank/tavern, defer flipping interiorOpen off by one tick.
   // This prevents Tavern.wav from cutting out/restarting when transitioning between
@@ -4341,6 +4351,13 @@ function autoDistributeSkillPoints(p) {
   function openSkillLevelUpModal() {
   const p = state.player;
   if (!p) return;
+  
+    // If the player clicks outside and closes the modal, auto-spend any remaining points.
+  modalOnClose = () => {
+    const pl = state.player;
+    if (!pl) return;
+    autoDistributeSkillPoints(pl); // no-ops if skillPoints <= 0
+  };
 
   // Give exactly 1 point if somehow missing
   if (p.skillPoints == null) p.skillPoints = 0;
@@ -4361,18 +4378,7 @@ function autoDistributeSkillPoints(p) {
     pointsEl.textContent = 'Unspent skill points: ' + p.skillPoints;
     body.appendChild(pointsEl);
     
-    const autoBtn = document.createElement('button');
-autoBtn.className = 'btn outline small';
-autoBtn.textContent = 'Auto Distribute';
-autoBtn.addEventListener('click', () => {
-  if (p.skillPoints <= 0) return;
-
-  autoDistributeSkillPoints(p);
-
-  // close out the forced-choice modal once points are spent
-  closeModal();
-});
-body.appendChild(autoBtn);
+    
 
     const skills = [
       {
