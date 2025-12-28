@@ -1918,10 +1918,11 @@ h3 { font-size: 0.95rem; } /* modal titles, sub-panels */
   border: 1px solid var(--border);
   background:#050816;
   color:var(--muted);
-  font-size:0.6rem;
   cursor:pointer;
-  text-transform:uppercase;
-  letter-spacing:0.12em;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 
   display:flex;              /* center label nicely */
   align-items:center;
