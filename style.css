@@ -570,7 +570,6 @@ h3 { font-size: 0.95rem; } /* modal titles, sub-panels */
 /* Selected effect unchanged */
 .pill-option.selected {
   border-color: var(--accent);
-  box-shadow: 0 0 0 1px rgba(79,195,247,0.3);
   color: var(--text);
   background: radial-gradient(circle at top, #18243c 0, #060815 70%);
 }
@@ -1869,7 +1868,6 @@ h3 { font-size: 0.95rem; } /* modal titles, sub-panels */
 .inv-search:focus,
 .inv-search:focus-visible {
   outline: 1px solid var(--accent);
-  box-shadow: 0 0 0 1px rgba(79,195,247,0.35);
   background: radial-gradient(circle at top, #1f2b45 0, #060815 70%);
 }
 .inv-sort {
@@ -1896,13 +1894,11 @@ h3 { font-size: 0.95rem; } /* modal titles, sub-panels */
 .inv-sort:focus,
 .inv-sort:focus-visible {
   outline: 1px solid var(--accent);
-  box-shadow: 0 0 0 1px rgba(79,195,247,0.35);
   background: radial-gradient(circle at top, #1f2b45 0, #060815 70%);
 }
 
 .inv-sort:active {
   transform: translateY(1px) scale(0.98);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.45) inset;
 }
 .inv-tabs{
   display:flex;
