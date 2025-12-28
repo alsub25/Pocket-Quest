@@ -236,9 +236,19 @@ h3{ font-size:0.95rem; }
 }
 
 /* ---- Shared focus ring --------------------------------------------------- */
-:where(button,[role="button"],.btn,.icon-btn,.pill-option,.log-chip,.char-tab,.inv-tab,.settings-select):focus-visible{
+:where(button,[role="button"],.btn,.icon-btn,.log-chip,.char-tab,.inv-tab,.settings-select):focus-visible{
   outline:var(--focus);
   outline-offset:var(--focus-offset);
+}
+
+
+/* ---- Pill focus (avoid extra outline ring; use the same glow style) ------ */
+:where(.pill-option,.tavern-game-pill):focus-visible{
+  outline:none;
+  border-color:transparent;
+  box-shadow:
+    0 0 0 2px rgba(79,195,247,0.55),
+    0 0 18px rgba(79,195,247,0.18);
 }
 
 /* ---- Shared press feedback ---------------------------------------------- */
@@ -451,8 +461,11 @@ h3{ font-size:0.95rem; }
 }
 
 .pill-option.selected{
-  border-color:var(--accent);
-  box-shadow:0 0 0 1px rgba(79,195,247,0.30);
+  /* Glow-only selection: keep border space but hide its color so you don't get a "double border" */
+  border-color:transparent;
+  box-shadow:
+    0 0 0 2px rgba(79,195,247,0.60),
+    0 0 18px rgba(79,195,247,0.22);
   color:var(--text);
   background:radial-gradient(circle at top, #18243c 0, #060815 70%);
 }
@@ -490,8 +503,10 @@ h3{ font-size:0.95rem; }
 }
 
 .tavern-game-pill.selected{
-  border-color:var(--accent);
-  box-shadow:0 0 0 1px rgba(79,195,247,0.30);
+  border-color:transparent;
+  box-shadow:
+    0 0 0 2px rgba(79,195,247,0.60),
+    0 0 18px rgba(79,195,247,0.22);
   background:radial-gradient(circle at top, var(--accent-soft), var(--surface-1));
   color:var(--text);
 }
