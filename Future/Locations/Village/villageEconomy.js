@@ -39,7 +39,11 @@ export function initVillageEconomyState(state) {
       prosperity: 50, // 0–100 (raw, pre-government)
       security: 40,
       trade: 50,
-      lastDayUpdated: 0
+      lastDayUpdated: null,
+      // When a Town Hall decree nudges the raw economy, we store a tiny
+      // breadcrumb here so UI can explain "why did this change today?".
+      // { day, petitionId, deltas: { prosperity, trade, security } }
+      lastDecreeNudge: null
     };
   }
   return state.villageEconomy;
@@ -139,10 +143,15 @@ export function getVillageEconomySummary(state) {
 export function getMerchantPrice(basePrice, state, context = "village") {
   const summary = getVillageEconomySummary(state);
   let mult = summary.tier.merchantPriceMultiplier;
+  // Safety: keep multiplier sane even if saves/mods inject weird values
+  mult = Number.isFinite(mult) ? mult : 1;
+  mult = Math.max(0.5, Math.min(2.0, mult));
 
   // Wandering merchants charge a bit more
   if (context === "wandering") {
     mult += 0.1;
+    // Clamp *again* after bump so we never exceed our intended ceiling.
+    mult = Math.max(0.5, Math.min(2.0, mult));
   }
 
   return Math.max(1, Math.round(basePrice * mult));
@@ -163,21 +172,19 @@ export function getRestCost(state) {
 
   if (g && g.townHallEffects) {
     const eff = g.townHallEffects;
-    const expiresOnDay = typeof eff.expiresOnDay === "number"
-      ? eff.expiresOnDay
-      : null;
+    const expiresOnDay = typeof eff.expiresOnDay === "number" ? eff.expiresOnDay : null;
 
     if (expiresOnDay != null && today <= expiresOnDay) {
       if (typeof eff.restCostMultiplier === "number") {
-        cost = Math.round(cost * eff.restCostMultiplier);
+        const m = eff.restCostMultiplier;
+        if (Number.isFinite(m)) cost = Math.round(cost * m);
       }
-    } else if (expiresOnDay != null && today > expiresOnDay) {
-      // Clean up expired effect so it doesn't linger.
-      delete g.townHallEffects;
     }
   }
 
-  return cost;
+  cost = Number(cost);
+  if (!Number.isFinite(cost) || cost < 1) cost = 1;
+  return Math.round(cost);
 }
 
 // Called once when a *new day* is reached (we pass absoluteDay from timeSystem)
@@ -190,6 +197,47 @@ export function handleEconomyDayTick(state, absoluteDay) {
   // Slight random drift in prosperity (biased a bit upward)
   const drift = (Math.random() - 0.45) * 6; // -3.0 .. +3.3ish
   econ.prosperity = clamp(econ.prosperity + drift, 0, 100);
+
+  // Town Hall decrees can nudge the underlying economy while they remain active.
+  // This is a gentle, deterministic push layered on top of normal drift so the
+  // economy feels reactive without becoming fully scripted.
+  //
+  // NOTE: These are raw metric nudges, not multipliers. Other systems still read
+  // *effective* values via getVillageEconomySummary().
+  const eff = state?.government?.townHallEffects;
+  // Use the tick day passed in (absoluteDay) so catch-up loops apply effects
+  // to the correct historical day.
+  const today = typeof absoluteDay === 'number' ? Math.floor(absoluteDay) : 0;
+  const isActive =
+    eff &&
+    eff.petitionId &&
+    typeof eff.expiresOnDay === 'number' &&
+    today <= eff.expiresOnDay;
+
+  if (isActive) {
+    const pDelta = Number(eff.econProsperityDelta);
+    const tDelta = Number(eff.econTradeDelta);
+    const sDelta = Number(eff.econSecurityDelta);
+
+    const applied = {
+      prosperity: Number.isFinite(pDelta) ? Math.round(pDelta) : 0,
+      trade: Number.isFinite(tDelta) ? Math.round(tDelta) : 0,
+      security: Number.isFinite(sDelta) ? Math.round(sDelta) : 0
+    };
+
+    if (applied.prosperity || applied.trade || applied.security) {
+      econ.prosperity = clamp(econ.prosperity + applied.prosperity, 0, 100);
+      econ.trade = clamp((econ.trade || 50) + applied.trade, 0, 100);
+      econ.security = clamp((econ.security || 40) + applied.security, 0, 100);
+
+      // Expose the last applied decree push so UI can explain “why did this change?”
+      econ.lastDecreeNudge = {
+        day: absoluteDay,
+        petitionId: eff.petitionId,
+        deltas: applied
+      };
+    }
+  }
 
   recomputeTier(econ);
 }
@@ -219,7 +267,8 @@ export function handleEconomyAfterPurchase(
   context = "village"
 ) {
   const econ = initVillageEconomyState(state);
-  if (goldSpent <= 0) return;
+  goldSpent = Number(goldSpent);
+  if (!Number.isFinite(goldSpent) || goldSpent <= 0) return;
 
   if (context === "village") {
     // Spending money *in* the village helps trade + prosperity a little
@@ -253,7 +302,9 @@ function recomputeTier(econ) {
 
 // Clamp to range AND round to a whole number
 function clamp(val, min, max) {
-  const rounded = Math.round(val);
+  const n = Number(val);
+  if (!Number.isFinite(n)) return min;
+  const rounded = Math.round(n);
   if (rounded < min) return min;
   if (rounded > max) return max;
   return rounded;

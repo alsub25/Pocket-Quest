@@ -107,6 +107,50 @@ const GAMES = {
     baseStake: 15,
     biasKey: "coin",
     description: "A painted wheel spins. Where it stops can mean a small profit or a blazing jackpot."
+  },
+  seven: {
+    id: "seven",
+    label: "Seven's Reckoning",
+    riskLabel: "Tactical",
+    baseStake: 10,
+    biasKey: "dice",
+    callLabel: "Bet",
+    callOptions: ["Under", "Seven", "Over"],
+    description:
+      "Choose Under (2–6), Seven, or Over (8–12), then roll two dice. Under/Over pay steady; Seven pays a rare bounty."
+  },
+  cups: {
+    id: "cups",
+    label: "Cups & Pebble",
+    riskLabel: "Fast Hands",
+    baseStake: 12,
+    biasKey: "coin",
+    callLabel: "Cup",
+    callOptions: ["Left", "Center", "Right"],
+    description:
+      "A pebble vanishes beneath three cups as the patron shuffles. Pick the cup—quick wins, quicker losses."
+  },
+  odd: {
+    id: "odd",
+    label: "Odd or Even",
+    riskLabel: "Even Odds",
+    baseStake: 8,
+    biasKey: "dice",
+    callLabel: "Call",
+    callOptions: ["Odd", "Even"],
+    description:
+      "A single die rolls across the table. Call odd or even before it lands—simple wagers for simple folk."
+  },
+  colors: {
+    id: "colors",
+    label: "Red & Black",
+    riskLabel: "Card Luck",
+    baseStake: 10,
+    biasKey: "cards",
+    callLabel: "Color",
+    callOptions: ["Red", "Black"],
+    description:
+      "A card is drawn from a worn deck. Call Red or Black. The tavern swears the deck is fair (the tavern always swears)."
   }
 };
 
@@ -116,11 +160,224 @@ const GAMES = {
 
 function ensureGamblingState(state) {
   if (!state.gambling) {
-    state.gambling = { lastPatronId: null, roundsWithPatron: 0 };
+    state.gambling = {
+      lastPatronId: null,
+      roundsWithPatron: 0,
+
+      // -1..+1: soft "fortune" that drifts with streaks.
+      // Positive = you feel lucky; negative = cold table.
+      luck: 0,
+
+      // 0..1: how closely the house is watching you.
+      // High heat means the table gets tighter (worse odds + lower max bet).
+      heat: 0,
+
+      winStreak: 0,
+      lossStreak: 0,
+
+      // Optional timed tavern event that changes feel/odds for a few rounds.
+      // { id, name, desc, roundsLeft, bias, payoutBonus, stakeMaxDelta, onlyGames? }
+      event: null
+    };
   }
   if (!("lastPatronId" in state.gambling)) state.gambling.lastPatronId = null;
   if (!("roundsWithPatron" in state.gambling)) state.gambling.roundsWithPatron = 0;
+
+  if (typeof state.gambling.luck !== "number") state.gambling.luck = 0;
+  state.gambling.luck = clamp(state.gambling.luck, -1, 1);
+
+  if (typeof state.gambling.heat !== "number") state.gambling.heat = 0;
+  state.gambling.heat = clamp(state.gambling.heat, 0, 1);
+
+  if (typeof state.gambling.winStreak !== "number") state.gambling.winStreak = 0;
+  if (typeof state.gambling.lossStreak !== "number") state.gambling.lossStreak = 0;
+  if (!("event" in state.gambling)) state.gambling.event = null;
+
   return state.gambling;
+}
+
+// ----------------------------------------------------------------------------
+// DYNAMIC TABLE FEEL (fortune/heat/events)
+// ----------------------------------------------------------------------------
+
+const EVENT_POOL = [
+  {
+    id: "festival",
+    name: "Festival Crowd",
+    desc: "Songs spill into the tavern. Patrons toss coin like confetti.",
+    rounds: [3, 6],
+    bias: 0.04,
+    payoutBonus: 0.08,
+    stakeMaxDelta: 60
+  },
+  {
+    id: "crooked",
+    name: "Crooked Dealer",
+    desc: "A new hand runs the table—quick fingers, quicker smiles.",
+    rounds: [3, 5],
+    bias: -0.06,
+    payoutBonus: -0.05,
+    stakeMaxDelta: -50
+  },
+  {
+    id: "freeAle",
+    name: "Free Ale Night",
+    desc: "Half the tavern is tipsy. Mistakes happen… on both sides.",
+    rounds: [4, 7],
+    bias: 0.0,
+    payoutBonus: 0.03,
+    stakeMaxDelta: 20
+  },
+  {
+    id: "wornDeck",
+    name: "Worn Deck",
+    desc: "Cards stick together. Some draws feel… suspicious.",
+    rounds: [3, 6],
+    bias: -0.05,
+    payoutBonus: 0.0,
+    stakeMaxDelta: 0,
+    onlyGames: ["cards", "colors"]
+  }
+];
+
+function eventApplies(event, gameId) {
+  if (!event) return false;
+  if (!Array.isArray(event.onlyGames) || !event.onlyGames.length) return true;
+  return event.onlyGames.includes(gameId);
+}
+
+function tickGamblingDynamics(state) {
+  const g = ensureGamblingState(state);
+
+  // Drift luck/heat toward neutral each round.
+  g.luck *= 0.9;
+  g.heat = clamp(g.heat * 0.92, 0, 1);
+
+  if (g.event && typeof g.event.roundsLeft === "number") {
+    g.event.roundsLeft -= 1;
+    if (g.event.roundsLeft <= 0) g.event = null;
+  }
+
+  // Chance to start a new event when none is active.
+  if (!g.event && Math.random() < 0.12) {
+    const e = pick(EVENT_POOL);
+    const rounds = Array.isArray(e.rounds) ? randInt(e.rounds[0], e.rounds[1]) : randInt(3, 6);
+    g.event = {
+      id: e.id,
+      name: e.name,
+      desc: e.desc,
+      roundsLeft: rounds,
+      bias: e.bias || 0,
+      payoutBonus: e.payoutBonus || 0,
+      stakeMaxDelta: e.stakeMaxDelta || 0,
+      onlyGames: e.onlyGames || null
+    };
+  }
+
+  return g;
+}
+
+function getPatronBias(patron, gameBiasKey) {
+  if (!patron) return 0;
+  // Shifty patrons press the edge; cheery ones play looser.
+  const moodBias = patron.mood === "shifty" ? -0.03 : patron.mood === "cheery" ? 0.01 : 0;
+  // If it's their favorite kind of game, they get a tiny edge from experience.
+  const favoriteEdge = patron.favoriteGame === gameBiasKey ? -0.02 : 0;
+  return moodBias + favoriteEdge;
+}
+
+function getTableLimits(state) {
+  const g = ensureGamblingState(state);
+  const baseMax = 200;
+
+  // Heat clamps table limits.
+  let max = baseMax;
+  if (g.heat >= 0.75) max = 80;
+  else if (g.heat >= 0.45) max = 120;
+  else if (g.heat >= 0.25) max = 160;
+
+  // Event can push limits up/down.
+  if (g.event) max = max + (g.event.stakeMaxDelta || 0);
+
+  // Hard clamp.
+  max = clamp(max, 40, 300);
+  return { min: 5, max };
+}
+
+function describeLuck(luck) {
+  if (luck >= 0.55) return "Blessed";
+  if (luck >= 0.2) return "Favored";
+  if (luck <= -0.55) return "Cursed";
+  if (luck <= -0.2) return "Cold";
+  return "Steady";
+}
+
+function describeHeat(heat) {
+  if (heat >= 0.75) return "High";
+  if (heat >= 0.45) return "Rising";
+  if (heat >= 0.2) return "Low";
+  return "None";
+}
+
+function computeRoundMods({ state, patron, gameId, stake, gameBiasKey }) {
+  const g = ensureGamblingState(state);
+  const event = g.event;
+
+  // Luck gives a small nudge; heat is a stronger counterweight.
+  let bias = g.luck * 0.05 - g.heat * 0.09;
+  bias += getPatronBias(patron, gameBiasKey);
+
+  // Big bets attract scrutiny.
+  if (stake >= 120) bias -= 0.02;
+  if (stake >= 180) bias -= 0.03;
+
+  // Event bias, only if it applies to this game.
+  if (event && eventApplies(event, gameId)) bias += event.bias || 0;
+
+  // Streak "momentum" (tiny), but it also increases heat elsewhere.
+  if (g.winStreak >= 2) bias += clamp(g.winStreak * 0.005, 0, 0.02);
+  if (g.lossStreak >= 2) bias += clamp(g.lossStreak * 0.007, 0, 0.025);
+
+  bias = clamp(bias, -0.12, 0.12);
+
+  // Payout bonus is mostly a flavor lever; keep it modest.
+  let payoutBonus = 0;
+  if (event && eventApplies(event, gameId)) payoutBonus += event.payoutBonus || 0;
+
+  // Win streak can make the crowd eager to match you (slight payout bump), but not forever.
+  payoutBonus += clamp(g.winStreak * 0.01, 0, 0.06);
+
+  const payoutMult = clamp(1 + payoutBonus, 0.8, 1.25);
+
+  return { bias, payoutMult, event };
+}
+
+function applyPostRoundDynamics(state, outcomeType, stake) {
+  const g = ensureGamblingState(state);
+
+  // Decay heat a little each round, but spike it on big wins.
+  g.heat = clamp(g.heat + Math.min(0.18, stake / 900), 0, 1);
+
+  if (outcomeType === "good") {
+    g.winStreak += 1;
+    g.lossStreak = 0;
+    g.luck = clamp(g.luck + 0.18, -1, 1);
+    g.heat = clamp(g.heat + 0.12 + Math.min(0.12, stake / 700), 0, 1);
+  } else if (outcomeType === "danger") {
+    g.lossStreak += 1;
+    g.winStreak = 0;
+    g.luck = clamp(g.luck - 0.16, -1, 1);
+    // Losing cools the table's attention.
+    g.heat = clamp(g.heat - 0.08, 0, 1);
+  } else {
+    // Push/neutral results soften streaks.
+    g.winStreak = Math.max(0, g.winStreak - 1);
+    g.lossStreak = Math.max(0, g.lossStreak - 1);
+    g.luck *= 0.95;
+    g.heat = clamp(g.heat - 0.03, 0, 1);
+  }
+
+  return g;
 }
 
 function ensureGamblingDebug(state) {
@@ -206,9 +463,30 @@ function applyDebugBias(dbgMode, kind, playerValue, houseValue, maxValue) {
   return { playerValue, houseValue };
 }
 
-function playDice({ stake, patron, dbgMode, payoutMult }) {
+function applyDynamicBiasToPair(bias, playerValue, houseValue, maxValue) {
+  // bias in [-0.12..+0.12]. Use it as a small chance to "tighten" or "loosen" the outcome.
+  if (typeof bias !== "number" || bias === 0) return { playerValue, houseValue };
+
+  // Positive bias: if you're losing/tied, chance to nudge you ahead.
+  if (bias > 0 && playerValue <= houseValue && Math.random() < bias) {
+    return { playerValue: clamp(houseValue + randInt(1, 2), 1, maxValue), houseValue };
+  }
+  // Negative bias: if you're winning/tied, chance to nudge the house ahead.
+  if (bias < 0 && playerValue >= houseValue && Math.random() < -bias) {
+    return { playerValue, houseValue: clamp(playerValue + randInt(1, 2), 1, maxValue) };
+  }
+  return { playerValue, houseValue };
+}
+
+function clampProb(p) {
+  return clamp(p, 0.05, 0.95);
+}
+
+function playDice({ stake, patron, dbgMode, payoutMult, bias = 0 }) {
   let you = randInt(1, 6) + randInt(1, 6);
   let them = randInt(1, 6) + randInt(1, 6);
+
+  ({ playerValue: you, houseValue: them } = applyDynamicBiasToPair(bias, you, them, 12));
 
   ({ playerValue: you, houseValue: them } = applyDebugBias(dbgMode, "dice", you, them, 12));
 
@@ -234,12 +512,14 @@ function playDice({ stake, patron, dbgMode, payoutMult }) {
   };
 }
 
-function playCards({ stake, patron, dbgMode, payoutMult }) {
+function playCards({ stake, patron, dbgMode, payoutMult, bias = 0 }) {
   const suits = ["♠", "♥", "♦", "♣"];
   let you = randInt(1, 13);
   let them = randInt(1, 13);
   const youSuit = pick(suits);
   const themSuit = pick(suits);
+
+  ({ playerValue: you, houseValue: them } = applyDynamicBiasToPair(bias, you, them, 13));
 
   ({ playerValue: you, houseValue: them } = applyDebugBias(dbgMode, "cards", you, them, 13));
 
@@ -269,8 +549,11 @@ function playCards({ stake, patron, dbgMode, payoutMult }) {
   };
 }
 
-function playCoin({ stake, patron, dbgMode, payoutMult, call }) {
-  let toss = Math.random() < 0.5 ? "Heads" : "Tails";
+function playCoin({ stake, patron, dbgMode, payoutMult, call, bias = 0 }) {
+  const other = call === "Heads" ? "Tails" : "Heads";
+  const pCorrect = clampProb(0.5 + bias);
+
+  let toss = Math.random() < pCorrect ? call : other;
 
   if (dbgMode === "playerFavored") toss = call;
   if (dbgMode === "houseFavored") toss = call === "Heads" ? "Tails" : "Heads";
@@ -290,10 +573,12 @@ function playCoin({ stake, patron, dbgMode, payoutMult, call }) {
   };
 }
 
-function playDragon({ stake, patron, payoutMult }) {
+function playDragon({ stake, patron, payoutMult, bias = 0 }) {
   const roll3d6 = () => randInt(1, 6) + randInt(1, 6) + randInt(1, 6);
-  const you = roll3d6();
-  const them = roll3d6();
+  let you = roll3d6();
+  let them = roll3d6();
+
+  ({ playerValue: you, houseValue: them } = applyDynamicBiasToPair(bias, you, them, 18));
 
   let multiplier = 0;
   if (you >= them + 4) multiplier = 3;
@@ -322,8 +607,10 @@ function playDragon({ stake, patron, payoutMult }) {
   };
 }
 
-function playRunes({ stake, patron, payoutMult }) {
-  const roll = randInt(1, 100);
+function playRunes({ stake, patron, payoutMult, bias = 0 }) {
+  let roll = randInt(1, 100);
+  // Positive bias pushes toward better runes; negative toward worse.
+  roll = clamp(Math.round(roll + bias * 55), 1, 100);
   let multiplier = 0;
   let rune = "a dark, cracked rune";
 
@@ -360,10 +647,10 @@ function playRunes({ stake, patron, payoutMult }) {
   };
 }
 
-function playWheel({ stake, patron, payoutMult }) {
+function playWheel({ stake, patron, payoutMult, bias = 0 }) {
   const elements = ["Flame", "Tide", "Gale", "Stone"];
   const landed = pick(elements);
-  const r = Math.random();
+  const r = clamp(Math.random() + bias * 0.6, 0, 0.999);
 
   let multiplier = 0;
   let flavor = "the wheel sputters out, leaving the element dim and cold";
@@ -396,13 +683,154 @@ function playWheel({ stake, patron, payoutMult }) {
   };
 }
 
+function playSeven({ stake, patron, dbgMode, payoutMult, call, bias = 0 }) {
+  // Under: 2-6, Seven: 7, Over: 8-12
+  const winningTotals = bet => {
+    if (bet === "Seven") return [7];
+    if (bet === "Under") return [2, 3, 4, 5, 6];
+    return [8, 9, 10, 11, 12];
+  };
+  const losingTotals = bet => {
+    const all = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    const win = new Set(winningTotals(bet));
+    return all.filter(t => !win.has(t));
+  };
+
+  let total = randInt(1, 6) + randInt(1, 6);
+
+  // Small chance to flip a losing roll into a winning one (or vice versa), while keeping it plausible.
+  const isWin = winningTotals(call || "Under").includes(total);
+  if (!isWin && bias > 0 && Math.random() < bias) total = pick(winningTotals(call || "Under"));
+  if (isWin && bias < 0 && Math.random() < -bias) total = pick(losingTotals(call || "Under"));
+
+  if (dbgMode === "playerFavored") total = pick(winningTotals(call));
+  if (dbgMode === "houseFavored") total = pick(losingTotals(call));
+
+  let multiplier = 0;
+  let betName = call || "Under";
+
+  if (betName === "Seven") {
+    multiplier = total === 7 ? 5.5 : 0;
+  } else if (betName === "Under") {
+    multiplier = total <= 6 ? 2.2 : 0;
+  } else {
+    multiplier = total >= 8 ? 2.2 : 0;
+  }
+
+  if (multiplier === 0) {
+    return {
+      type: "danger",
+      delta: 0,
+      text: `You wager ${betName}, but the dice show ${total}. ${patron.name} takes your ${stake} gold.`
+    };
+  }
+
+  const win = Math.round(Math.round(stake * multiplier) * payoutMult);
+  return {
+    type: betName === "Seven" ? "good" : "system",
+    delta: win,
+    text: `You wager ${betName} and the dice land ${total}. The table pays out ${win} gold.`
+  };
+}
+
+function playCups({ stake, patron, dbgMode, payoutMult, call, bias = 0 }) {
+  const cups = ["Left", "Center", "Right"];
+  const guess = call || "Center";
+
+  // Base is 1/3; bias nudges it.
+  const pGuess = clampProb(1 / 3 + bias);
+  let pebble = Math.random() < pGuess ? guess : pick(cups.filter(c => c !== guess));
+
+  if (dbgMode === "playerFavored") pebble = guess;
+  if (dbgMode === "houseFavored") pebble = pick(cups.filter(c => c !== guess));
+
+  if (pebble === guess) {
+    const win = Math.round(Math.round(stake * 2.9) * payoutMult);
+    return {
+      type: "good",
+      delta: win,
+      text: `Your finger taps the ${guess} cup—there's the pebble! You win ${win} gold from ${patron.name}.`
+    };
+  }
+
+  return {
+    type: "danger",
+    delta: 0,
+    text: `You choose the ${guess} cup, but the pebble sits under the ${pebble}. You lose your ${stake} gold.`
+  };
+}
+
+function playOddEven({ stake, patron, dbgMode, payoutMult, call, bias = 0 }) {
+  const want = call || "Odd";
+
+  const pWant = clampProb(0.5 + bias);
+  const chooseWant = Math.random() < pWant;
+  const parity = chooseWant ? want : want === "Odd" ? "Even" : "Odd";
+
+  let die = parity === "Odd" ? pick([1, 3, 5]) : pick([2, 4, 6]);
+
+  if (dbgMode === "playerFavored") die = want === "Odd" ? pick([1, 3, 5]) : pick([2, 4, 6]);
+  if (dbgMode === "houseFavored") die = want === "Odd" ? pick([2, 4, 6]) : pick([1, 3, 5]);
+
+  const got = die % 2 === 0 ? "Even" : "Odd";
+  if (got === want) {
+    const win = Math.round(stake * 2 * payoutMult);
+    return {
+      type: "system",
+      delta: win,
+      text: `The die shows ${die} (${got}). You called it—${patron.name} pays you ${win} gold.`
+    };
+  }
+
+  return {
+    type: "danger",
+    delta: 0,
+    text: `The die shows ${die} (${got}). Wrong call—your ${stake} gold is gone.`
+  };
+}
+
+function playColors({ stake, patron, dbgMode, payoutMult, call, bias = 0 }) {
+  const suits = ["♠", "♥", "♦", "♣"];
+  const suitColor = s => (s === "♥" || s === "♦" ? "Red" : "Black");
+  const want = call || "Red";
+
+  const pWant = clampProb(0.5 + bias);
+  const chooseWant = Math.random() < pWant;
+  const color = chooseWant ? want : want === "Red" ? "Black" : "Red";
+
+  let suit = color === "Red" ? pick(["♥", "♦"]) : pick(["♠", "♣"]);
+
+  if (dbgMode === "playerFavored") suit = want === "Red" ? pick(["♥", "♦"]) : pick(["♠", "♣"]);
+  if (dbgMode === "houseFavored") suit = want === "Red" ? pick(["♠", "♣"]) : pick(["♥", "♦"]);
+
+  const got = suitColor(suit);
+  if (got === want) {
+    const win = Math.round(stake * 2 * payoutMult);
+    return {
+      type: "system",
+      delta: win,
+      text: `A card flips—${suit} (${got}). You called it right and win ${win} gold.`
+    };
+  }
+
+  return {
+    type: "danger",
+    delta: 0,
+    text: `A card flips—${suit} (${got}). ${patron.name} grins as you lose your ${stake} gold.`
+  };
+}
+
 const GAME_RUNNERS = {
   dice: playDice,
   cards: playCards,
   coin: playCoin,
   dragon: playDragon,
   runes: playRunes,
-  wheel: playWheel
+  wheel: playWheel,
+  seven: playSeven,
+  cups: playCups,
+  odd: playOddEven,
+  colors: playColors
 };
 
 // ----------------------------------------------------------------------------
@@ -421,10 +849,19 @@ export function openGambleModalImpl(deps) {
   // Local UI state.
   let currentGameId = "dice";
   let currentStake = GAMES[currentGameId].baseStake;
-  let currentCall = "Heads"; // coin only
+  let currentCall = "Heads";
+  let currentCallOptions = ["Heads", "Tails"]; // games can override via cfg.callOptions
+  let currentCallLabel = "Call";
 
   const STAKE_MIN = 5;
-  const STAKE_MAX = 200;
+  const STAKE_MAX_BASE = 200;
+
+  function getLimits() {
+    // Use dynamic table limits (heat/events) when available.
+    const lim = getTableLimits(state);
+    // Keep minimum aligned with this modal's minimum, even if table limits change.
+    return { min: Math.max(STAKE_MIN, lim.min || STAKE_MIN), max: lim.max || STAKE_MAX_BASE };
+  }
 
   function cleanFooters(modalBodyEl) {
     const panel = modalBodyEl?.parentElement;
@@ -451,8 +888,35 @@ export function openGambleModalImpl(deps) {
     );
 
     const goldLine = el("p", { className: "modal-subtitle" });
+    const tableLine = el("p", { className: "modal-subtitle" });
+
+    // NEW: quick-visual meters for Luck and Heat.
+    const meterRow = el("div", { className: "mini-meter-row" });
+    const luckBlock = el("div", { className: "mini-meter-block" });
+    const heatBlock = el("div", { className: "mini-meter-block" });
+    const luckLabel = el("div", { className: "mini-meter-label", text: "Luck" });
+    const heatLabel = el("div", { className: "mini-meter-label", text: "Heat" });
+    const luckBar = el("div", { className: "mini-meter" });
+    const heatBar = el("div", { className: "mini-meter" });
+    const luckFill = el("div", { className: "mini-meter-fill" });
+    const heatFill = el("div", { className: "mini-meter-fill" });
+    luckBar.appendChild(luckFill);
+    heatBar.appendChild(heatFill);
+    luckBlock.appendChild(luckLabel);
+    luckBlock.appendChild(luckBar);
+    heatBlock.appendChild(heatLabel);
+    heatBlock.appendChild(heatBar);
+    meterRow.appendChild(luckBlock);
+    meterRow.appendChild(heatBlock);
+
+    const hintLine = el("p", { className: "modal-subtitle" });
+    const eventLine = el("p", { className: "modal-subtitle" });
     const dbgLine = el("p", { className: "modal-subtitle" });
     headerCard.appendChild(goldLine);
+    headerCard.appendChild(tableLine);
+    headerCard.appendChild(meterRow);
+    headerCard.appendChild(hintLine);
+    headerCard.appendChild(eventLine);
     headerCard.appendChild(dbgLine);
     body.appendChild(headerCard);
 
@@ -503,7 +967,8 @@ export function openGambleModalImpl(deps) {
       className: "btn small outline",
       text: "-5g",
       onClick: () => {
-        currentStake = clamp(currentStake - 5, STAKE_MIN, STAKE_MAX);
+        const lim = getLimits();
+        currentStake = clamp(currentStake - 5, lim.min, lim.max);
         refreshStake();
       }
     });
@@ -511,7 +976,8 @@ export function openGambleModalImpl(deps) {
       className: "btn small outline",
       text: "+5g",
       onClick: () => {
-        currentStake = clamp(currentStake + 5, STAKE_MIN, STAKE_MAX);
+        const lim = getLimits();
+        currentStake = clamp(currentStake + 5, lim.min, lim.max);
         refreshStake();
       }
     });
@@ -520,16 +986,19 @@ export function openGambleModalImpl(deps) {
       text: "M",
       attrs: { title: "Max bet" },
       onClick: () => {
-        currentStake = clamp(Math.min(player.gold, STAKE_MAX), STAKE_MIN, STAKE_MAX);
+        const lim = getLimits();
+        currentStake = clamp(Math.min(player.gold, lim.max), lim.min, lim.max);
         refreshStake();
       }
     });
     const callBtn = el("button", {
       className: "btn small outline",
-      text: `Call: ${currentCall}`,
+      text: `${currentCallLabel}: ${currentCall}`,
       onClick: () => {
-        currentCall = currentCall === "Heads" ? "Tails" : "Heads";
-        callBtn.textContent = `Call: ${currentCall}`;
+        if (!Array.isArray(currentCallOptions) || currentCallOptions.length < 2) return;
+        const idx = Math.max(0, currentCallOptions.indexOf(currentCall));
+        currentCall = currentCallOptions[(idx + 1) % currentCallOptions.length];
+        callBtn.textContent = `${currentCallLabel}: ${currentCall}`;
       }
     });
 
@@ -570,6 +1039,31 @@ export function openGambleModalImpl(deps) {
     // --- UI refresh helpers ----------------------------------------------
     function refreshGold() {
       goldLine.textContent = `Your gold: ${player.gold}g`;
+
+      const g = ensureGamblingState(state);
+      const lim = getLimits();
+      const streak = g.winStreak > 0 ? `W${g.winStreak}` : g.lossStreak > 0 ? `L${g.lossStreak}` : "-";
+      tableLine.textContent = `Fortune: ${describeLuck(g.luck)} · Eyes: ${describeHeat(g.heat)} · Streak: ${streak} · Table max: ${lim.max}g`;
+
+      eventLine.textContent = g.event
+        ? `Event: ${g.event.name} (${g.event.roundsLeft} rounds) — ${g.event.desc}`
+        : "";
+
+      // Meters: Luck is -1..1; Heat is 0..1.
+      const luckNorm = clamp((g.luck + 1) / 2, 0, 1);
+      const heatNorm = clamp(g.heat, 0, 1);
+      luckFill.style.width = `${Math.round(luckNorm * 100)}%`;
+      heatFill.style.width = `${Math.round(heatNorm * 100)}%`;
+      luckFill.setAttribute('title', `Luck: ${describeLuck(g.luck)}`);
+      heatFill.setAttribute('title', `Heat: ${describeHeat(g.heat)}`);
+
+      hintLine.textContent =
+        g.heat >= 0.65
+          ? 'The house is watching you closely. Walking away now may be wise.'
+          : g.luck <= -0.55
+          ? 'The table feels cold. If you keep playing, keep your bets small.'
+          : '';
+
       const dbg = ensureGamblingDebug(state);
       const mode = dbg.mode || "normal";
       const mult = dbg.payoutMultiplier || 1;
@@ -580,22 +1074,30 @@ export function openGambleModalImpl(deps) {
     }
 
     function refreshStake() {
-      currentStake = clamp(currentStake, STAKE_MIN, STAKE_MAX);
+      const lim = getLimits();
+      currentStake = clamp(currentStake, lim.min, lim.max);
       const affordable = player.gold >= currentStake;
+      const limitNote = currentStake >= lim.max ? ` (table max ${lim.max}g)` : "";
       stakeLabel.textContent = affordable
-        ? `Stake: ${currentStake}g`
-        : `Stake: ${currentStake}g (need ${currentStake - player.gold}g more)`;
+        ? `Stake: ${currentStake}g${limitNote}`
+        : `Stake: ${currentStake}g${limitNote} (need ${currentStake - player.gold}g more)`;
       btnPlay.disabled = !affordable;
     }
 
     function refreshCallVisibility() {
-      callBtn.style.display = currentGameId === "coin" ? "inline-flex" : "none";
+      const show = Array.isArray(currentCallOptions) && currentCallOptions.length;
+      callBtn.style.display = show ? "inline-flex" : "none";
+      if (show) callBtn.textContent = `${currentCallLabel}: ${currentCall}`;
     }
 
     function setGame(id) {
       const cfg = GAMES[id] || GAMES.dice;
+      const lim = getLimits();
       currentGameId = cfg.id;
-      currentStake = cfg.baseStake;
+      currentStake = clamp(cfg.baseStake, lim.min, lim.max);
+      currentCallOptions = Array.isArray(cfg.callOptions) && cfg.callOptions.length ? cfg.callOptions : [];
+      currentCallLabel = cfg.callLabel || "Call";
+      currentCall = currentCallOptions.length ? currentCallOptions[0] : "";
       currentTag.textContent = `${cfg.label} · ${cfg.riskLabel}`;
       currentDesc.textContent = cfg.description;
 
@@ -612,6 +1114,22 @@ export function openGambleModalImpl(deps) {
     }
 
     function playRound() {
+      const beforeEventId = ensureGamblingState(state).event?.id || null;
+      tickGamblingDynamics(state);
+      const afterEvent = ensureGamblingState(state).event;
+      if (afterEvent && afterEvent.id && afterEvent.id !== beforeEventId) {
+        addLog(`The tavern mood shifts: ${afterEvent.name}. ${afterEvent.desc}`, "system");
+      }
+
+      // If the table has tightened/loosened, keep the current stake valid.
+      const limNow = getLimits();
+      const stakeBeforeClamp = currentStake;
+      const safeStake = Number.isFinite(Number(currentStake)) ? Number(currentStake) : limNow.min;
+      currentStake = clamp(safeStake, limNow.min, limNow.max);
+      if (currentStake !== stakeBeforeClamp) {
+        addLog?.(`The dealer caps your bet to the table limit (${currentStake}g).`, "system");
+      }
+
       if (player.gold < currentStake) {
         refreshGold();
         refreshStake();
@@ -629,6 +1147,15 @@ export function openGambleModalImpl(deps) {
       const patron = pickPatron(state, cfg.biasKey);
       const rounds = ensureGamblingState(state).roundsWithPatron || 1;
 
+      const mods = computeRoundMods({
+        state,
+        patron,
+        gameId: cfg.id,
+        stake: currentStake,
+        gameBiasKey: cfg.biasKey
+      });
+      const finalPayoutMult = payoutMult * mods.payoutMult;
+
       // Pay stake up front.
       player.gold -= currentStake;
 
@@ -637,13 +1164,16 @@ export function openGambleModalImpl(deps) {
         stake: currentStake,
         patron,
         dbgMode,
-        payoutMult,
-        call: currentCall
+        payoutMult: finalPayoutMult,
+        call: currentCall,
+        bias: mods.bias
       });
 
       if (outcome && typeof outcome.delta === "number") {
         player.gold += outcome.delta;
       }
+
+      applyPostRoundDynamics(state, outcome.type, currentStake);
 
       const flavored = addFlavor(outcome.text, outcome.type, patron, rounds);
       showOutcome(`${flavored} You now have ${player.gold} gold.`, outcome.type);

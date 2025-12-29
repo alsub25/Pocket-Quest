@@ -60,7 +60,12 @@ const PETITIONS = {
       depositRateMultiplier: 1.4,
       investmentRateMultiplier: 1.2,
       loanRateMultiplier: 1,
-      restCostMultiplier: 1.3
+      restCostMultiplier: 1.3,
+      // Short-lived spending pushes commerce upward.
+      econProsperityDelta: 1,
+      econTradeDelta: 1,
+      econSecurityDelta: 0,
+      moodDailyDelta: 0
     },
     favorIdeologies: ["hawk", "pragmatist", "reformer"],
     opposeIdeologies: ["traditionalist"]
@@ -82,7 +87,12 @@ const PETITIONS = {
       depositRateMultiplier: 1.1,
       investmentRateMultiplier: 1.15,
       loanRateMultiplier: 1,
-      restCostMultiplier: 1.4
+      restCostMultiplier: 1.4,
+      // Festival crowds: trade jumps, but watchfulness lags.
+      econProsperityDelta: 1,
+      econTradeDelta: 2,
+      econSecurityDelta: -1,
+      moodDailyDelta: 1
     },
     favorIdeologies: ["populist", "reformer", "dove"],
     opposeIdeologies: ["hawk", "traditionalist"]
@@ -104,7 +114,12 @@ const PETITIONS = {
       depositRateMultiplier: 0.8,
       investmentRateMultiplier: 0.8,
       loanRateMultiplier: 0.9,
-      restCostMultiplier: 0.8
+      restCostMultiplier: 0.8,
+      // Belt-tightening slows commerce but can steady streets.
+      econProsperityDelta: -1,
+      econTradeDelta: -1,
+      econSecurityDelta: 1,
+      moodDailyDelta: -1
     },
     favorIdeologies: ["hawk", "traditionalist", "pragmatist"],
     opposeIdeologies: ["populist", "dove", "reformer"]
@@ -126,7 +141,12 @@ const PETITIONS = {
       depositRateMultiplier: 1,
       investmentRateMultiplier: 1,
       loanRateMultiplier: 1.15,
-      restCostMultiplier: 1.2
+      restCostMultiplier: 1.2,
+      // Guards and walls improve security, but coin is diverted from trade.
+      econProsperityDelta: 0,
+      econTradeDelta: -1,
+      econSecurityDelta: 2,
+      moodDailyDelta: -1
     },
     favorIdeologies: ["hawk", "traditionalist"],
     opposeIdeologies: ["dove", "reformer"]
@@ -148,7 +168,12 @@ const PETITIONS = {
       depositRateMultiplier: 1.1,
       investmentRateMultiplier: 1,
       loanRateMultiplier: 0.95,
-      restCostMultiplier: 0.85
+      restCostMultiplier: 0.85,
+      // Stable food supply improves mood and prosperity a touch.
+      econProsperityDelta: 1,
+      econTradeDelta: 0,
+      econSecurityDelta: 0,
+      moodDailyDelta: 1
     },
     favorIdeologies: ["populist", "dove", "reformer"],
     opposeIdeologies: ["hawk"]
@@ -170,7 +195,12 @@ const PETITIONS = {
       depositRateMultiplier: 1.2,
       investmentRateMultiplier: 1.25,
       loanRateMultiplier: 0.95,
-      restCostMultiplier: 1
+      restCostMultiplier: 1,
+      // Better contracts = more caravans.
+      econProsperityDelta: 1,
+      econTradeDelta: 2,
+      econSecurityDelta: 0,
+      moodDailyDelta: 0
     },
     favorIdeologies: ["hawk", "pragmatist", "reformer"],
     opposeIdeologies: ["populist"]
@@ -192,7 +222,12 @@ const PETITIONS = {
       depositRateMultiplier: 0.95,
       investmentRateMultiplier: 0.9,
       loanRateMultiplier: 1,
-      restCostMultiplier: 0.8
+      restCostMultiplier: 0.8,
+      // Hospitality raises mood and trade, with a small security tax.
+      econProsperityDelta: 0,
+      econTradeDelta: 1,
+      econSecurityDelta: -1,
+      moodDailyDelta: 1
     },
     favorIdeologies: ["dove", "traditionalist", "populist"],
     opposeIdeologies: ["hawk"]
@@ -280,7 +315,12 @@ const PETITIONS = {
       depositRateMultiplier: 1,
       investmentRateMultiplier: 1.2,
       loanRateMultiplier: 1.3,
-      restCostMultiplier: 1.4
+      restCostMultiplier: 1.4,
+      // War levies strain households and trade.
+      econProsperityDelta: -2,
+      econTradeDelta: -2,
+      econSecurityDelta: 1,
+      moodDailyDelta: -2
     },
     favorIdeologies: ["hawk"],
     opposeIdeologies: ["dove", "populist", "reformer"]
@@ -302,7 +342,12 @@ const PETITIONS = {
       depositRateMultiplier: 0.95,
       investmentRateMultiplier: 0.95,
       loanRateMultiplier: 1,
-      restCostMultiplier: 0.85
+      restCostMultiplier: 0.85,
+      // Quiet streets increase security but dampen night trade.
+      econProsperityDelta: 0,
+      econTradeDelta: -1,
+      econSecurityDelta: 1,
+      moodDailyDelta: 0
     },
     favorIdeologies: ["traditionalist", "pragmatist", "dove"],
     opposeIdeologies: ["populist"]
@@ -830,7 +875,95 @@ function ensureTownHallEffects(state) {
   if (!state.government.townHallEffects) {
     state.government.townHallEffects = {};
   }
-  return state.government.townHallEffects;
+
+  // Keep object shape stable so UIs can rely on fields existing.
+  const eff = state.government.townHallEffects;
+  const defaults = {
+    petitionId: null,
+    title: null,
+    label: null,
+    description: null,
+    startedOnDay: null,
+    expiresOnDay: null,
+    depositRateMultiplier: null,
+    investmentRateMultiplier: null,
+    loanRateMultiplier: null,
+    restCostMultiplier: null,
+
+    // NEW: decrees can gently nudge the raw village economy while active.
+    // These are per-day additive deltas, kept small by design.
+    econProsperityDelta: null,
+    econTradeDelta: null,
+    econSecurityDelta: null,
+
+    // Optional: ongoing mood pressure (separate from the one-time decree announcement).
+    moodDailyDelta: null
+  };
+
+  for (const [k, v] of Object.entries(defaults)) {
+    if (typeof eff[k] === "undefined") eff[k] = v;
+  }
+
+  return eff;
+}
+
+// -----------------------------------------------------------------------------
+// SHARED EFFECT CLEANUP (used by bank / economy / any other system)
+// -----------------------------------------------------------------------------
+// IMPORTANT: Other systems should *not* delete state.government.townHallEffects.
+// The Town Hall UI expects the object to exist (or be easily re-initialized)
+// and uses its presence for snapshots. When an effect expires, we simply
+// clear the fields so the shape remains stable.
+
+export function cleanupTownHallEffects(state, todayOverride = null) {
+  if (!state) return { changed: false, active: false };
+  if (!state.government) return { changed: false, active: false };
+
+  const eff = ensureTownHallEffects(state);
+  const today =
+    typeof todayOverride === "number"
+      ? todayOverride
+      : typeof state.time?.dayIndex === "number"
+      ? state.time.dayIndex
+      : 0;
+
+  const expiresOnDay =
+    typeof eff.expiresOnDay === "number" ? eff.expiresOnDay : null;
+
+  const active =
+    !!eff.petitionId && expiresOnDay != null && today <= expiresOnDay;
+
+  if (!active && expiresOnDay != null && today > expiresOnDay) {
+    // Clear, don't delete.
+    const hadSomething =
+      !!eff.petitionId ||
+      typeof eff.startedOnDay === "number" ||
+      typeof eff.depositRateMultiplier === "number" ||
+      typeof eff.investmentRateMultiplier === "number" ||
+      typeof eff.loanRateMultiplier === "number" ||
+      typeof eff.restCostMultiplier === "number";
+
+    eff.petitionId = null;
+    eff.title = null;
+    eff.label = null;
+    eff.description = null;
+    eff.startedOnDay = null;
+    eff.expiresOnDay = null;
+    eff.depositRateMultiplier = null;
+    eff.investmentRateMultiplier = null;
+    eff.loanRateMultiplier = null;
+    eff.restCostMultiplier = null;
+
+    // Economy / mood nudges
+    eff.econProsperityDelta = null;
+    eff.econTradeDelta = null;
+    eff.econSecurityDelta = null;
+    eff.moodDailyDelta = null;
+
+    return { changed: hadSomething, active: false };
+  }
+
+  return { changed: false, active };
 }
 
 function buildActiveEffectSnapshot(state) {
@@ -867,6 +1000,21 @@ function buildActiveEffectSnapshot(state) {
     lines.push(effects.description);
   }
 
+  // NEW: surface ongoing economy/mood nudges so players understand why things drift.
+  const pD = Number(effects.econProsperityDelta);
+  const tD = Number(effects.econTradeDelta);
+  const sD = Number(effects.econSecurityDelta);
+  const mD = Number(effects.moodDailyDelta);
+  const econBits = [];
+  if (Number.isFinite(pD) && Math.round(pD) !== 0) econBits.push(`Prosperity ${Math.round(pD) > 0 ? '+' : ''}${Math.round(pD)}/day`);
+  if (Number.isFinite(tD) && Math.round(tD) !== 0) econBits.push(`Trade ${Math.round(tD) > 0 ? '+' : ''}${Math.round(tD)}/day`);
+  if (Number.isFinite(sD) && Math.round(sD) !== 0) econBits.push(`Security ${Math.round(sD) > 0 ? '+' : ''}${Math.round(sD)}/day`);
+  if (econBits.length) lines.push(`Ongoing nudge: ${econBits.join(' · ')}.`);
+  if (Number.isFinite(mD) && Math.round(mD) !== 0) {
+    const md = Math.round(mD);
+    lines.push(`Ongoing mood pressure: ${md > 0 ? '+' : ''}${md}/day.`);
+  }
+
   return {
     hasActive: true,
     title: effects.title || "Temporary decree in effect",
@@ -894,7 +1042,15 @@ function applyApprovedPetition(state, petitionId, addLog) {
     depositRateMultiplier = 1,
     investmentRateMultiplier = 1,
     loanRateMultiplier = 1,
-    restCostMultiplier = 1
+    restCostMultiplier = 1,
+
+    // NEW: per-day economy nudges while the decree is active
+    econProsperityDelta = 0,
+    econTradeDelta = 0,
+    econSecurityDelta = 0,
+
+    // Optional: per-day mood pressure
+    moodDailyDelta = 0
   } = def.effect || {};
 
   effects.petitionId = petitionId;
@@ -907,6 +1063,12 @@ function applyApprovedPetition(state, petitionId, addLog) {
   effects.investmentRateMultiplier = investmentRateMultiplier;
   effects.loanRateMultiplier = loanRateMultiplier;
   effects.restCostMultiplier = restCostMultiplier;
+
+  // Economy / mood nudges
+  effects.econProsperityDelta = econProsperityDelta;
+  effects.econTradeDelta = econTradeDelta;
+  effects.econSecurityDelta = econSecurityDelta;
+  effects.moodDailyDelta = moodDailyDelta;
 
   // Track in decree history (for Prior Decrees UI).
   hall.priorDecrees.push({
@@ -1106,7 +1268,12 @@ export function handleTownHallDayTick(state, absoluteDay, hooks = {}) {
   const addLog = typeof hooks.addLog === "function" ? hooks.addLog : null;
 
   const hall = ensureTownHallState(state, absoluteDay);
+  // Guard against double-running the same day (keeps petition timelines sane).
+  if (hall.lastDayUpdated === absoluteDay) return;
   hall.lastDayUpdated = absoluteDay;
+
+  // Centralized cleanup so expired decrees don't linger.
+  cleanupTownHallEffects(state, absoluteDay);
   const council = ensureVillageCouncil(state);
 
   // NEW: Let councillors die / leave / be recalled, and handle recess / replacement.
