@@ -1,5 +1,5 @@
 // Loot/lootGenerator.js
-// Dynamic loot generation for Project: Mystic
+// Dynamic loot generation for Emberwood: The Blackbark Oath
 // - Potions (HP + class-resource potions)
 // - Weapons + single-piece Armor (not per-slot gear)
 // - Leveled loot with rarities and item levels derived from stats
