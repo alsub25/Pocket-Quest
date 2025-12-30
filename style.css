@@ -582,6 +582,127 @@ h3{ font-size:0.95rem; }
 .changelog-modal ul{ margin:0 0 4px 1.1rem; padding-left:0; }
 .changelog-modal li{ margin-bottom:2px; }
 
+
+/* Cheat toolbar + status (keeps the changelog/cheat aesthetic) */
+.cheat-toolbar{
+  display:flex;
+  gap:4px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin:4px 0 6px;
+}
+.cheat-search-wrap{ flex:1 1 220px; min-width:180px; }
+
+.cheat-statusbar{
+  /* These variables are tuned by JS to keep pills within 2 rows on mobile */
+  --cheat-stat-font: 11.5px;
+  --cheat-stat-padY: 3px;
+  --cheat-stat-padX: 8px;
+  --cheat-stat-gap: 4px;
+
+  display:flex;
+  flex-wrap:wrap;
+  gap:var(--cheat-stat-gap);
+  margin:0 0 6px;
+}
+.cheat-stat{
+  font-size:var(--cheat-stat-font);
+  line-height:1.1;
+  white-space:nowrap;
+  color:var(--muted);
+  border:1px solid var(--border);
+  border-radius:999px;
+  padding:var(--cheat-stat-padY) var(--cheat-stat-padX);
+  background:var(--bg-alt);
+}
+
+/* Wider combined pills (e.g., Location/Difficulty, Flags) */
+.cheat-stat-wide{
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* Hard cap: never scroll the cheat status bar.
+   If we still exceed 2 rows at minimum scale, clamp wide pills so everything wraps into 2 rows. */
+.cheat-statusbar.two-row-clamp .cheat-stat-wide{
+  max-width:calc((100% - var(--cheat-stat-gap)) / 2);
+}
+
+/* Compact mode: invoked only if the bar still wants a 3rd row at minimum scale.
+   Keeps the aesthetic but tightens the layout a touch more. */
+.cheat-statusbar.two-row-compact{
+  --cheat-stat-gap:3px;
+}
+.cheat-statusbar.two-row-compact .cheat-stat{
+  letter-spacing:0;
+}
+
+/* Tighten spacing inside cheat modal (keeps aesthetic, reduces vertical bloat) */
+.cheat-modal .btn{
+  margin-top:0;
+  padding:10px 12px;
+}
+.cheat-modal .btn.small{ padding:6px 10px; }
+
+/* Inputs inside cheat menu (teleport, ids, metrics, etc.) */
+.cheat-modal :is(input.input, select.input){
+  border:1px solid var(--border);
+  background:var(--surface-1);
+  color:var(--text);
+  padding:8px 10px;
+  border-radius:var(--pill);
+  outline:none;
+
+  transition:
+    transform var(--t-fast) var(--ease),
+    box-shadow var(--t-fast) var(--ease),
+    border-color var(--t-med) var(--ease),
+    background var(--t-med) var(--ease),
+    color var(--t-med) var(--ease);
+}
+.cheat-modal :is(input.input, select.input)::placeholder{ color:var(--muted); opacity:0.85; }
+.cheat-modal :is(input.input, select.input):focus,
+.cheat-modal :is(input.input, select.input):focus-visible{
+  outline:1px solid var(--accent);
+  background:radial-gradient(circle at top, #1f2b45 0, #060815 70%);
+}
+
+
+
+/* Cheat menu action rows: keep controls aligned on mobile (2-up layout that wraps cleanly) */
+.cheat-modal .item-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:4px;
+}
+.cheat-modal .item-actions > *{
+  flex:1 1 calc(50% - 8px);
+  min-width:160px;
+}
+.cheat-modal .item-actions .btn,
+.cheat-modal .item-actions button{
+  width:100%;
+  justify-content:center;
+}
+.cheat-modal .item-actions :is(input.input, select.input){
+  width:100%;
+}
+
+/* Composite field (e.g., item id + qty) used to preserve alignment */
+.cheat-inline{
+  display:flex;
+  gap:4px;
+  width:100%;
+  align-items:stretch;
+}
+.cheat-inline > :first-child{ flex:1 1 auto; }
+.cheat-inline > :last-child{ flex:0 0 96px; }
+
+@media (max-width:420px){
+  .cheat-modal .item-actions > *{ flex-basis:100%; min-width:0; }
+  .cheat-inline{ flex-wrap:wrap; }
+  .cheat-inline > :last-child{ flex:1 1 100%; }
+}
 /* Cheat sections */
 .cheat-section{
   border:1px solid var(--border);
@@ -629,7 +750,7 @@ h3{ font-size:0.95rem; }
   border-top:1px solid rgba(255,255,255,0.06);
   display:flex;
   flex-direction:column;
-  gap:6px;
+  gap:4px;
 }
 
 /* =============================================================================
@@ -1492,6 +1613,12 @@ min-height: 0; /* instead of 60px */
 .inv-compare{ font-size:0.74rem; color:var(--muted); }
 .inv-actions{ display:flex; flex-wrap:wrap; gap:8px; }
 
+/* =====================================================================
+   SPELLBOOK / ABILITIES: inventory-style collapsible cards
+   ===================================================================== */
+
+.spell-card.in-combat .inv-card-header{ cursor:pointer; }
+
 /* =============================================================================
    18) ANIMATIONS + RESPONSIVE WRAP
    ============================================================================= */
@@ -1703,5 +1830,128 @@ min-height: 0; /* instead of 60px */
   .notice-board-detail{
     max-height:26vh;
   }
+}
+
+
+/* =====================================================================
+   SPELLBOOK / ABILITIES MODAL: two-panel layout (list + details)
+   ===================================================================== */
+
+.spellbook-content{
+  margin-top:6px;
+  display:flex;
+  gap:8px;
+  align-items:stretch;
+}
+
+.spellbook-list{
+  flex:0 0 44%;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  min-width:0;
+  max-height:40dvh;
+  overflow-y:auto;
+  padding-right:2px;
+}
+
+.spellbook-detail{
+  flex:1 1 auto;
+  min-width:0;
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:var(--radius);
+  background:var(--surface-1);
+  padding:8px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  max-height:40dvh;
+  overflow:hidden;
+}
+
+.spellbook-subhead{
+  margin-top:6px;
+  color:var(--muted);
+  font-size:0.72rem;
+  text-transform:uppercase;
+  letter-spacing:0.10em;
+}
+
+.spell-row{
+  border-radius:var(--radius);
+  border:1px solid rgba(255,255,255,0.08);
+  background:rgba(0,0,0,0.14);
+  padding:8px;
+  cursor:pointer;
+  transition:
+    transform var(--t-fast) var(--ease),
+    box-shadow var(--t-fast) var(--ease),
+    border-color var(--t-med) var(--ease),
+    background var(--t-med) var(--ease);
+}
+
+.spell-row:hover{
+  transform:translateY(-1px);
+  box-shadow:var(--shadow-hover);
+  border-color:rgba(255,255,255,0.16);
+  background:radial-gradient(circle at top, rgba(79,195,247,0.10), rgba(0,0,0,0.08));
+}
+
+.spell-row.selected{
+  border-color:var(--accent);
+  box-shadow:0 0 0 1px rgba(79,195,247,0.30);
+  background:radial-gradient(circle at top, var(--accent-soft), rgba(0,0,0,0.10));
+}
+
+.spell-row-title{
+  font-weight:650;
+  font-size:0.85rem;
+  color:var(--text);
+  line-height:1.15;
+  margin-bottom:2px;
+}
+
+.spell-row-sub{
+  font-size:0.74rem;
+  color:var(--muted);
+  line-height:1.25;
+}
+
+.spell-detail-title{
+  font-size:0.86rem;
+  font-weight:700;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  color:var(--text);
+}
+
+.spell-detail-desc{
+  font-size:0.82rem;
+  color:var(--text);
+  opacity:0.95;
+  line-height:1.35;
+  white-space:pre-line;
+  overflow-y:auto;
+  padding-right:2px;
+}
+
+.spell-detail-meta{
+  border-top:1px solid rgba(255,255,255,0.06);
+  padding-top:6px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+
+.spell-detail-empty{
+  color:var(--muted);
+  font-size:0.78rem;
+  line-height:1.35;
+}
+
+@media (max-width: 480px){
+  .spellbook-content{ flex-direction:column; }
+  .spellbook-list{ max-height:22dvh; }
+  .spellbook-detail{ max-height:30dvh; }
 }
 

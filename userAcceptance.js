@@ -1,3 +1,16 @@
+
+
+/* --------------------------- Safe storage --------------------------- */
+function safeStorageGet(key) {
+  try { return localStorage.getItem(key); } catch (_) { return null; }
+}
+function safeStorageSet(key, value) {
+  try { localStorage.setItem(key, value); return true; } catch (_) { return false; }
+}
+
+function safeStorageRemove(key) {
+  try { localStorage.removeItem(key); return true; } catch (_) { return false; }
+}
 /* ==========================================================================
    userAcceptance.js  (2 SEPARATE PANELS + SCROLL-TO-BOTTOM UNLOCK PER PANEL)
    --------------------------------------------------------------------------
@@ -37,7 +50,7 @@ function safeJsonParse(raw) {
 
 function readAcceptanceRecord() {
   try {
-    const raw = localStorage.getItem(ACCEPTANCE_STORAGE_KEY);
+    const raw = safeStorageGet(ACCEPTANCE_STORAGE_KEY);
     if (!raw) return null;
     return safeJsonParse(raw);
   } catch {
@@ -53,7 +66,7 @@ function writeAcceptanceRecord() {
     acceptedLegal: true
   };
   try {
-    localStorage.setItem(ACCEPTANCE_STORAGE_KEY, JSON.stringify(rec));
+    safeStorageSet(ACCEPTANCE_STORAGE_KEY, JSON.stringify(rec));
   } catch {
     // If storage fails, acceptance is session-only after clicking Accept.
   }
@@ -71,7 +84,7 @@ export function hasUserAccepted() {
 }
 
 export function resetUserAcceptance() {
-  try { localStorage.removeItem(ACCEPTANCE_STORAGE_KEY); } catch {}
+  safeStorageRemove(ACCEPTANCE_STORAGE_KEY);
 }
 
 export function initUserAcceptanceGate(options = {}) {
@@ -120,6 +133,13 @@ function openModalLikeGameDoes(title, builderFn) {
   if (!els) return;
 
   const { modalEl, modalTitleEl, modalBodyEl } = els;
+
+  // Claim and lock the modal so other UI code (bootstrap/game) can't dismiss it.
+  try {
+    modalEl.dataset.owner = "acceptance";
+    modalEl.dataset.lock = "1";
+  } catch (_) {}
+
   modalTitleEl.textContent = title;
 
   // cleanup any leftovers your game may append
@@ -139,6 +159,12 @@ function closeModalLikeGameDoes() {
   const { modalEl, modalCloseEl } = els;
   modalEl.classList.add("hidden");
   modalCloseEl.style.display = "";
+
+  // Release lock/ownership.
+  try {
+    if (modalEl.dataset.owner === "acceptance") modalEl.dataset.owner = "";
+    if (modalEl.dataset.lock === "1") modalEl.dataset.lock = "0";
+  } catch (_) {}
 }
 
 function installGameplayGateCapture() {

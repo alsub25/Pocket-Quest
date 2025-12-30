@@ -1,207 +1,155 @@
 # Emberwood: The Blackbark Oath
 
-A single‑page, browser-based RPG + village sim where your **daily choices** (resting, shopping, banking, town politics, and even tavern gambling) ripple through a living settlement.
+A single‑page, browser RPG + village simulation where **daily decisions** (resting, shopping, banking, local politics, and tavern games) ripple through a living settlement — and where combat, loot, and quests feed back into that world loop.
 
-> Current patch: **v1.0.9** (see in-game Changelog modal / `changelog.js`)
-
----
-
-## Table of Contents
-
-- [What is Emberwood: The Blackbark Oath?](#what-is-emberwood-the-blackbark-oath)
-- [Features](#features)
-- [Quick Start](#quick-start)
-- [How to Play](#how-to-play)
-- [Core Systems](#core-systems)
-  - [Time & Calendar](#time--calendar)
-  - [Village Economy](#village-economy)
-  - [Population & Mood](#population--mood)
-  - [Town Hall: Petitions & Decrees](#town-hall-petitions--decrees)
-  - [Emberwood Bank](#emberwood-bank)
-  - [Merchants](#merchants)
-  - [Tavern & Gambling](#tavern--gambling)
-  - [Dynamic Difficulty](#dynamic-difficulty)
-- [Project Structure](#project-structure)
-- [State Model](#state-model)
-- [Saving & Loading](#saving--loading)
-- [Development](#development)
-- [Roadmap Ideas](#roadmap-ideas)
-- [Credits](#credits)
-- [License](#license)
+> Current patch: **v1.1.5 — The Blackbark Oath**  
+> Changelog: open the in‑game **Changelog** modal.
 
 ---
 
-## What is Emberwood: The Blackbark Oath?
+## What this project is
 
-**Emberwood: The Blackbark Oath** is a lightweight RPG built in plain JavaScript (ES modules) designed to feel like a “mini campaign” you can pick up and play in short sessions.
+Emberwood is built like a **self‑contained game “appliance”**:
+- Runs entirely in the browser (no backend required).
+- Uses **native ES modules** for code organization.
+- Saves persist to the local browser via `localStorage`.
+- Includes an optional **Developer Cheats / QA** menu for testing and reproducibility.
 
-It blends:
-- **Turn-based battles** (with a classic “boss ladder” feel)
-- **Town progression** (economy, population mood, and government policy)
-- **Player-driven simulation** (resting and spending can strengthen or destabilize Emberwood)
-
----
-
-## Features
-
-### Gameplay
-- **Exploration loop** spanning Emberwood Village, the Emerald Forest, and deeper ruins.
-- **Boss progression** (multiple major encounters that gate story steps).
-- **Companion support** (one active companion / HUD view toggle).
-- **Class system** including a **Vampire** archetype (Essence Drain, Bat Swarm, Shadow Veil, etc.).
-
-### World Simulation
-- **Time system** with day parts and a fantasy calendar.
-- **Village economy** that shifts day-to-day (tiers, prosperity/trade/security drift, price descriptors).
-- **Population system** tracking settlement size and villager mood.
-- **Town Hall** petition system that can enact **temporary multipliers** affecting bank rates and rest costs.
-
-### Town Interaction
-- **Emberwood Bank**: deposit, withdraw, loans, investments; rates react to the world.
-- **Merchants**: buy/sell pricing tied to economy; purchases can push the economy.
-- **Emberwood Tavern**: rest to advance time; gambling mini-games.
-
-### Quality-of-life
-- In-game **Changelog** viewer (`CHANGELOG` data + modal).
-- UI log system with **filter chips** (combat/system/village/etc).
-- Multi-slot saves with a Save Manager UI.
+It’s designed to be easy to iterate on: most systems are isolated into small modules (economy, bank, town hall, RNG, time, loot, quests) with a single coordinating “game” module.
 
 ---
 
-## Quick Start
+## Quick start
 
-This project uses **native ES modules**, so you’ll want to run it from a local web server (opening HTML from disk may block imports depending on browser).
+### Run locally (recommended)
 
-### Option A: Python
+Because the project uses ES modules, it should be served via a local web server. Opening `index.html` via `file://` can block imports on many browsers (and is especially unreliable on mobile Safari).
+
+#### Python
 ```bash
 python -m http.server 8000
 ```
 
-### Option B: Node
+#### Node
 ```bash
 npx serve .
 ```
 
-Then open:
+Open:
 - `http://localhost:8000`
 
-> `index.html` loads `bootstrap.js` as a module, which then loads the game entry module (currently `./Future/Future.js`).
+### Host it (static hosting)
+
+Any static host works (GitHub Pages, Netlify, etc.). The project does not require server-side logic.
 
 ---
 
-## How to Play
+## How to play (game loop)
 
-1. **Start in Emberwood Village**: check your stats, the quest box, and the event log.
-2. **Prepare**:
-   - Buy supplies from the **Merchant**
-   - Visit the **Bank** to invest or take a loan
-   - Check the **Town Hall** for petitions/decrees that change costs/rates
-3. **Explore** into danger zones to trigger battles and progress quests.
-4. **Rest at the Tavern** to advance the day — this is when the simulation ticks:
-   - economy updates
-   - population mood drifts
-   - petition/decree timers advance
+1. **Create a hero** (name, class, difficulty).
+2. Start in **Emberwood Village**. Typical day:
+   - **Merchant**: buy/sell, prices respond to the economy
+   - **Bank**: deposit/withdraw, loans, investment behavior and periodic interest rules
+   - **Town Hall**: petitions & decrees that temporarily affect rates/costs
+   - **Tavern**: rest (advances time) + gambling mini‑games
+3. **Explore** into nearby zones to trigger encounters, earn loot, and progress quests.
+4. **Resting** is the main “world tick”:
+   - advances the in‑game day / day‑part
+   - runs daily simulation hooks (economy, government, population, merchant)
+   - expires decrees and updates timing-dependent systems
 
----
-
-## Core Systems
-
-### Time & Calendar
-
-The world tracks:
-- **Day parts** (morning/afternoon/evening style segmentation)
-- A fantasy weekday list
-- A rolling **year/day index**
-
-Most systems advance on **“jump to next morning”** events (commonly triggered by resting).
+Progress is saved locally on this device/browser.
 
 ---
 
-### Village Economy
+## Core systems overview
 
-The village economy is modeled with three key axes:
-- **Prosperity**
-- **Trade**
-- **Security**
+### Combat
+- Turn‑based battles (player vs enemy AI).
+- Enemies can have **templates** that define stats, moves, and behaviors.
+- Critical hit behavior includes:
+  - normal crit flow
+  - QA toggles (always crit / never crit) for balance testing
+- “God Mode” and other dev toggles exist strictly for testing.
 
-Each day tick applies:
-- gentle **drift** toward a baseline
-- small random changes (bounded)
-- a **tier evaluation** that influences “price descriptor” output used by shops and services
+### Classes, resources, and spell systems
+- Classes define a hero’s identity and (where applicable) resource system.
+- Spellcasting support is class-aware (only eligible classes should see spell UI).
+- The engine includes safety guards to prevent NaN/Infinity cascades from corrupting runs.
 
-Economy tiers help create a readable player experience like:
-- “Struggling / Stable / Thriving”
-- “Prices are steep / fair / cheap”
-- etc.
+### Loot and economy pressure
+- Loot generation produces items with varying power/rarity.
+- Merchant prices can react to economy drift and events.
+- Sell value/spread logic is centralized so changes propagate consistently.
 
----
+### Time and daily ticks
+Time is tracked with:
+- `dayIndex` (integer day count)
+- `partIndex` / `part` (day-part state)
 
-### Population & Mood
+A centralized daily tick runner keeps **rest, explore, and other day advances** consistent and prevents “double tick” or “missed tick” bugs.
 
-Population sim is intentionally lightweight:
-- tracks **population size**
-- tracks **villager mood**
-- drifts mood daily (with caps) so your actions have *slow-burn* impact
-
-Mood is surfaced in town summaries and can be referenced by future events/quests.
-
----
-
-### Town Hall: Petitions & Decrees
-
-The Town Hall provides a political layer:
-- You can sponsor or vote on **petitions**
-- Successful petitions apply short-lived **multipliers** stored in `government.townHallEffects`
-
-Examples of what policy can influence:
-- Rest cost multiplier (tavern)
-- Deposit / loan / investment rate multipliers (bank)
-
-Policies naturally **expire after N days**, so the system encourages revisiting.
+### Village simulation
+The village loop is modeled as several stateful subsystems:
+- **Economy** (tiers/summaries, derived costs like rest price and merchant price multipliers)
+- **Population** (mood drift and summary)
+- **Government / Town Hall** (petitions and time-limited decrees)
+- **Merchant** (stock/restock hooks)
 
 ---
 
-### Emberwood Bank
+## Developer Cheats / QA menu
 
-The bank supports common financial actions:
-- **Deposit / withdraw**
-- **Invest**
-- **Loans**
-- **Interest and rate calculation** influenced by economy + town policy
+Developer cheats are intended for **testing only**.
 
-A weekly-style interest accrual prevents constant micro-optimizing, while still rewarding planning.
+### Enabling
+Enable on the **Create Hero** screen via **“Enable developer cheats”**. When enabled, a **Cheat Menu** button becomes available in‑game for that character.
 
----
+### What it’s for
+- Reproducing issues quickly (teleport, force an enemy, grant items).
+- Creating deterministic bug reports (seeded RNG, RNG logging).
+- Sanity checks (smoke tests, state audit).
+- Capturing **bug report JSON** bundles suitable for sharing.
 
-### Merchants
+### QA tools you’ll see
+- Deterministic RNG toggle + seed set
+- RNG logging toggle
+- Smoke tests runner
+- “Copy Bug Report (JSON)” bundle builder
+- Spawn & Teleport utilities
+- Simulation/time fast-forward (runs daily ticks)
 
-Merchants are economy-aware:
-- Pricing reflects the current **price descriptor** and economy multipliers.
-- Purchases can nudge the economy (supply/demand flavor) to keep the town feeling reactive.
-
----
-
-### Tavern & Gambling
-
-The Tavern is the primary **day-advance** hub:
-- Resting advances time and triggers system ticks.
-- Gambling mini-games are available and include a developer tuning mode (`gamblingDebug`) to make house odds normal / player-favored / house-favored.
+> Cheats modify the **active save immediately**.
 
 ---
 
-### Dynamic Difficulty
+## Saving, schema, and persistence
 
-Emberwood: The Blackbark Oath includes a “rubber band” difficulty system:
-- tracks recent battle outcomes
-- gradually adjusts encounter tuning to keep progression moving
+### Storage
+- Saves are stored in `localStorage` under versioned keys.
+- Storage is wrapped with “safe” helpers so private mode / quota failures don’t crash the game.
 
-Difficulty presets are defined in `Future/Future.js` (`DIFFICULTY_CONFIG`) and can be expanded with new styles.
+### State shape (high level)
+The game uses a single top‑level `state` object. Common buckets include:
+- `player`: stats, level, hp/resource, inventory, gear, class configuration
+- `time`: day index + day part
+- `flags`: debug/progression toggles (dev cheats, god mode, crit mode, etc.)
+- `quests`: quest state + flags/bindings
+- `village`: economy + population state
+- `government`: town hall / decree state
+- `bank`: deposits/loans/investment timers
+- `log`: structured log entries and filters
+- `ui`: modal state and UI routing helpers
+
+### Troubleshooting saves
+If saves don’t persist:
+- Browser storage may be blocked (private mode / iOS limitations).
+- Quota may be exceeded.
+- The game will attempt to log a warning and preserve a breadcrumb for debugging.
 
 ---
 
-## Project Structure
-
-Typical repo layout (based on module imports):
+## Project structure
 
 ```
 /
@@ -213,8 +161,16 @@ Typical repo layout (based on module imports):
    ├─ Future.js
    ├─ Changelog/
    │  └─ changelog.js
+   ├─ Quests/
+   │  ├─ questDefs.js
+   │  ├─ questDefaults.js
+   │  └─ questBindings.js
    ├─ Systems/
    │  ├─ timeSystem.js
+   │  ├─ lootGenerator.js
+   │  ├─ kingdomGovernment.js
+   │  ├─ rng.js
+   │  ├─ assertState.js
    │  └─ safety.js
    └─ Locations/
       └─ Village/
@@ -227,86 +183,90 @@ Typical repo layout (based on module imports):
          └─ tavernGames.js
 ```
 
-### Key entrypoints
-- **`bootstrap.js`**: loads the selected build entry module and provides the version picker UI
-- **`Future/Future.js`**: main game module (UI wiring, state model, battle loop, quest progression, save manager)
-- **Village modules**: encapsulate simulation sub-systems + modal UIs
-- **`timeSystem.js`**: canonical time math + “next morning” jump
+### Key entry points
+- **`index.html`**: UI shell + modal host.
+- **`bootstrap.js`**: version selector/label + module bootstrapping.
+- **`Future/Future.js`**: main game orchestration (state, UI wiring, combat, saves, cheat menu).
+- **Systems modules**: pure-ish logic for time, RNG, validation, loot, government.
+- **Village modules**: simulation + modal UI implementations.
 
 ---
 
-## State Model
+## Adding content (practical guide)
 
-The global `state` object acts as a single source of truth. Key top-level buckets include:
+### Enemies
+Enemy behavior is driven by templates (commonly exposed as `ENEMY_TEMPLATES`).
+Typical workflow:
+1. Add/modify a template definition.
+2. Use the Cheat Menu → **Spawn & Teleport** → **Start Battle** with the `templateId`.
+3. Iterate on stats/behavior until it feels right.
 
-- `player`: stats, inventory, equipped gear, class
-- `quests`: main quest + side quest objects (step/status)
-- `flags`: boolean gates (met elder, bosses defeated, dev cheats, etc.)
-- `time`: world clock (day, part, weekday)
-- `villageEconomy`: prosperity/trade/security + tier info
-- `government`: Town Hall effects + tracking
-- `bank`: account balances, last interest day, etc.
-- `log`: structured log entries and UI filter state
-- `saveSlots`: metadata index for save manager
+### Items
+Items are driven by item definitions (commonly exposed as `ITEM_DEFS`).
+Typical workflow:
+1. Add a new item id + properties.
+2. Use Cheat Menu → **Give Item** to grant the item by id.
+3. Confirm:
+   - inventory display
+   - equip/sell behavior
+   - loot generator interaction (if applicable)
 
-Because everything is in one tree, adding new systems is usually:  
-**(1)** extend state, **(2)** add a day-tick hook, **(3)** surface it in a modal/summary UI.
+### Quests
+Quests are defined in `Future/Quests/`:
+- definitions (`questDefs.js`)
+- default state/flags (`questDefaults.js`)
+- bindings/side effects (`questBindings.js`)
 
----
-
-## Saving & Loading
-
-Saves are stored in **localStorage** using versioned keys (v1 prefix), and managed through an in-game Save Manager:
-
-- A **save index** tracks slot metadata.
-- Each slot stores serialized state.
-
-This makes the game easy to host as a static site while still supporting persistence.
-
----
-
-## Development
-
-### Recommended workflow
-- Run a local web server (see [Quick Start](#quick-start))
-- Use browser dev tools:
-  - `console.log(state)` is your best friend
-  - toggle `state.flags.devCheatsEnabled` if you want to expose dev-only tools (if wired in UI)
-
-### Extending the game
-Some high-leverage extension points:
-- Add new **Town Hall petition types** in `townHall.js`
-- Add new **economy tiers** and descriptors in `villageEconomy.js`
-- Add new **merchant stock** and pricing rules in `merchant.js`
-- Add new **tavern games** in `tavernGames.js`
-- Add new **time events** (weekly taxes, festivals, etc.) in `timeSystem.js`
+Add a quest by:
+1. Defining it in `questDefs.js`
+2. Providing default state and flags
+3. Binding triggers to world actions (explore, battles, visiting locations, etc.)
 
 ---
 
-## Roadmap Ideas
+## Debugging and diagnostics
 
-If you want to keep building:
-- Seasonal events and weekly “market days”
-- Reputation system tied to population mood
-- More companions with unique passives
-- Crafting + economy-driven item scarcity
-- New village locations (blacksmith, temple, barracks)
-- Random encounters influenced by security/prosperity
+### Reproducible bug reports (best practice)
+1. Enable **Deterministic RNG**
+2. Set a known **Seed**
+3. Reproduce the issue
+4. Use **Copy Bug Report (JSON)** and attach the result to an issue report
+
+### State validation
+The project includes a state validation/assertion system used by smoke tests and diagnostics. It’s intended to catch:
+- missing fields in old saves
+- invalid ranges (negative HP, NaN resource)
+- inventory inconsistencies
+
+---
+
+## UI notes (PC vs mobile)
+
+- The UI is designed to work on both desktop and mobile.
+- On mobile Safari, ES module loading and `localStorage` reliability can vary if running from `file://`.
+  If you’re testing on iPhone/iPad, serving via a local server (or hosting) is strongly recommended.
+
+---
+
+## Roadmap ideas
+- More village locations (blacksmith, temple, barracks)
+- Seasonal events / festivals
+- Crafting + scarcity pressure on merchant stock
+- Deeper companion progression (unique passives, affinity)
+- More enemy factions tied to town security/prosperity
+- Expanded diagnostics and automated regression checks
 
 ---
 
 ## Credits
+Built by the repository author(s).
 
-Built by the repo author(s).  
-If you use third‑party assets (icons, fonts, etc.), add them here.
+If you add third‑party assets (fonts, icons, music, SFX), list sources and licenses here.
 
 ---
 
 ## License
-
-Choose a license:
-- MIT (simple and permissive)
-- GPLv3 (strong copyleft)
+Add a `LICENSE` file that matches your intent:
+- MIT (permissive)
+- GPLv3 (copyleft)
 - Proprietary (private projects)
-
-Add the appropriate `LICENSE` file to the repo root.

@@ -1,7 +1,7 @@
 // bootstrap.js
 
 const VERSIONS = [
-  { id: "future",  label: "Emberwood Patch V1.0.9",  entry: "./Future/Future.js" },
+  { id: "future",  label: "Emberwood Patch V1.1.5 — The Blackbark Oath",  entry: "./Future/Future.js" },
 ];
 
 const STORAGE_KEY = "selected_game_version";
@@ -9,6 +9,14 @@ const GAME_SCRIPT_ID = "game-entry-module";
 const BTN_ID = "btnChangeVersion";
 
 /* --------------------------- small helpers --------------------------- */
+
+
+function safeStorageGet(key) {
+  try { return localStorage.getItem(key); } catch (_) { return null; }
+}
+function safeStorageSet(key, value) {
+  try { localStorage.setItem(key, value); return true; } catch (_) { return false; }
+}
 
 function onDocReady(fn) {
   if (document.readyState === "loading") {
@@ -32,7 +40,7 @@ function pickVersionId() {
   const url = new URL(location.href);
   const fromQuery = url.searchParams.get("v");
   if (fromQuery) return fromQuery;
-  return localStorage.getItem(STORAGE_KEY);
+  return safeStorageGet(STORAGE_KEY);
 }
 
 function getOnlyVersionIfSingle() {
@@ -100,6 +108,8 @@ function showBootstrapModal(titleText, contentNode) {
   body.innerHTML = "";
   body.appendChild(contentNode);
 
+  try { modal.dataset.owner = "bootstrap"; modal.dataset.lock = "0"; } catch (_) {}
+
   modal.classList.remove("hidden");
   modal.dataset.bootstrapOpen = "1";
 }
@@ -108,10 +118,16 @@ function hideBootstrapModal() {
   const { modal, body } = getModalEls();
   if (!modal) return;
 
+  // Don’t close if someone else locked the modal (acceptance gate).
+  try {
+    if (modal.dataset.lock === "1" && modal.dataset.owner && modal.dataset.owner !== "bootstrap") return;
+  } catch (_) {}
+
   // Only close what we opened (so we don’t fight game code if it opens its own modal)
-  if (modal.dataset.bootstrapOpen === "1") {
+  if (modal.dataset.bootstrapOpen === "1" && (!modal.dataset.owner || modal.dataset.owner === "bootstrap")) {
     modal.classList.add("hidden");
     modal.dataset.bootstrapOpen = "0";
+    try { if (modal.dataset.owner === "bootstrap") modal.dataset.owner = ""; } catch (_) {}
     if (body) body.innerHTML = "";
   }
 }
@@ -153,7 +169,7 @@ function openVersionModal({ requirePick = false } = {}) {
     btn.textContent = v.label;
 
     btn.addEventListener("click", () => {
-      localStorage.setItem(STORAGE_KEY, v.id);
+      safeStorageSet(STORAGE_KEY, v.id);
       location.href = normalizeUrlWithoutQueryV(); // clean swap, no leftover ?v=
     });
 
@@ -228,7 +244,7 @@ function initBootstrap() {
     if (only) {
       removeChangeVersionButtonIfPresent();
       // Keep localStorage consistent (optional but helpful for debugging)
-      localStorage.setItem(STORAGE_KEY, only.id);
+      safeStorageSet(STORAGE_KEY, only.id);
       loadGameVersion(only);
       return;
     }
@@ -242,7 +258,7 @@ function initBootstrap() {
     // If query param used and valid, persist it so it “sticks”
     const url = new URL(location.href);
     const q = url.searchParams.get("v");
-    if (q && picked) localStorage.setItem(STORAGE_KEY, picked.id);
+    if (q && picked) safeStorageSet(STORAGE_KEY, picked.id);
 
     if (picked) {
       loadGameVersion(picked, { onFail: () => openVersionModal({ requirePick: true }) });
