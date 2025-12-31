@@ -1,7 +1,7 @@
 // bootstrap.js
 
 const VERSIONS = [
-  { id: "future",  label: "Emberwood Patch V1.1.5 — The Blackbark Oath",  entry: "./Future/Future.js" },
+  { id: "future",  label: "Emberwood Patch V1.1.52 — The Blackbark Oath",  entry: "./Future/Future.js" },
 ];
 
 const STORAGE_KEY = "selected_game_version";
