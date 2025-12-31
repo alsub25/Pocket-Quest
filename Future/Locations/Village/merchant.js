@@ -201,7 +201,9 @@ function getMerchantStockBucket(state, context, merchantId) {
 }
 
 // Ensure each item in this shop has an initial stock amount.
-function ensureMerchantStock(
+// Exported for smoke tests and any save-reconcile helpers that need to sanitize persisted stock buckets.
+// (Stable API: mutates only the relevant bucket in the provided save state.)
+export function ensureMerchantStock(
     state,
     context,
     merchantId,
@@ -222,6 +224,20 @@ function ensureMerchantStock(
         }
     })
 
+    // Reconcile persisted buckets: remove items that are no longer sold by this merchant
+    // (or no longer exist in the item defs). This prevents "ghost stock" after content changes.
+    try {
+        const allow = new Set(Array.isArray(stockKeys) ? stockKeys : [])
+        Object.keys(bucket).forEach((k) => {
+            if (!allow.has(k)) {
+                delete bucket[k]
+                return
+            }
+            const def = cloneItemDef(k)
+            if (!def) delete bucket[k]
+        })
+    } catch (_) {}
+
     return bucket
 }
 
@@ -238,7 +254,8 @@ function ensureMerchantStock(
 //  - Restocks are small (usually +1) to preserve the "limited stock" feeling.
 
 export function handleMerchantDayTick(state, absoluteDay, cloneItemDef) {
-    if (!state || typeof day !== 'number') return
+    const day = Math.floor(Number(absoluteDay))
+    if (!state || !Number.isFinite(day)) return
 
     if (!state.merchantStock) return
 
