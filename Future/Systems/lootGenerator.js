@@ -421,10 +421,52 @@ function areaTier(area) {
     }
 }
 
-function rollRarity(isBoss, isElite) {
+function rollRarity(isBoss, isElite, enemyRarityTier = 1) {
     if (isBoss) return pickWeighted(RARITY_WEIGHTS_BOSS)
-    if (isElite) return pickWeighted(RARITY_WEIGHTS_ELITE)
-    return pickWeighted(RARITY_WEIGHTS_NORMAL)
+
+    // Start with the baseline table (elite vs normal)...
+    const base = isElite ? RARITY_WEIGHTS_ELITE : RARITY_WEIGHTS_NORMAL
+
+    // ...then nudge weights upward based on enemy rarity.
+    const tier = clamp(Number(enemyRarityTier) || 1, 1, 6)
+
+    // Convert to a mutable map
+    const m = {}
+    base.forEach(([id, w]) => { m[id] = (Number(w) || 0) })
+
+    if (tier === 2) {
+        m.common = Math.max(0, m.common - 8)
+        m.uncommon = (m.uncommon || 0) + 8
+    } else if (tier === 3) {
+        m.common = Math.max(0, m.common - 10)
+        m.uncommon = (m.uncommon || 0) + 4
+        m.rare = (m.rare || 0) + 6
+    } else if (tier === 4) {
+        m.common = Math.max(0, m.common - 15)
+        m.uncommon = (m.uncommon || 0) + 4
+        m.rare = (m.rare || 0) + 8
+        m.epic = (m.epic || 0) + 3
+    } else if (tier >= 5) {
+        m.common = Math.max(0, m.common - 18)
+        m.uncommon = (m.uncommon || 0) + 3
+        m.rare = (m.rare || 0) + 10
+        m.epic = (m.epic || 0) + 4
+        m.legendary = (m.legendary || 0) + 1
+
+        // Mythic enemies (tier 6) push loot further upward.
+        if (tier >= 6) {
+            m.common = Math.max(0, m.common - 6)
+            m.uncommon = Math.max(0, (m.uncommon || 0) - 2)
+            m.rare = (m.rare || 0) + 6
+            m.epic = (m.epic || 0) + 6
+            m.legendary = (m.legendary || 0) + 2
+        }
+    }
+
+    const weights = RARITY_ORDER.map((id) => [id, Math.max(0, Math.round(m[id] || 0))])
+    // Guard: ensure something is positive
+    if (!weights.some(([, w]) => w > 0)) return 'common'
+    return pickWeighted(weights)
 }
 function rollBaseLevel(playerLevel, area, isBoss) {
     const tier = areaTier(area)
@@ -545,6 +587,68 @@ const WEAPON_AFFIX_POOL = [
                 desc: [`+${v} ${ELEMENT_LABEL[element] || cap(element)} Damage`]
             }
         }
+    },
+
+    // Combo-style affixes: slightly rarer, but add more distinct feel.
+    {
+        id: 'balanced',
+        weight: 7,
+        namePrefix: 'Balanced',
+        apply: ({ level, rarity }) => {
+            const mult = RARITY_MULT[rarity] || 1
+            const v = Math.max(1, Math.round((1 + level * 0.22) * mult))
+            return {
+                mods: { attackBonus: v, magicBonus: v },
+                desc: [`+${v} Attack`, `+${v} Magic`]
+            }
+        }
+    },
+    {
+        id: 'berserking',
+        weight: 6,
+        namePrefix: 'Berserking',
+        apply: ({ level, rarity }) => {
+            const mult = RARITY_MULT[rarity] || 1
+            const atk = Math.max(1, Math.round((1 + level * 0.28) * mult))
+            const haste = round1((0.6 + level * 0.03) * mult)
+            return {
+                mods: { attackBonus: atk, haste },
+                desc: [`+${atk} Attack`, `+${haste}% Haste`]
+            }
+        }
+    },
+    {
+        id: 'spellwoven',
+        weight: 6,
+        namePrefix: 'Spellwoven',
+        apply: ({ level, rarity }) => {
+            const mult = RARITY_MULT[rarity] || 1
+            const mag = Math.max(1, Math.round((1 + level * 0.28) * mult))
+            const crit = round1((0.5 + level * 0.03) * mult)
+            return {
+                mods: { magicBonus: mag, critChance: crit },
+                desc: [`+${mag} Magic`, `+${crit}% Crit`]
+            }
+        }
+    },
+    {
+        id: 'stormforged',
+        weight: 5,
+        namePrefix: 'Stormforged',
+        apply: ({ level, rarity, element }) => {
+            const mult = RARITY_MULT[rarity] || 1
+            const haste = round1((0.8 + level * 0.04) * mult)
+            const v = Math.max(1, Math.round((1 + level * 0.3) * mult))
+            // Uses chosen element if available; otherwise defaults to lightning.
+            const elem = element || 'lightning'
+            const suffixList = ELEMENT_SUFFIX[elem] || ['of Storms']
+            const nameSuffix = pickWeighted(suffixList.map((s) => [s, 1]))
+            return {
+                mods: { haste, elementalType: elem, elementalBonus: v },
+                nameSuffix,
+                desc: [`+${haste}% Haste`, `+${v} ${ELEMENT_LABEL[elem] || cap(elem)} Damage`]
+            }
+        }
     }
 ]
 
@@ -620,6 +724,76 @@ const ARMOR_AFFIX_POOL = [
             const mult = RARITY_MULT[rarity] || 1
             const v = Math.max(1, Math.round((2 + level * 0.45) * mult))
             return { mods: { armorBonus: v }, desc: [`+${v} Armor`] }
+        }
+    },
+    {
+        id: 'bulwark',
+        weight: 7,
+        namePrefix: 'Bulwark',
+        apply: ({ level, rarity }) => {
+            const mult = RARITY_MULT[rarity] || 1
+            const armor = Math.max(1, Math.round((1 + level * 0.35) * mult))
+            const resist = round1((0.6 + level * 0.035) * mult)
+            return {
+                mods: { armorBonus: armor, resistAll: resist },
+                desc: [`+${armor} Armor`, `+${resist}% Resist All`]
+            }
+        }
+    },
+    {
+        id: 'quickstep',
+        weight: 7,
+        namePrefix: 'Quickstep',
+        apply: ({ level, rarity }) => {
+            const mult = RARITY_MULT[rarity] || 1
+            const spd = Math.max(1, Math.round((0.6 + level * 0.05) * mult))
+            const dodge = round1((0.6 + level * 0.03) * mult)
+            return {
+                mods: { speedBonus: spd, dodgeChance: dodge },
+                desc: [`+${spd} Speed`, `+${dodge}% Dodge`]
+            }
+        }
+    },
+    {
+        id: 'predatory',
+        weight: 6,
+        namePrefix: 'Predatory',
+        apply: ({ level, rarity }) => {
+            const mult = RARITY_MULT[rarity] || 1
+            const atk = Math.max(1, Math.round((1 + level * 0.18) * mult))
+            const crit = round1((0.5 + level * 0.025) * mult)
+            return {
+                mods: { attackBonus: atk, critChance: crit },
+                desc: [`+${atk} Attack`, `+${crit}% Crit`]
+            }
+        }
+    },
+    {
+        id: 'sorcerous',
+        weight: 6,
+        namePrefix: 'Sorcerous',
+        apply: ({ level, rarity }) => {
+            const mult = RARITY_MULT[rarity] || 1
+            const mag = Math.max(1, Math.round((1 + level * 0.18) * mult))
+            const res = Math.max(1, Math.round((2 + level * 0.4) * mult))
+            return {
+                mods: { magicBonus: mag, maxResourceBonus: res },
+                desc: [`+${mag} Magic`, `+${res} Max Resource`]
+            }
+        }
+    },
+    {
+        id: 'energized',
+        weight: 6,
+        namePrefix: 'Energized',
+        apply: ({ level, rarity }) => {
+            const mult = RARITY_MULT[rarity] || 1
+            const haste = round1((0.7 + level * 0.03) * mult)
+            const regen = round1((0.15 + level * 0.02) * mult)
+            return {
+                mods: { haste, hpRegen: regen },
+                desc: [`+${haste}% Haste`, `+${regen} HP Regen`]
+            }
         }
     }
 ]
@@ -744,6 +918,172 @@ const LEGENDARY_EPITHETS = [
     'the Black Tide'
 ]
 
+// Curated legendary names (in addition to procedural naming).
+// These are intentionally rare(ish) so they feel special.
+//
+// NOTE: All stats use fields that already exist elsewhere in the combat/inventory code.
+const UNIQUE_LEGENDARIES = {
+    weapon: {
+        forest: [
+            {
+                name: 'Thornspire',
+                baseName: 'Spear',
+                element: 'nature',
+                mods: { critChance: 2.2, haste: 2.0 }
+            },
+            {
+                name: 'Ashwake',
+                baseName: 'Greatsword',
+                element: 'fire',
+                mods: { armorPen: 3.0, lifeSteal: 1.4 }
+            }
+        ],
+        ruins: [
+            {
+                name: 'Glyphbinder',
+                baseName: 'Staff',
+                element: 'arcane',
+                mods: { critChance: 2.0, armorPen: 2.2 }
+            },
+            {
+                name: 'Star-Index',
+                baseName: 'Orb Focus',
+                element: 'arcane',
+                mods: { haste: 2.8, lifeSteal: 1.0 }
+            }
+        ],
+        marsh: [
+            {
+                name: 'Mirefang',
+                baseName: 'Dagger',
+                element: 'poison',
+                mods: { lifeSteal: 2.0, armorPen: 2.0 }
+            }
+        ],
+        frostpeak: [
+            {
+                name: 'Rimebrand',
+                baseName: 'Longsword',
+                element: 'frost',
+                mods: { critChance: 2.4, haste: 1.8 }
+            },
+            {
+                name: 'Tempest Pike',
+                baseName: 'War Pike',
+                element: 'lightning',
+                mods: { armorPen: 3.4, haste: 2.2 }
+            }
+        ],
+        catacombs: [
+            {
+                name: 'Nightglass',
+                baseName: 'Runic Dagger',
+                element: 'shadow',
+                mods: { critChance: 2.6, lifeSteal: 1.6 }
+            }
+        ],
+        keep: [
+            {
+                name: 'Oathbreaker’s Edge',
+                baseName: 'Greatsword',
+                element: 'fire',
+                mods: { armorPen: 3.6, critChance: 2.0 }
+            },
+            {
+                name: 'Storm-Crowned Scepter',
+                baseName: 'Scepter',
+                element: 'lightning',
+                mods: { haste: 3.0, armorPen: 2.4 }
+            }
+        ]
+    },
+    armor: {
+        forest: [
+            {
+                name: 'Grovewarden Mantle',
+                slot: 'armor',
+                mods: { resistAll: 2.0, dodgeChance: 1.6, hpRegen: 0.8 }
+            }
+        ],
+        ruins: [
+            {
+                name: 'Runesigil Cuirass',
+                slot: 'armor',
+                mods: { resistAll: 2.2, maxResourceBonus: 18, armorBonus: 3 }
+            }
+        ],
+        marsh: [
+            {
+                name: 'Bogskin Wraps',
+                slot: 'hands',
+                mods: { dodgeChance: 2.0, thorns: 14, maxHPBonus: 10 }
+            }
+        ],
+        frostpeak: [
+            {
+                name: 'Glacierbound Greaves',
+                slot: 'feet',
+                mods: { resistAll: 2.4, armorBonus: 4, speedBonus: 2 }
+            }
+        ],
+        catacombs: [
+            {
+                name: 'Shroudweave Hood',
+                slot: 'head',
+                mods: { dodgeChance: 2.2, resistAll: 1.8, maxResourceBonus: 14 }
+            }
+        ],
+        keep: [
+            {
+                name: 'Warden’s Bulwarkplate',
+                slot: 'armor',
+                mods: { armorBonus: 6, resistAll: 2.0, maxHPBonus: 18 }
+            }
+        ]
+    }
+}
+
+const FLAVOR_PREFIX = [
+    'Weathered',
+    'Etched',
+    'Gilded',
+    'Carved',
+    'Stitched',
+    'Rune-Scored',
+    'Frost-Kissed',
+    'Ash-Touched',
+    'Moonlit',
+    'Graveworn'
+]
+
+// Implicit traits by base weapon. These add tiny, consistent identity per base type.
+// Uses existing stat fields only.
+const WEAPON_IMPLICITS = {
+    Dagger: { critChance: 0.8, label: '+0.8% Crit' },
+    Shortsword: { haste: 0.7, label: '+0.7% Haste' },
+    Saber: { critChance: 0.6, label: '+0.6% Crit' },
+    Rapier: { critChance: 1.0, label: '+1.0% Crit' },
+    Gladius: { haste: 0.8, label: '+0.8% Haste' },
+    Falchion: { armorPen: 0.9, label: '+0.9% Armor Pen' },
+    'War Axe': { armorPen: 1.1, label: '+1.1% Armor Pen' },
+    Greatsword: { lifeSteal: 0.7, label: '+0.7% Life Steal' },
+    Halberd: { armorPen: 1.2, label: '+1.2% Armor Pen' },
+    Spear: { armorPen: 1.0, label: '+1.0% Armor Pen' },
+    Trident: { armorPen: 1.0, label: '+1.0% Armor Pen' },
+    Mace: { lifeSteal: 0.6, label: '+0.6% Life Steal' },
+    'Flanged Hammer': { lifeSteal: 0.9, label: '+0.9% Life Steal' },
+    Maul: { lifeSteal: 1.0, label: '+1.0% Life Steal' },
+    Staff: { haste: 0.7, label: '+0.7% Haste' },
+    'Aether Staff': { haste: 1.0, label: '+1.0% Haste' },
+    Wand: { critChance: 0.7, label: '+0.7% Crit' },
+    Scepter: { armorPen: 0.7, label: '+0.7% Armor Pen' },
+    'Runic Dagger': { critChance: 0.9, label: '+0.9% Crit' },
+    Hexknife: { critChance: 1.0, label: '+1.0% Crit' },
+    Spellblade: { haste: 0.6, label: '+0.6% Haste' },
+    'Orb Focus': { armorPen: 0.6, label: '+0.6% Armor Pen' },
+    'Sigil Rod': { critChance: 0.6, label: '+0.6% Crit' }
+}
+
 function composeName({
     rarity,
     material,
@@ -771,11 +1111,35 @@ function composeName({
     }
 
     // Non-legendary: keep readable (avoid stacking too many prefixes)
+    const maybeFlavor =
+        !affixPrefix && rngFloat(null, 'loot.flavorPrefix') < 0.28
+            ? `${pickWeighted(FLAVOR_PREFIX.map((t) => [t, 1]))} `
+            : ''
     const maybeAffix = affixPrefix ? `${affixPrefix} ` : ''
     const maybeSuffix = affixSuffix ? ` ${affixSuffix}` : ''
-    return `${rarityPrefix}${maybeAffix}${core}${maybeSuffix}`
+    return `${rarityPrefix}${maybeFlavor}${maybeAffix}${core}${maybeSuffix}`
         .replace(/\s+/g, ' ')
         .trim()
+}
+
+function pickUniqueLegendary(type, area) {
+    const byArea = (UNIQUE_LEGENDARIES[type] || {})[area]
+    const any = Object.values(UNIQUE_LEGENDARIES[type] || {}).flat()
+    const list = (byArea && byArea.length ? byArea : any) || []
+    if (!list.length) return null
+    return pickWeighted(list.map((it) => [it, 1]))
+}
+
+function scalePct(p, level, rarity) {
+    const r = Math.max(0, RARITY_ORDER.indexOf(rarity))
+    const s = (0.95 + (level || 1) * 0.015) * (1 + r * 0.08)
+    return round1(p * s)
+}
+
+function scaleFlat(n, level, rarity) {
+    const r = Math.max(0, RARITY_ORDER.indexOf(rarity))
+    const s = (0.95 + (level || 1) * 0.02) * (1 + r * 0.08)
+    return Math.max(1, Math.round(n * s))
 }
 
 // ------------------------------
@@ -784,6 +1148,12 @@ function composeName({
 
 function buildWeapon(level, rarity, area = 'forest', isBoss = false) {
     const mult = RARITY_MULT[rarity] || 1.0
+
+    // Some legendary drops become curated "named" legendaries for extra variety.
+    const uniqueLegendary =
+        rarity === 'legendary' && rngFloat(null, 'loot.uniqueLegendary') < 0.6
+            ? pickUniqueLegendary('weapon', area)
+            : null
 
     const archetype = pickWeighted([
         ['war', 45],
@@ -806,53 +1176,95 @@ function buildWeapon(level, rarity, area = 'forest', isBoss = false) {
         mag = Math.round((3 + level * 0.9) * mult)
     }
 
-    const element = rollElement(area)
+    const element = uniqueLegendary && uniqueLegendary.element
+        ? uniqueLegendary.element
+        : rollElement(area)
     const material = rollMaterial(level, rarity)
 
-    const baseName = pickWeighted(
-        (archetype === 'war'
-            ? [
-                  ['Longsword', 18],
-                  ['War Axe', 12],
-                  ['Halberd', 10],
-                  ['Mace', 10],
-                  ['Greatsword', 10],
-                  ['Spear', 12],
-                  ['Hookblade', 6],
-                  ['Flanged Hammer', 6],
-                  ['Gladius', 8],
-                  ['Falchion', 8]
-              ]
-            : archetype === 'mage'
-            ? [
-                  ['Staff', 18],
-                  ['Wand', 14],
-                  ['Spellblade', 10],
-                  ['Runic Dagger', 10],
-                  ['Scepter', 12],
-                  ['Cane', 8],
-                  ['Sigil Rod', 10],
-                  ['Hexknife', 8],
-                  ['Orb Focus', 6],
-                  ['Aether Staff', 4]
-              ]
-            : [
-                  ['Spear', 14],
-                  ['Longsword', 12],
-                  ['Saber', 10],
-                  ['Dagger', 10],
-                  ['War Pike', 8],
-                  ['Twinblade', 8],
-                  ['Glaive', 8],
-                  ['Shortsword', 10],
-                  ['Staff', 10],
-                  ['War Axe', 10]
-              ]
-        ).map((x) => [x[0], x[1]])
-    )
+    const baseName = uniqueLegendary && uniqueLegendary.baseName
+        ? uniqueLegendary.baseName
+        : pickWeighted(
+              (archetype === 'war'
+                  ? [
+                        ['Longsword', 14],
+                        ['War Axe', 10],
+                        ['Halberd', 8],
+                        ['Mace', 8],
+                        ['Greatsword', 8],
+                        ['Spear', 10],
+                        ['Rapier', 7],
+                        ['Scimitar', 7],
+                        ['Claymore', 6],
+                        ['Maul', 6],
+                        ['Flail', 6],
+                        ['Morningstar', 5],
+                        ['Trident', 5],
+                        ['Hookblade', 5],
+                        ['Flanged Hammer', 5],
+                        ['Gladius', 6],
+                        ['Falchion', 6]
+                    ]
+                  : archetype === 'mage'
+                  ? [
+                        ['Staff', 14],
+                        ['Wand', 12],
+                        ['Spellblade', 10],
+                        ['Runic Dagger', 8],
+                        ['Scepter', 10],
+                        ['Cane', 8],
+                        ['Sigil Rod', 9],
+                        ['Hexknife', 7],
+                        ['Orb Focus', 7],
+                        ['Aether Staff', 4],
+                        ['Crystal Wand', 6],
+                        ['Grimoire', 5],
+                        ['Runed Tome', 5],
+                        ['Astral Lens', 4],
+                        ['Spirit Staff', 6]
+                    ]
+                  : [
+                        ['Spear', 12],
+                        ['Longsword', 10],
+                        ['Saber', 9],
+                        ['Dagger', 9],
+                        ['War Pike', 7],
+                        ['Twinblade', 7],
+                        ['Glaive', 7],
+                        ['Shortsword', 9],
+                        ['Staff', 8],
+                        ['War Axe', 8],
+                        ['Rapier', 6],
+                        ['Scimitar', 6],
+                        ['Trident', 5],
+                        ['Flail', 5]
+                    ]
+              ).map((x) => [x[0], x[1]])
+          )
+
+    // Implicit identity traits per base type (tiny, consistent).
+    const implicit = WEAPON_IMPLICITS[baseName] || null
+    const implicitMods = {}
+    const implicitDesc = []
+    if (implicit) {
+        for (const [k, v] of Object.entries(implicit)) {
+            if (k === 'label') continue
+            implicitMods[k] = scalePct(Number(v) || 0, level, rarity)
+        }
+        // rebuild label so it matches scaled number
+        if (implicitMods.critChance)
+            implicitDesc.push(`+${implicitMods.critChance}% Crit (Implicit)`)
+        if (implicitMods.haste)
+            implicitDesc.push(`+${implicitMods.haste}% Haste (Implicit)`)
+        if (implicitMods.lifeSteal)
+            implicitDesc.push(`+${implicitMods.lifeSteal}% Life Steal (Implicit)`)
+        if (implicitMods.armorPen)
+            implicitDesc.push(`+${implicitMods.armorPen}% Armor Pen (Implicit)`)
+    }
 
     // Affixes
-    const affixCount = affixCountFor(rarity, isBoss)
+    const affixCount = uniqueLegendary
+        ? clamp(affixCountFor(rarity, isBoss) - 1, 1, 3)
+        : affixCountFor(rarity, isBoss)
     const rolled = rollAffixes({
         itemType: 'weapon',
         count: affixCount,
@@ -863,7 +1275,7 @@ function buildWeapon(level, rarity, area = 'forest', isBoss = false) {
     atk += rolled.mods.attackBonus || 0
     mag += rolled.mods.magicBonus || 0
 
-    const name = composeName({
+    let name = composeName({
         rarity,
         material,
         baseName,
@@ -871,6 +1283,14 @@ function buildWeapon(level, rarity, area = 'forest', isBoss = false) {
         affixSuffix: rolled.nameSuffix,
         isLegendary: rarity === 'legendary'
     })
+
+    if (uniqueLegendary) {
+        const suffixList = ELEMENT_SUFFIX[element] || ['of Legends']
+        const tail = pickWeighted(suffixList.map((s) => [s, 1]))
+        name = `${uniqueLegendary.name}, ${material} ${baseName} ${tail}`
+            .replace(/\s+/g, ' ')
+            .trim()
+    }
 
     const item = {
         id: makeId('gen_weapon'),
@@ -880,17 +1300,43 @@ function buildWeapon(level, rarity, area = 'forest', isBoss = false) {
         magicBonus: mag || undefined,
 
         // optional affix stats:
-        critChance: rolled.mods.critChance || undefined,
-        haste: rolled.mods.haste || undefined,
-        lifeSteal: rolled.mods.lifeSteal || undefined,
-        armorPen: rolled.mods.armorPen || undefined,
+        critChance:
+            (implicitMods.critChance || 0) + (rolled.mods.critChance || 0) ||
+            undefined,
+        haste:
+            (implicitMods.haste || 0) + (rolled.mods.haste || 0) || undefined,
+        lifeSteal:
+            (implicitMods.lifeSteal || 0) + (rolled.mods.lifeSteal || 0) ||
+            undefined,
+        armorPen:
+            (implicitMods.armorPen || 0) + (rolled.mods.armorPen || 0) ||
+            undefined,
         elementalType: rolled.mods.elementalType || undefined,
         elementalBonus: rolled.mods.elementalBonus || undefined,
 
         // metadata:
         rarity,
         generated: true,
+        unique: uniqueLegendary ? true : undefined,
         affixes: rolled.picked.length ? rolled.picked : undefined
+    }
+
+    // Curated legendary mods (scaled). Uses existing fields only.
+    if (uniqueLegendary && uniqueLegendary.mods) {
+        for (const [k, v] of Object.entries(uniqueLegendary.mods)) {
+            if (v === undefined || v === null) continue
+            const isPct =
+                ['critChance', 'haste', 'lifeSteal', 'armorPen', 'dodgeChance', 'resistAll'].includes(k)
+            const add = isPct ? scalePct(Number(v) || 0, level, rarity) : scaleFlat(Number(v) || 0, level, rarity)
+            item[k] = (item[k] || 0) + add
+        }
+        // Ensure a unique legendary always has an elemental identity.
+        if (!item.elementalType) item.elementalType = element
+        if (!item.elementalBonus)
+            item.elementalBonus = Math.max(
+                1,
+                Math.round((3 + (level || 1) * 0.6) * mult)
+            )
     }
 
     item.itemLevel = estimateItemLevelFromStats(item, level)
@@ -905,7 +1351,9 @@ function buildWeapon(level, rarity, area = 'forest', isBoss = false) {
     const descParts = []
     if (item.attackBonus) descParts.push(`+${item.attackBonus} Attack`)
     if (item.magicBonus) descParts.push(`+${item.magicBonus} Magic`)
+    if (implicitDesc.length) descParts.push(...implicitDesc)
     if (rolled.descParts.length) descParts.push(...rolled.descParts)
+    if (uniqueLegendary) descParts.push('Unique')
     descParts.push(`iLv ${item.itemLevel}`, formatRarityLabel(rarity))
 
     item.desc = descParts.filter(Boolean).join(', ') + '.'
@@ -916,8 +1364,14 @@ function buildWeapon(level, rarity, area = 'forest', isBoss = false) {
 function buildArmor(level, rarity, area = 'forest', isBoss = false) {
     const mult = RARITY_MULT[rarity] || 1.0
 
+    // Some legendary drops become curated "named" legendaries for extra variety.
+    const uniqueLegendary =
+        rarity === 'legendary' && rngFloat(null, 'loot.uniqueLegendaryArmor') < 0.55
+            ? pickUniqueLegendary('armor', area)
+            : null
+
     // Slot weights: body armor is most common; jewelry is rarer.
-    const slot = pickWeighted([
+    let slot = pickWeighted([
         ['armor', 34],
         ['head', 16],
         ['hands', 14],
@@ -926,6 +1380,8 @@ function buildArmor(level, rarity, area = 'forest', isBoss = false) {
         ['neck', 6],
         ['ring', 4]
     ])
+
+    if (uniqueLegendary && uniqueLegendary.slot) slot = uniqueLegendary.slot
 
     const element = rollElement(area)
     const material = rollMaterial(level, rarity)
@@ -952,7 +1408,10 @@ function buildArmor(level, rarity, area = 'forest', isBoss = false) {
                   ['Knight Cuirass', 14],
                   ['Bulwark Mail', 12],
                   ['Warplate', 10],
-                  ['Ironward Brigandine', 8]
+                  ['Ironward Brigandine', 8],
+                  ['Steel Hauberk', 8],
+                  ['Lamellar Coat', 7],
+                  ['Sentinel Cuirass', 6]
               ])
             : style === 'leather'
             ? pickWeighted([
@@ -960,14 +1419,20 @@ function buildArmor(level, rarity, area = 'forest', isBoss = false) {
                   ['Hunter Mantle', 14],
                   ['Shadowstitch Coat', 12],
                   ['Ranger Vest', 10],
-                  ['Nightweave Jerkin', 8]
+                  ['Nightweave Jerkin', 8],
+                  ['Scout Coat', 8],
+                  ['Brigand Vest', 7],
+                  ['Wanderer Leathers', 6]
               ])
             : pickWeighted([
                   ['Runed Robe', 20],
                   ['Sigil Vestments', 14],
                   ['Aetherweave Robe', 12],
                   ['Hexed Raiment', 10],
-                  ['Arcanist Mantle', 8]
+                  ['Arcanist Mantle', 8],
+                  ['Mystic Vestments', 7],
+                  ['Silken Robes', 7],
+                  ['Elderweave Garb', 6]
               ])
 
     const headName =
@@ -976,20 +1441,26 @@ function buildArmor(level, rarity, area = 'forest', isBoss = false) {
                   ['Greathelm', 18],
                   ['Visored Helm', 14],
                   ['Warden Helm', 12],
-                  ['Iron Crown', 10]
+                  ['Iron Crown', 10],
+                  ['Sallet', 10],
+                  ['Horned Helm', 8]
               ])
             : style === 'leather'
             ? pickWeighted([
                   ['Leather Cap', 18],
                   ['Hunter Hood', 14],
                   ['Nightmask', 12],
-                  ['Ranger Hood', 10]
+                  ['Ranger Hood', 10],
+                  ['Scout Cowl', 10],
+                  ['Stalker Hood', 8]
               ])
             : pickWeighted([
                   ['Runed Cowl', 18],
                   ['Aether Hood', 14],
                   ['Sigil Circlet', 12],
-                  ['Hexed Veil', 10]
+                  ['Hexed Veil', 10],
+                  ['Moon Circlet', 10],
+                  ['Oracle Veil', 8]
               ])
 
     const handsName =
@@ -998,20 +1469,26 @@ function buildArmor(level, rarity, area = 'forest', isBoss = false) {
                   ['Gauntlets', 20],
                   ['Iron Grips', 14],
                   ['Warden Gauntlets', 12],
-                  ['Templar Gloves', 10]
+                  ['Templar Gloves', 10],
+                  ['Braced Gauntlets', 8],
+                  ['Chain Mitts', 8]
               ])
             : style === 'leather'
             ? pickWeighted([
                   ['Leather Gloves', 20],
                   ['Shadow Grips', 14],
                   ['Hunter Wraps', 12],
-                  ['Ranger Gloves', 10]
+                  ['Ranger Gloves', 10],
+                  ['Scout Gloves', 8],
+                  ['Stitched Wraps', 8]
               ])
             : pickWeighted([
                   ['Spellwraps', 20],
                   ['Sigil Gloves', 14],
                   ['Aether Wraps', 12],
-                  ['Arcanist Mitts', 10]
+                  ['Arcanist Mitts', 10],
+                  ['Runewoven Gloves', 8],
+                  ['Mystic Wraps', 8]
               ])
 
     const feetName =
@@ -1020,20 +1497,26 @@ function buildArmor(level, rarity, area = 'forest', isBoss = false) {
                   ['Greaves', 20],
                   ['War Treads', 14],
                   ['Bulwark Greaves', 12],
-                  ['Iron Boots', 10]
+                  ['Iron Boots', 10],
+                  ['Sabatons', 10],
+                  ['Steel Striders', 8]
               ])
             : style === 'leather'
             ? pickWeighted([
                   ['Leather Boots', 20],
                   ['Ranger Boots', 14],
                   ['Night Treads', 12],
-                  ['Hunter Boots', 10]
+                  ['Hunter Boots', 10],
+                  ['Scout Boots', 10],
+                  ['Stalker Treads', 8]
               ])
             : pickWeighted([
                   ['Runed Slippers', 20],
                   ['Aether Steps', 14],
                   ['Sigil Shoes', 12],
-                  ['Hexed Sandals', 10]
+                  ['Hexed Sandals', 10],
+                  ['Mystic Slippers', 10],
+                  ['Moonlit Steps', 8]
               ])
 
     const beltName =
@@ -1130,7 +1613,9 @@ function buildArmor(level, rarity, area = 'forest', isBoss = false) {
     }
 
     // --- Affixes -------------------------------------------------------------
-    const affixCount = affixCountFor(rarity, isBoss)
+    const affixCount = uniqueLegendary
+        ? clamp(affixCountFor(rarity, isBoss) - 1, 1, 3)
+        : affixCountFor(rarity, isBoss)
     const affixType =
         slot === 'neck' || slot === 'ring' ? 'accessory' : 'armor'
 
@@ -1147,7 +1632,7 @@ function buildArmor(level, rarity, area = 'forest', isBoss = false) {
     resistAll += rolled.mods.resistAll || 0
     speedBonus += rolled.mods.speedBonus || 0
 
-    const name = composeName({
+    let name = composeName({
         rarity,
         material,
         baseName,
@@ -1155,6 +1640,12 @@ function buildArmor(level, rarity, area = 'forest', isBoss = false) {
         affixSuffix: rolled.nameSuffix,
         isLegendary: rarity === 'legendary'
     })
+
+    if (uniqueLegendary) {
+        name = `${uniqueLegendary.name}, ${material} ${baseName}`
+            .replace(/\s+/g, ' ')
+            .trim()
+    }
 
     const item = {
         id: makeId('gen_gear'),
@@ -1187,7 +1678,27 @@ function buildArmor(level, rarity, area = 'forest', isBoss = false) {
 
         rarity,
         generated: true,
+        unique: uniqueLegendary ? true : undefined,
         affixes: rolled.picked.length ? rolled.picked : undefined
+    }
+
+    // Curated legendary mods (scaled). Uses existing fields only.
+    if (uniqueLegendary && uniqueLegendary.mods) {
+        for (const [k, v] of Object.entries(uniqueLegendary.mods)) {
+            if (v === undefined || v === null) continue
+            const isPct =
+                ['critChance', 'haste', 'lifeSteal', 'armorPen', 'dodgeChance', 'resistAll'].includes(k)
+            // hpRegen is a small per-turn number; keep it in decimal land.
+            if (k === 'hpRegen') {
+                const add = round1(scalePct(Number(v) || 0, level, rarity))
+                item[k] = round1((item[k] || 0) + add)
+                continue
+            }
+            const add = isPct
+                ? scalePct(Number(v) || 0, level, rarity)
+                : scaleFlat(Number(v) || 0, level, rarity)
+            item[k] = (item[k] || 0) + add
+        }
     }
 
     item.itemLevel = estimateItemLevelFromStats(item, level)
@@ -1207,6 +1718,7 @@ function buildArmor(level, rarity, area = 'forest', isBoss = false) {
     if (item.maxResourceBonus)
         descParts.push(`+${item.maxResourceBonus} Max Resource`)
     if (rolled.descParts.length) descParts.push(...rolled.descParts)
+    if (uniqueLegendary) descParts.push('Unique')
     descParts.push(`iLv ${item.itemLevel}`, formatRarityLabel(rarity))
 
     item.desc = descParts.filter(Boolean).join(', ') + '.'
@@ -1219,10 +1731,20 @@ function buildPotion(level, rarity, resourceKey, area = 'forest') {
     const mult = RARITY_MULT[rarity] || 1.0
 
     // Decide potion subtype
-    const subtype = pickWeighted([
-        ['hp', 55],
-        ['resource', 45]
-    ])
+    // Rare+ can roll hybrid elixirs (restores HP + resource) for extra variety.
+    const canHybrid = ['rare', 'epic', 'legendary'].includes(rarity)
+    const subtype = pickWeighted(
+        canHybrid
+            ? [
+                  ['hp', 45],
+                  ['resource', 40],
+                  ['hybrid', 15]
+              ]
+            : [
+                  ['hp', 55],
+                  ['resource', 45]
+              ]
+    )
 
     // Tier based on rarity (common/uncommon -> small; rare+ -> strong)
     const tier =
@@ -1267,7 +1789,7 @@ function buildPotion(level, rarity, resourceKey, area = 'forest') {
         )
         item.price = Math.max(3, Math.round(restore * 0.55))
         item.desc = [`Restore ${restore} HP.`, flavor].filter(Boolean).join(' ')
-    } else {
+    } else if (subtype === 'resource') {
         const key = resourceKey || 'mana'
         const restore = Math.round(
             (16 + level * 6) *
@@ -1285,6 +1807,38 @@ function buildPotion(level, rarity, resourceKey, area = 'forest') {
         )
         item.price = Math.max(3, Math.round(restore * 0.55))
         item.desc = [`Restore ${restore} ${prettyKey}.`, flavor]
+            .filter(Boolean)
+            .join(' ')
+    } else {
+        // Hybrid elixir: restores both HP and the player resource.
+        const key = resourceKey || 'mana'
+        const hpRestore = Math.round(
+            (18 + level * 6) *
+                mult *
+                (tier === 'small' ? 0.65 : tier === 'standard' ? 0.8 : 1.0)
+        )
+        const resRestore = Math.round(
+            (16 + level * 6) *
+                mult *
+                (tier === 'small' ? 0.65 : tier === 'standard' ? 0.8 : 1.0)
+        )
+
+        item.id = `elixir_${key}_${tier}`
+        const prettyKey = key.charAt(0).toUpperCase() + key.slice(1)
+        item.name = `${tierLabel} Reprieve Elixir`
+        item.resourceKey = key
+        item.hpRestore = hpRestore
+        item.resourceRestore = resRestore
+
+        item.itemLevel = estimateItemLevelFromStats(
+            { ...item, hpRestore: hpRestore, resourceRestore: resRestore },
+            level
+        )
+        item.price = Math.max(5, Math.round((hpRestore + resRestore) * 0.42))
+        item.desc = [
+            `Restore ${hpRestore} HP and ${resRestore} ${prettyKey}.`,
+            flavor
+        ]
             .filter(Boolean)
             .join(' ')
     }
@@ -1352,7 +1906,8 @@ const drops = []
     const preferredResourceKey = playerResourceKey || null
 
     for (let i = 0; i < dropCount; i++) {
-        const rarity = rollRarity(isBoss, isElite)
+        const enemyTier = enemy && typeof enemy.rarityTier === 'number' ? enemy.rarityTier : 1
+        const rarity = rollRarity(isBoss, isElite, enemyTier)
         const category = pickWeighted(categoryWeights)
 
         if (category === 'weapon') {
@@ -1369,7 +1924,7 @@ const drops = []
     // Small post-pass: ensure at least 1 potion on bosses only if no potion rolled.
     if (isBoss && !drops.some((d) => d.type === 'potion')) {
         drops.push(
-            buildPotion(baseLevel, rollRarity(true), preferredResourceKey, area)
+            buildPotion(baseLevel, rollRarity(true, false, enemy && enemy.rarityTier ? enemy.rarityTier : 1), preferredResourceKey, area)
         )
     }
 
