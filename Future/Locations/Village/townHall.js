@@ -912,16 +912,17 @@ function ensureTownHallEffects(state) {
 // -----------------------------------------------------------------------------
 // SHARED EFFECT CLEANUP (used by bank / economy / any other system)
 // -----------------------------------------------------------------------------
-// IMPORTANT: Other systems should *not* delete state.government.townHallEffects.
-// The Town Hall UI expects the object to exist (or be easily re-initialized)
-// and uses its presence for snapshots. When an effect expires, we simply
-// clear the fields so the shape remains stable.
+// NOTE: Expired decree payloads should not linger. When a decree expires we
+// remove state.government.townHallEffects entirely (it will be re-created
+// on-demand by ensureTownHallEffects() when the Town Hall UI needs it).
 
 export function cleanupTownHallEffects(state, todayOverride = null) {
   if (!state) return { changed: false, active: false };
   if (!state.government) return { changed: false, active: false };
 
-  const eff = ensureTownHallEffects(state);
+  // If there is no effects object, nothing to clean.
+  const eff = state.government.townHallEffects;
+  if (!eff || typeof eff !== 'object') return { changed: false, active: false };
   const today =
     typeof todayOverride === "number"
       ? todayOverride
@@ -932,36 +933,13 @@ export function cleanupTownHallEffects(state, todayOverride = null) {
   const expiresOnDay =
     typeof eff.expiresOnDay === "number" ? eff.expiresOnDay : null;
 
-  const active =
-    !!eff.petitionId && expiresOnDay != null && today <= expiresOnDay;
+  const active = !!eff.petitionId && expiresOnDay != null && today <= expiresOnDay;
 
   if (!active && expiresOnDay != null && today > expiresOnDay) {
-    // Clear, don't delete.
-    const hadSomething =
-      !!eff.petitionId ||
-      typeof eff.startedOnDay === "number" ||
-      typeof eff.depositRateMultiplier === "number" ||
-      typeof eff.investmentRateMultiplier === "number" ||
-      typeof eff.loanRateMultiplier === "number" ||
-      typeof eff.restCostMultiplier === "number";
-
-    eff.petitionId = null;
-    eff.title = null;
-    eff.label = null;
-    eff.description = null;
-    eff.startedOnDay = null;
-    eff.expiresOnDay = null;
-    eff.depositRateMultiplier = null;
-    eff.investmentRateMultiplier = null;
-    eff.loanRateMultiplier = null;
-    eff.restCostMultiplier = null;
-
-    // Economy / mood nudges
-    eff.econProsperityDelta = null;
-    eff.econTradeDelta = null;
-    eff.econSecurityDelta = null;
-    eff.moodDailyDelta = null;
-
+    // Delete the payload entirely so expired modifiers can't be accidentally
+    // re-applied by other systems that only check for object presence.
+    const hadSomething = Object.keys(eff).length > 0;
+    delete state.government.townHallEffects;
     return { changed: hadSomething, active: false };
   }
 

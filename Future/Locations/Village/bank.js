@@ -46,11 +46,19 @@ function initBankState(state) {
       state.bank.loan.baseRate = Number.isFinite(br) ? br : 0;
     }
     if (!Number.isFinite(Number(state.bank.visits))) state.bank.visits = 0;
-    const lid = Number(state.bank.lastInterestDay);
-    if (!Number.isFinite(lid) || lid < 0) {
+    // NOTE: lastInterestDay may be:
+    //  - null/undefined (uninitialized)
+    //  - a number (including negative values in dev/smoke scenarios)
+    //  - a numeric string (legacy saves)
+    // We keep null/undefined as-is so the interest engine can treat it as
+    // "first ever run". We preserve negative values to allow backfilling
+    // in controlled scenarios (e.g., automated tests).
+    const rawLid = state.bank.lastInterestDay;
+    if (rawLid === null || typeof rawLid === "undefined") {
       state.bank.lastInterestDay = null;
     } else {
-      state.bank.lastInterestDay = Math.floor(lid);
+      const lid = Number(rawLid);
+      state.bank.lastInterestDay = Number.isFinite(lid) ? Math.floor(lid) : null;
     }
   }
   return state.bank;
@@ -214,7 +222,8 @@ function applyInterest(state, addLog) {
   let loanInterestTotal = 0;
 
   // First-ever run: initialize the reference day and bail.
-  if (!Number.isFinite(Number(bank.lastInterestDay))) {
+  // (Treat null/undefined as uninitialized; do not coerce with Number(null) -> 0.)
+  if (bank.lastInterestDay === null || typeof bank.lastInterestDay === "undefined" || !Number.isFinite(Number(bank.lastInterestDay))) {
     bank.lastInterestDay = currentDay;
 
     // Patch/migration quality-of-life: give a one-time note so it doesn't feel "broken".
@@ -256,6 +265,16 @@ function applyInterest(state, addLog) {
 
   if (daysDelta >= BANK_DAYS_PER_WEEK) {
     weeksApplied = Math.floor(daysDelta / BANK_DAYS_PER_WEEK);
+  }
+
+  // Defensive cap: if something corrupted lastInterestDay far into the past,
+  // don't explode balances with thousands of compounded weeks.
+  const MAX_WEEKS_BACKLOG = 260; // ~5 in-game years of weekly ticks
+  const remainderDays = daysDelta >= 0 ? (daysDelta % BANK_DAYS_PER_WEEK) : 0;
+  let backlogCapped = false;
+  if (weeksApplied > MAX_WEEKS_BACKLOG) {
+    weeksApplied = MAX_WEEKS_BACKLOG;
+    backlogCapped = true;
   }
 
   // No full weeks passed -> just return current rates snapshot
@@ -324,10 +343,23 @@ function applyInterest(state, addLog) {
 
   // Move lastInterestDay forward by the number of *whole* weeks we consumed.
   // This preserves any "leftover" days towards the next week.
+  // If we capped the backlog, snap the reference point to avoid repeated
+  // re-application on every bank visit.
   const daysConsumed = weeksApplied * BANK_DAYS_PER_WEEK;
   bank.lastInterestDay = Number(bank.lastInterestDay);
   if (!Number.isFinite(bank.lastInterestDay)) bank.lastInterestDay = currentDay;
   bank.lastInterestDay += daysConsumed;
+
+  if (backlogCapped) {
+    bank.lastInterestDay = currentDay - remainderDays;
+    if (log && !bank._weeklyInterestBacklogCapped) {
+      bank._weeklyInterestBacklogCapped = true;
+      log(
+        "The bank's ledgers are unusually old; weekly interest has been capped to protect account stability.",
+        "system"
+      );
+    }
+  }
 
   return {
     anyChange,
