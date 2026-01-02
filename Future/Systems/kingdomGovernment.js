@@ -800,7 +800,6 @@ function buildVillageInfluenceDescription(village, government, popSnapshot) {
 //
 // In your time system integration (where you already call handleEconomyDayTick):
 //
-//   import { handleGovernmentDayTick } from "./Systems/kingdomGovernment.js";
 //
 //   // When a new day begins inside exploreArea():
 //   const timeStep = advanceTime(state, 1);
