@@ -3,6 +3,532 @@
 
 export const CHANGELOG = [
   {
+    version: "1.1.92",
+    title: "The Blackbark Oath — AoE, Multi-Enemy, UI Polish (2026-01-01)",
+    sections: [
+      {
+        heading: "Combat",
+        items: [
+          {
+            title: "Difficulty-weighted multi-enemy encounters",
+            bullets: [
+              "Easy: almost always 1 enemy; rarely 2; never 3.",
+              "Normal: still mostly 1 enemy, but a much higher chance to see 2 enemies; 3-enemy fights remain rare.",
+              "Hard: rarely 1 enemy; most encounters are 2 enemies, with a higher chance of seeing 3 enemies.",
+              "Dynamic: multi-enemy encounter sizing follows the closest tier shown in the Dynamic difficulty label (Easy/Normal/Hard)."
+            ]
+          },
+          {
+            title: "Player multi-enemy damage spells",
+            bullets: [
+              "Added AoE/splash support to several player abilities so they can damage multiple enemies in multi-enemy fights.",
+              "Updated key class unlocks (e.g., Cleave, Blood Nova, Rain of Thorns, Stone Quake, Meteor Sigil, Arcane Overload, Tempest) to hit more than one foe when multiple enemies are present.",
+              "AoE rules: the selected target takes full damage; other living enemies take reduced splash damage (spell-dependent)."
+            ]
+          },
+          {
+            title: "Class mechanics meter now matters",
+            bullets: [
+              "Mage (Rhythm): every 3rd spell is empowered (higher damage/healing, bonus crit) and refunds a small amount of Mana.",
+              "Warrior (Bulwark): while Fury is high, your next damaging ability is empowered; after it lands, Bulwark spends Fury and grants a small shield.",
+              "Ranger (Marks): marked targets take slightly increased damage between finishers (Headshot still consumes Marks for a big payoff).",
+              "Blood Knight (Blood): high Blood triggers Bloodrush, boosting damage and temporarily increasing lifesteal."
+            ]
+          },
+          {
+            title: "Spell selection UX (in-combat)",
+            bullets: [
+              "Combat spell cards now show a short description inline, since tapping a card casts immediately (no expand/collapse)."
+            ]
+          }
+        ]
+      },
+      {
+        heading: "UI / Inventory",
+        items: [
+          {
+            title: "Spell Book modal",
+            bullets: [
+              "Spell Book modal UX improvements: clearer guidance, badges (AoE/Single/Support), and a quick legend.",
+              "When your class meter is ready (e.g., Bulwark/Bloodrush/Rhythm), the Spell Book shows a clear preview of what the next cast will do (shown in combat only).",
+              "Spell list now shows a deterministic numeric preview (damage/heal/shield) next to the resource cost.",
+              "Spell Book action buttons (Equip/Unequip/Upgrade) now match the Inventory action button styling."
+            ]
+          },
+          {
+            title: "Inventory actions",
+            bullets: [
+              "Grouped Equip/Unequip/Use + Drop actions more tightly for faster item management.",
+              "Updated the Inventory 'Use' button styling so it matches the rest of the item action buttons."
+            ]
+          }
+        ]
+      },
+      {
+        heading: "Testing / QA",
+        items: [
+          {
+            title: "New smoke tests",
+            bullets: [
+              "Added smoke tests verifying AoE spells apply damage to multiple enemies (Cleave, Blood Nova, Meteor Sigil)."
+            ]
+          }
+        ]
+      },
+      {
+        heading: "Bug Fixes",
+        items: [
+          {
+            title: "Stability + rules enforcement",
+            bullets: [
+              "Prevented Equip/Unequip/Upgrade actions from being available inside the in-combat Spell Book (loadout changes are now correctly combat-locked).",
+              "Hardened player AoE helpers against edge cases where the selected target is missing or the alive-enemy list changes mid-cast (prevents rare runtime errors).",
+              "Fixed an iOS file:// crash in Spell Book badge rendering caused by missing semicolon/ASI parsing.",
+              "Spell Book badge rendering now falls back safely when optional metadata is missing (prevents edge-case modal errors)."
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    version: "1.1.82",
+    title: "Smoke Test UX + QA Robustness",
+    sections: [
+      {
+        heading: "Testing / QA",
+        items: [
+          {
+            title: "Smoke Tests modal is now more actionable",
+            bullets: [
+              "Added an explicit Run button plus Copy Results / Copy Failures / Copy JSON actions.",
+              "Added a lightweight summary line (pass/fail counts + runtime) so you can tell at a glance if the suite is healthy.",
+              "The modal now auto-runs once on open to keep quick QA loops fast."
+            ]
+          },
+          {
+            title: "Smoke suite robustness improvements",
+            bullets: [
+              "Console noise is now treated as a first-class failure: any console.error or failed console.assert is surfaced and causes the run to fail.",
+              "Failure output now includes the first 20 console.error / console.assert messages to make regressions easier to diagnose from a single paste."
+            ]
+          }
+        ]
+      },
+      {
+        heading: "Bugfixes",
+        items: [
+          {
+            title: "Section summaries are accurate",
+            bullets: [
+              "Fixed section accounting so the final test section is included in the per-section results list."
+            ]
+          },
+          {
+            title: "Version labels aligned",
+            bullets: [
+              "Aligned GAME_PATCH, README, boot diagnostics overlay, and bootstrap version label to 1.1.82."
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    version: "1.1.8",
+    title: "Enemy Rarity + Mini-Affixes (Difficulty-Linked)",
+    sections: [
+      {
+        heading: "Combat",
+        items: [
+          {
+            title: "Enemy mini-affixes",
+            bullets: [
+              "Added mini-affix rolls on non-boss enemies (outside the village).",
+              "Elites reliably roll mini-affixes; higher enemy rarity can increase affix count.",
+              "Affixes supported: Vampiric, Thorned, Frozen (Chilled), Hexed, Berserk, Regenerating."
+            ]
+          }
+          ,
+          {
+            title: "Enemy sheet",
+            bullets: [
+              "You can now tap/click the enemy panel in combat to open a full Enemy Sheet modal.",
+              "Shows enemy stats, posture, intent, abilities, affixes, current effects, and reward/loot info.",
+              "Removed the tap/click focus glow on the enemy panel (keyboard focus still shows an outline)."
+            ]
+          }
+,
+          {
+            title: "Enemy rarity tiers",
+            bullets: [
+              "Added enemy rarities: Common, Uncommon, Rare, Epic, Legendary, Mythic — bosses are always Legendary.",
+              "Rarity scales enemy max HP and combat stats, plus rewards (XP/gold) and loot odds.",
+              "Hard can roll a few Epics, a few Legendaries, and extremely rare Mythics (level-gated)."
+            ]
+          }
+          ,
+          {
+            title: "Loot ties to enemy rarity",
+            bullets: [
+              "Loot quality and drop chances are driven by the enemy's rarity tier.",
+              "Higher difficulty improves loot mostly indirectly by spawning higher-rarity enemies."
+            ]
+          }
+          ,
+          {
+            title: "Enemy systems modularized",
+            bullets: [
+              "Enemy creation (zone scaling → elite → rarity → affixes) is now built through Systems/Enemy modules.",
+              "This makes enemy logic easier to maintain and reduces Future.js churn while keeping gameplay behavior identical."
+            ]
+          }
+          ,
+          {
+            title: "Bug fixes",
+            bullets: [
+              "Fixed a missing combat helper (applyDirectDamageToPlayer) introduced during enemy modularization that could break combat flows and smoke tests."
+            ]
+          }
+
+        ]
+      },
+      {
+        heading: "Difficulty",
+        items: [
+          {
+            title: "Difficulty now influences rarity + affixes",
+            bullets: [
+              "Easy: enemies roll Common only (straightforward encounters).",
+              "Normal: very little Common; mostly Uncommon with a few Rares.",
+              "Hard: no Common; very little Uncommon; mostly Rare with a few Epics, a few Legendaries, and extremely rare Mythics.",
+              "Tuned Hard non-boss Legendary roll weight slightly upward so Legendary spawns show up reliably (and smoke tests stay stable).",
+              "Dynamic: enemy rolls follow the effective difficulty label (Easy/Normal/Hard).",
+              "Mini-affix frequency and caps follow the same difficulty intent; Easy disables mini-affixes unless forced."
+]
+          }
+        ]
+      },
+      {
+        heading: "Bugfixes",
+        items: [
+          {
+            title: "Spawned enemies now start at full HP after rarity scaling",
+            bullets: [
+              "If an enemy spawns at full HP, rarity scaling preserves full HP after max HP increases.",
+              "Loaded/mid-combat enemies are not healed by this adjustment."
+            ]
+          },
+          {
+            title: "Scaled stats now affect damage as intended",
+            bullets: [
+              "After difficulty/rarity scaling, enemy baseAttack/baseMagic are synced so scaled damage is applied consistently."
+            ]
+          },
+          {
+            title: "Affix hooks apply consistently",
+            bullets: [
+              "Thorns/Vampiric/Frozen hooks now trigger on all relevant hit paths (including basic attacks / interrupt paths)."
+            ]
+          }
+        ]
+      },
+      {
+        heading: "Testing",
+        items: [
+          {
+            title: "Expanded smoke tests",
+            bullets: [
+              "Added deterministic combat smoke tests for affixes, rarity rules (boss/elite), and difficulty-linked rarity trends.",
+              "Strengthened invariants to catch NaN/Infinity and negative counter regressions."
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    version: "1.1.72",
+    title: "Enemy HUD Styling Pass + Combat UI Bugfixes",
+    sections: [
+      {
+        heading: "UI / HUD",
+        items: [
+          {
+            title: "Enemy panel now matches the hero HUD",
+            bullets: [
+              "Enemy panel layout, padding, and typography were updated to mirror the hero HUD styling for a more cohesive combat UI.",
+              "Enemy name/tags now use the same uppercase + letter-spacing treatment as the hero HUD header."
+            ]
+          },
+          {
+            title: "Enemy HP bar label visibility",
+            bullets: [
+              "Enemy HP label is now anchored as an overlay (like the hero bars), staying centered and readable even when enemy HP is very low.",
+              "Enemy HP bar height now matches the hero HP/resource bars for consistent readability."
+            ]
+          }
+          ,
+          {
+            title: "Rarity-colored item names",
+            bullets: [
+              "Each rarity tier now has its own text color (Common/Uncommon/Rare/Epic/Legendary) so item names immediately read as their tier.",
+              "Rarity colors are shown in both the Inventory list and the Equipment tab on the character sheet."
+            ]
+          }
+          ,
+          {
+            title: "CSS unification + removed click press animation",
+            bullets: [
+              "Consolidated repeated focus/selected/hover gradients and rarity colors into shared CSS tokens to make future reskins easier and reduce duplication.",
+              "Removed press/click scaling/shift feedback on buttons/tabs, and restricted hover lift effects to pointer devices so taps don’t animate on mobile."
+            ]
+          }
+          ,
+          {
+            title: "Pill click highlight restored",
+            bullets: [
+              "The HUD top-right pills (Menu/Cheats/Smoke Tests) and the modal close (✕) now play a quick glow highlight on tap/click (no movement/scale)."
+            ]
+          }
+          ,
+          {
+            title: "Combat class meter icons",
+            bullets: [
+              "The combat class meter (second ability bar) now uses class-themed icons instead of tick dots for clearer class identity.",
+              "Icons are now rendered from an inline SVG sprite (tintable via CSS and crisp at small sizes, including iOS file:// installs).",
+              "Icons were refined for clarity at small sizes and now render as outlined circles with crisp outline-only icons; active pips highlight the circle + icon in your class color (no filled pips).",
+              "The meter fill color now tints per class (Rogue/Ranger/Necromancer/etc.) instead of using the global accent.",
+              "When all ticks are active (or the meter is in a Ready state), the tick area now pulses with a stronger class-tinted glow so it’s obvious you can spend/use the meter."
+            ]
+          }
+          ,
+          {
+            title: "Live HP/Mana bar animation",
+            bullets: [
+              "Hero HP bar defines the live motion treatment (drifting texture + sheen) designed to read smoothly on mobile Safari.",
+              "Mana/Fury/Essence/Blood resource bars now use the exact same motion timing/opacity as HP so every bar feels like one unified system.",
+              "Enemy HP bar uses the same live motion so both sides of combat match.",
+              "Animations respect prefers-reduced-motion for accessibility.",
+              "Added a Reduce motion setting in Settings to disable UI motion/animations on demand (in addition to honoring the OS preference)."
+            ]
+          }
+          ,
+          {
+            title: "Cleaner Settings menus",
+            bullets: [
+              "Main-menu Settings screen was reorganized into clear sections (Display/Audio/Gameplay/Accessibility) with a cleaner label/control layout.",
+              "Both the main-menu Settings screen and the in-game Settings modal were compacted to use less vertical space (single-line descriptions, tighter row padding) while keeping the same functionality.",
+              "In-game Settings modal matches the same sectioned layout, with switch-style toggles and consistent control styling for a cleaner menu during combat."
+            ]
+          }
+,
+          {
+            title: "Loot generator parse error fix (iOS boot)",
+            bullets: [
+              "Fixed an unquoted object key ('War Axe') in the weapon implicit-traits table that could cause a JavaScript syntax error and prevent the game from booting on iOS."
+            ]
+          }
+        ]
+      },
+      {
+        heading: "Loot / Item Generation",
+        items: [
+          {
+            title: "Major loot variety expansion",
+            bullets: [
+              "Legendary drops can now roll curated 'named' legendaries (area-themed) in addition to procedural names.",
+              "Weapons now have small implicit identity traits (e.g., daggers lean crit, spears lean armor pen) to make base types feel more distinct.",
+              "Expanded weapon and armor base name pools across styles/slots, increasing overall naming variety.",
+              "New multi-stat affixes added for both weapons and armor (e.g., Balanced / Berserking / Bulwark / Quickstep / Sorcerous) to diversify stat profiles.",
+              "Rare+ potions can roll hybrid Reprieve Elixirs that restore both HP and your class resource (stackable by tier)."
+            ]
+          }
+        ]
+      },
+      {
+        heading: "Bug Fixes",
+        items: [
+          {
+            title: "Combat HP UI stability",
+            bullets: [
+              "Hardened enemy HP percent calculation against divide-by-zero/NaN edge-cases so the fill bar can’t break during corrupted or partially-initialized enemy states."
+            ]
+          },
+          {
+            title: "Inventory power comparison indicator",
+            bullets: [
+              "Inventory items that can be compared to equipped gear now show the ▲/▼ power delta in the collapsed header row, not only after expanding the card."
+            ]
+          },
+          {
+            title: "Gear stat effects",
+            bullets: [
+              "Speed now contributes to your Dodge chance so Speed bonuses on gear affect combat.",
+              "Haste now boosts end-of-round resource regeneration and scales HP Regen ticks.",
+              "HP Regen now ticks each round even if you don't attack, making regen gear reliable during defensive play.",
+              "Added a Diagnostics → 'Gear Effects Audit' report to compare stats with gear unequipped vs equipped."
+            ]
+          },
+          {
+            title: "HUD & status-line hardening",
+            bullets: [
+              "Prevented hero resource bar NaN/Infinity widths when maxResource is 0 (or corrupted), and avoids writing an 'undefined' resource CSS class.",
+              "Enemy posture/intent status text now clamps invalid values so the status line can’t display NaN or negative counters.",
+              "Enemy panel now hides automatically when an enemy reaches 0 HP, preventing lingering combat UI in rare edge-cases.",
+              "Added defensive null-checks around HUD nodes to avoid hard crashes if updateHUD is invoked during partial/early DOM states."
+            ]
+          },
+          {
+            title: "Boot diagnostics now auto-surface early load failures",
+            bullets: [
+              "If a script fails to load/parse during startup, the boot diagnostics overlay now pops automatically (instead of silently logging the issue).",
+              "bootstrap now marks a successful boot once the game entry module loads, preventing overlays from appearing during normal gameplay."
+            ]
+          },
+        ]
+      }
+    ]
+  },
+  {
+    version: "1.1.7",
+    title: "Class Flush-Out + Combat HUD Meters + Boot Diagnostics",
+    sections: [
+      {
+        heading: "Classes & Abilities",
+        items: [
+          {
+            title: "New unlock tiers (Lv 9 / Lv 12)",
+            bullets: [
+              "Every player class now has additional unlocks at levels 9 and 12 (on top of existing Lv 3 / Lv 6 unlocks).",
+              "Unlock table is migration-safe: older saves auto-gain any missing unlocks up to their current level."
+            ]
+          },
+          {
+            title: "Lightweight class mechanics",
+            bullets: [
+              "Rogue: Combo Points (Backstab / Poisoned Blade / Shadowstep generate; Eviscerate spends; Vanish boosts).",
+              "Meter usability: Rogue Eviscerate now unlocks at Lv 3; Ranger Headshot now unlocks at Lv 3; Shaman Totem Spark now activates the Totem meter.",
+              "Ranger: Marks (Twin Arrows / Marked Prey / Hunter's Trap add Marks; Headshot spends; Marks now decay).",
+              "Necromancer: Soul Shards + Lich Form sustain hook (shadow hits siphon HP while Lich Form is active).",
+              "Shaman: Totem state with timed duration used by Tempest for bonus output."
+            ]
+          }
+        ]
+      },
+      {
+        heading: "Combat HUD",
+        items: [
+          {
+            title: "Class mechanics meter",
+            bullets: [
+              "Class meter now appears immediately when an enemy spawns (combat start), before the first player action.",
+              "During combat, HUD meta fields (Level/XP, time of day, gold) are hidden to reduce clutter.",
+              "All player classes now display a combat meter row in the HUD to visualize their class mechanic or passive state.",
+              "Mage: Rhythm (progress toward the next discounted + crit-boosted spell).",
+              "Warrior: Bulwark (progress to 40 Fury; shows when the Bulwark bonus is active).",
+              "Blood Knight: Blood (5-dot gauge of your Blood resource).",
+              "Paladin: Sanctuary (ward/shield state; shows On/Off).",
+              "Cleric: Ward (current shield amount).",
+              "Necromancer: Shards (Soul Shards gauge).",
+              "Rogue: Combo Points (5-dot meter).",
+              "Ranger: Marks stacks (dots) and remaining mark turns (shows 0/0t when not applied).",
+              "Shaman: Totem type and remaining turns (shows None/0t when inactive so the mechanic is always visible).",
+              "Berserker: Frenzy (fills as HP is lost).",
+              "Vampire: Hunger (essence threshold indicator for Hungering Vein bonuses).",
+              "Character creation: class cards now label each class’s Combat Meter and what it tracks."
+
+            ]
+          }
+        ]
+      },
+      {
+        heading: "Removals",
+        items: [
+          {
+            title: "Tutorial tips removed",
+            bullets: [
+              "Removed the tutorial tip banner system and its Settings toggle per patch feedback.",
+              "Removed the remaining merchant modal \"I knew\" tip banner so no tutorial prompts appear anywhere."
+            ]
+          }
+        ]
+      },
+      {
+        heading: "Diagnostics & Smoke Tests",
+        items: [
+          {
+            title: "Boot diagnostics (small/)",
+            bullets: [
+              "Added early error capture for window.onerror and unhandledrejection, persisting the last boot failures to localStorage.",
+              "Added a screenshot-friendly overlay with Copy Report button to quickly capture why the game failed to start.",
+              "Bootstrap now preflights the Future module graph via fetch to flag missing modules before load.",
+              "Boot hotfix: entry module paths are resolved relative to index.html (not /small) to avoid broken /small/Future/... paths on boot.",
+              "Boot hotfix: preflight is skipped for file:// environments (common on iOS) where fetch(file://...) is frequently blocked."
+            ]
+          },
+          {
+            title: "New smoke tests",
+            bullets: [
+              "Added a dedicated smoke test section validating class unlock tables, unlock spell presence, Rogue Combo behavior, Ranger Mark decay, and Combat HUD meter rendering.",
+              "Fixed smoke test helpers (createPlayer) so class tests do not depend on DOM-driven new-game flow.",
+              "Smoke test runs no longer modify the player's visible log: the live log DOM + renderer bookkeeping are snapshotted and restored after the suite."
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    version: "1.1.62",
+    title: "Bugfixes + Expanded Smoke Tests",
+    sections: [
+      {
+        heading: "Bug Fixes",
+        items: [
+          {
+            title: "Version labeling consistency",
+            bullets: [
+              "Unified version labeling across in-game UI, bootstrap build label, and README so the displayed patch matches the actual build."
+            ]
+          },
+          {
+            title: "Inventory safety",
+            bullets: [
+              "Hardened item add/stack logic by normalizing invalid quantities (NaN/0/negative) to prevent corrupted stacks."
+            ]
+          },
+          {
+            title: "Bank weekly interest edge-case",
+            bullets: [
+              "Fixed an initialization edge-case where a negative or invalid lastInterestDay could suppress weekly interest backfill (and fail smoke tests).",
+              "Treats null/undefined lastInterestDay as truly uninitialized (avoids Number(null) → 0), and caps excessive catch-up backlogs to prevent runaway compounding on corrupted saves."
+            ]
+          },
+          {
+            title: "Town Hall decree expiry cleanup",
+            bullets: [
+              "Expired townHallEffects are removed from state.government so stale modifiers cannot be re-applied by presence checks."
+            ]
+          }
+        ]
+      },
+      {
+        heading: "Smoke Tests",
+        items: [
+          {
+            title: "Bug-catcher coverage",
+            bullets: [
+              "Smoke tests now capture console.error / failed console.assert and fail the run if any occur.",
+              "Added deep state scans for NaN/Infinity and negative counters after the suite runs.",
+              "Added a deterministic fuzz pass (120 randomized actions) that continuously validates invariants and common containers."
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
   version: "1.1.6",
   title: "Combat Patch 1.1.6: Intent Telegraphs, Posture Break, and Interrupt Counterplay",
   sections: [
