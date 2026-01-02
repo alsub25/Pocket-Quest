@@ -16,9 +16,35 @@ export const FANTASY_WEEKDAYS = [
 
 const DAYS_PER_YEAR = 360;
 
-// Ensure state.time exists
+/* --------------------------------------------------------------------------
+ * Internal normalization
+ * --------------------------------------------------------------------------
+ * Some systems read state.time.dayIndex / partIndex directly.
+ * So we normalize the stored values (not just the derived display info).
+ */
+
+function normalizeTimeObject(time) {
+  if (!time || typeof time !== 'object') return { dayIndex: 0, partIndex: 0 };
+
+  const rawDay = Number(time.dayIndex);
+  const rawPart = Number(time.partIndex);
+
+  // Clamp dayIndex to a non-negative integer
+  const dayIndex = Number.isFinite(rawDay) && rawDay >= 0 ? Math.floor(rawDay) : 0;
+
+  // Clamp partIndex to valid range
+  const maxPart = Math.max(0, DAY_PARTS.length - 1);
+  let partIndex = Number.isFinite(rawPart) && rawPart >= 0 ? Math.floor(rawPart) : 0;
+  if (partIndex > maxPart) partIndex = maxPart;
+
+  time.dayIndex = dayIndex;
+  time.partIndex = partIndex;
+  return time;
+}
+
+// Ensure state.time exists (and is normalized)
 export function initTimeState(state) {
-  if (!state.time) {
+  if (!state.time || typeof state.time !== 'object') {
     state.time = {
       // absolute day count from the start of the game (0-based)
       dayIndex: 0,
@@ -26,14 +52,16 @@ export function initTimeState(state) {
       partIndex: 0
     };
   }
+  normalizeTimeObject(state.time);
   return state.time;
 }
 
 // Compute a full time breakdown from state
 export function getTimeInfo(state) {
   const time = initTimeState(state);
-  const dayIndex = time.dayIndex || 0;
-  const partIndex = time.partIndex || 0;
+  // initTimeState already normalized dayIndex/partIndex
+  const dayIndex = time.dayIndex;
+  const partIndex = time.partIndex;
 
   const year = 1 + Math.floor(dayIndex / DAYS_PER_YEAR);
   const dayOfYear = (dayIndex % DAYS_PER_YEAR) + 1;
@@ -87,6 +115,9 @@ export function advanceTime(state, steps = 1) {
     remaining--;
   }
 
+  // Normalize in case anything weird happened (dev tools, hacked saves, etc.)
+  normalizeTimeObject(time);
+
   const after = getTimeInfo(state);
 
   return {
@@ -105,7 +136,6 @@ export function advanceTime(state, steps = 1) {
 // Skip forward to the next morning
 export function jumpToNextMorning(state) {
   const time = initTimeState(state);
-  const partsPerDay = DAY_PARTS.length;
 
   if (time.partIndex === 0) {
     // already morning – push one full day
@@ -116,5 +146,6 @@ export function jumpToNextMorning(state) {
     time.partIndex = 0;
   }
 
+  normalizeTimeObject(time);
   return getTimeInfo(state);
 }

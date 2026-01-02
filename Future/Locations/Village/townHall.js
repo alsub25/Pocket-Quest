@@ -16,6 +16,8 @@ import {
   adjustPopulationMood
 } from "./villagePopulation.js"; // adjust path if needed
 
+import { rngInt, rngFloat } from "../../Systems/rng.js";
+
 // -----------------------------------------------------------------------------
 // PETITION DEFINITIONS
 // -----------------------------------------------------------------------------
@@ -60,7 +62,12 @@ const PETITIONS = {
       depositRateMultiplier: 1.4,
       investmentRateMultiplier: 1.2,
       loanRateMultiplier: 1,
-      restCostMultiplier: 1.3
+      restCostMultiplier: 1.3,
+      // Short-lived spending pushes commerce upward.
+      econProsperityDelta: 1,
+      econTradeDelta: 1,
+      econSecurityDelta: 0,
+      moodDailyDelta: 0
     },
     favorIdeologies: ["hawk", "pragmatist", "reformer"],
     opposeIdeologies: ["traditionalist"]
@@ -82,7 +89,12 @@ const PETITIONS = {
       depositRateMultiplier: 1.1,
       investmentRateMultiplier: 1.15,
       loanRateMultiplier: 1,
-      restCostMultiplier: 1.4
+      restCostMultiplier: 1.4,
+      // Festival crowds: trade jumps, but watchfulness lags.
+      econProsperityDelta: 1,
+      econTradeDelta: 2,
+      econSecurityDelta: -1,
+      moodDailyDelta: 1
     },
     favorIdeologies: ["populist", "reformer", "dove"],
     opposeIdeologies: ["hawk", "traditionalist"]
@@ -104,7 +116,12 @@ const PETITIONS = {
       depositRateMultiplier: 0.8,
       investmentRateMultiplier: 0.8,
       loanRateMultiplier: 0.9,
-      restCostMultiplier: 0.8
+      restCostMultiplier: 0.8,
+      // Belt-tightening slows commerce but can steady streets.
+      econProsperityDelta: -1,
+      econTradeDelta: -1,
+      econSecurityDelta: 1,
+      moodDailyDelta: -1
     },
     favorIdeologies: ["hawk", "traditionalist", "pragmatist"],
     opposeIdeologies: ["populist", "dove", "reformer"]
@@ -126,7 +143,12 @@ const PETITIONS = {
       depositRateMultiplier: 1,
       investmentRateMultiplier: 1,
       loanRateMultiplier: 1.15,
-      restCostMultiplier: 1.2
+      restCostMultiplier: 1.2,
+      // Guards and walls improve security, but coin is diverted from trade.
+      econProsperityDelta: 0,
+      econTradeDelta: -1,
+      econSecurityDelta: 2,
+      moodDailyDelta: -1
     },
     favorIdeologies: ["hawk", "traditionalist"],
     opposeIdeologies: ["dove", "reformer"]
@@ -148,7 +170,12 @@ const PETITIONS = {
       depositRateMultiplier: 1.1,
       investmentRateMultiplier: 1,
       loanRateMultiplier: 0.95,
-      restCostMultiplier: 0.85
+      restCostMultiplier: 0.85,
+      // Stable food supply improves mood and prosperity a touch.
+      econProsperityDelta: 1,
+      econTradeDelta: 0,
+      econSecurityDelta: 0,
+      moodDailyDelta: 1
     },
     favorIdeologies: ["populist", "dove", "reformer"],
     opposeIdeologies: ["hawk"]
@@ -170,7 +197,12 @@ const PETITIONS = {
       depositRateMultiplier: 1.2,
       investmentRateMultiplier: 1.25,
       loanRateMultiplier: 0.95,
-      restCostMultiplier: 1
+      restCostMultiplier: 1,
+      // Better contracts = more caravans.
+      econProsperityDelta: 1,
+      econTradeDelta: 2,
+      econSecurityDelta: 0,
+      moodDailyDelta: 0
     },
     favorIdeologies: ["hawk", "pragmatist", "reformer"],
     opposeIdeologies: ["populist"]
@@ -192,7 +224,12 @@ const PETITIONS = {
       depositRateMultiplier: 0.95,
       investmentRateMultiplier: 0.9,
       loanRateMultiplier: 1,
-      restCostMultiplier: 0.8
+      restCostMultiplier: 0.8,
+      // Hospitality raises mood and trade, with a small security tax.
+      econProsperityDelta: 0,
+      econTradeDelta: 1,
+      econSecurityDelta: -1,
+      moodDailyDelta: 1
     },
     favorIdeologies: ["dove", "traditionalist", "populist"],
     opposeIdeologies: ["hawk"]
@@ -280,7 +317,12 @@ const PETITIONS = {
       depositRateMultiplier: 1,
       investmentRateMultiplier: 1.2,
       loanRateMultiplier: 1.3,
-      restCostMultiplier: 1.4
+      restCostMultiplier: 1.4,
+      // War levies strain households and trade.
+      econProsperityDelta: -2,
+      econTradeDelta: -2,
+      econSecurityDelta: 1,
+      moodDailyDelta: -2
     },
     favorIdeologies: ["hawk"],
     opposeIdeologies: ["dove", "populist", "reformer"]
@@ -302,7 +344,12 @@ const PETITIONS = {
       depositRateMultiplier: 0.95,
       investmentRateMultiplier: 0.95,
       loanRateMultiplier: 1,
-      restCostMultiplier: 0.85
+      restCostMultiplier: 0.85,
+      // Quiet streets increase security but dampen night trade.
+      econProsperityDelta: 0,
+      econTradeDelta: -1,
+      econSecurityDelta: 1,
+      moodDailyDelta: 0
     },
     favorIdeologies: ["traditionalist", "pragmatist", "dove"],
     opposeIdeologies: ["populist"]
@@ -406,7 +453,7 @@ const MAX_VOTE_DELAY = 3;
 // -----------------------------------------------------------------------------
 
 function randInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+  return rngInt(null, min, max, 'townHall.randInt');
 }
 
 function getCurrentDay(state) {
@@ -577,7 +624,7 @@ function ensureTownHallState(state, absoluteDay) {
       currentPetition: null,
       lastResolvedPetition: null,
       priorDecrees: [],
-      lastDayUpdated: typeof absoluteDay === "number" ? absoluteDay : null,
+      lastDayUpdated: typeof absoluteDay === "number" ? Math.floor(absoluteDay) : null,
       councilRecess: false,
       recessReason: null,
       recessStartedOnDay: null,
@@ -590,7 +637,7 @@ function ensureTownHallState(state, absoluteDay) {
     if (!("lastResolvedPetition" in th)) th.lastResolvedPetition = null;
     if (!Array.isArray(th.priorDecrees)) th.priorDecrees = [];
     if (typeof th.lastDayUpdated !== "number") {
-      th.lastDayUpdated = typeof absoluteDay === "number" ? absoluteDay : null;
+      th.lastDayUpdated = typeof absoluteDay === "number" ? Math.floor(absoluteDay) : null;
     }
     // Patch older saves with recess fields
     if (!("councilRecess" in th)) th.councilRecess = false;
@@ -776,7 +823,7 @@ function maybeUpdateVillageCouncilMembership(state, absoluteDay, addLog) {
     const leaveChance = member.loyalty < 35 ? 0.003 : 0.001;
     const removedChance = member.loyalty < 25 ? 0.004 : 0.0015;
 
-    const roll = Math.random();
+    const roll = rngFloat(null, 'townHall.memberFate');
     let reason = null;
 
     if (roll < baseDeath) {
@@ -830,7 +877,73 @@ function ensureTownHallEffects(state) {
   if (!state.government.townHallEffects) {
     state.government.townHallEffects = {};
   }
-  return state.government.townHallEffects;
+
+  // Keep object shape stable so UIs can rely on fields existing.
+  const eff = state.government.townHallEffects;
+  const defaults = {
+    petitionId: null,
+    title: null,
+    label: null,
+    description: null,
+    startedOnDay: null,
+    expiresOnDay: null,
+    depositRateMultiplier: null,
+    investmentRateMultiplier: null,
+    loanRateMultiplier: null,
+    restCostMultiplier: null,
+
+    // NEW: decrees can gently nudge the raw village economy while active.
+    // These are per-day additive deltas, kept small by design.
+    econProsperityDelta: null,
+    econTradeDelta: null,
+    econSecurityDelta: null,
+
+    // Optional: ongoing mood pressure (separate from the one-time decree announcement).
+    moodDailyDelta: null
+  };
+
+  for (const [k, v] of Object.entries(defaults)) {
+    if (typeof eff[k] === "undefined") eff[k] = v;
+  }
+
+  return eff;
+}
+
+// -----------------------------------------------------------------------------
+// SHARED EFFECT CLEANUP (used by bank / economy / any other system)
+// -----------------------------------------------------------------------------
+// NOTE: Expired decree payloads should not linger. When a decree expires we
+// remove state.government.townHallEffects entirely (it will be re-created
+// on-demand by ensureTownHallEffects() when the Town Hall UI needs it).
+
+export function cleanupTownHallEffects(state, todayOverride = null) {
+  if (!state) return { changed: false, active: false };
+  if (!state.government) return { changed: false, active: false };
+
+  // If there is no effects object, nothing to clean.
+  const eff = state.government.townHallEffects;
+  if (!eff || typeof eff !== 'object') return { changed: false, active: false };
+  const today =
+    typeof todayOverride === "number"
+      ? todayOverride
+      : typeof state.time?.dayIndex === "number"
+      ? state.time.dayIndex
+      : 0;
+
+  const expiresOnDay =
+    typeof eff.expiresOnDay === "number" ? eff.expiresOnDay : null;
+
+  const active = !!eff.petitionId && expiresOnDay != null && today <= expiresOnDay;
+
+  if (!active && expiresOnDay != null && today > expiresOnDay) {
+    // Delete the payload entirely so expired modifiers can't be accidentally
+    // re-applied by other systems that only check for object presence.
+    const hadSomething = Object.keys(eff).length > 0;
+    delete state.government.townHallEffects;
+    return { changed: hadSomething, active: false };
+  }
+
+  return { changed: false, active };
 }
 
 function buildActiveEffectSnapshot(state) {
@@ -867,6 +980,21 @@ function buildActiveEffectSnapshot(state) {
     lines.push(effects.description);
   }
 
+  // NEW: surface ongoing economy/mood nudges so players understand why things drift.
+  const pD = Number(effects.econProsperityDelta);
+  const tD = Number(effects.econTradeDelta);
+  const sD = Number(effects.econSecurityDelta);
+  const mD = Number(effects.moodDailyDelta);
+  const econBits = [];
+  if (Number.isFinite(pD) && Math.round(pD) !== 0) econBits.push(`Prosperity ${Math.round(pD) > 0 ? '+' : ''}${Math.round(pD)}/day`);
+  if (Number.isFinite(tD) && Math.round(tD) !== 0) econBits.push(`Trade ${Math.round(tD) > 0 ? '+' : ''}${Math.round(tD)}/day`);
+  if (Number.isFinite(sD) && Math.round(sD) !== 0) econBits.push(`Security ${Math.round(sD) > 0 ? '+' : ''}${Math.round(sD)}/day`);
+  if (econBits.length) lines.push(`Ongoing nudge: ${econBits.join(' · ')}.`);
+  if (Number.isFinite(mD) && Math.round(mD) !== 0) {
+    const md = Math.round(mD);
+    lines.push(`Ongoing mood pressure: ${md > 0 ? '+' : ''}${md}/day.`);
+  }
+
   return {
     hasActive: true,
     title: effects.title || "Temporary decree in effect",
@@ -894,7 +1022,15 @@ function applyApprovedPetition(state, petitionId, addLog) {
     depositRateMultiplier = 1,
     investmentRateMultiplier = 1,
     loanRateMultiplier = 1,
-    restCostMultiplier = 1
+    restCostMultiplier = 1,
+
+    // NEW: per-day economy nudges while the decree is active
+    econProsperityDelta = 0,
+    econTradeDelta = 0,
+    econSecurityDelta = 0,
+
+    // Optional: per-day mood pressure
+    moodDailyDelta = 0
   } = def.effect || {};
 
   effects.petitionId = petitionId;
@@ -907,6 +1043,12 @@ function applyApprovedPetition(state, petitionId, addLog) {
   effects.investmentRateMultiplier = investmentRateMultiplier;
   effects.loanRateMultiplier = loanRateMultiplier;
   effects.restCostMultiplier = restCostMultiplier;
+
+  // Economy / mood nudges
+  effects.econProsperityDelta = econProsperityDelta;
+  effects.econTradeDelta = econTradeDelta;
+  effects.econSecurityDelta = econSecurityDelta;
+  effects.moodDailyDelta = moodDailyDelta;
 
   // Track in decree history (for Prior Decrees UI).
   hall.priorDecrees.push({
@@ -1104,13 +1246,20 @@ function getYesChanceForCouncillor(
 export function handleTownHallDayTick(state, absoluteDay, hooks = {}) {
   if (!state) return;
   const addLog = typeof hooks.addLog === "function" ? hooks.addLog : null;
+  
+  const day = Number.isFinite(absoluteDay) ? Math.floor(absoluteDay) : 0;
 
-  const hall = ensureTownHallState(state, absoluteDay);
-  hall.lastDayUpdated = absoluteDay;
+  const hall = ensureTownHallState(state, day);
+  // Guard against double-running the same day (keeps petition timelines sane).
+  if (hall.lastDayUpdated === day) return;
+  hall.lastDayUpdated = day;
+
+  // Centralized cleanup so expired decrees don't linger.
+  cleanupTownHallEffects(state, day);
   const council = ensureVillageCouncil(state);
 
   // NEW: Let councillors die / leave / be recalled, and handle recess / replacement.
-  maybeUpdateVillageCouncilMembership(state, absoluteDay, addLog);
+  maybeUpdateVillageCouncilMembership(state, day, addLog);
 
   const inRecess = !!hall.councilRecess;
 
@@ -1122,7 +1271,7 @@ export function handleTownHallDayTick(state, absoluteDay, hooks = {}) {
     // 1a) Population vote happens first, on or after voteDueDay, if not yet taken.
     if (
       typeof petition.popularSupportPercent !== "number" &&
-      absoluteDay >= petition.voteDueDay
+      day >= petition.voteDueDay
     ) {
       resolvePopulationVote(state, hall, petition, addLog);
 
@@ -1137,7 +1286,7 @@ export function handleTownHallDayTick(state, absoluteDay, hooks = {}) {
           approved: false,
           yesVotes: 0,
           noVotes: 0,
-          resolvedOnDay: absoluteDay,
+          resolvedOnDay: day,
           popularApproved: false,
           popularSupportPercent: popSupport
         };
@@ -1154,7 +1303,7 @@ export function handleTownHallDayTick(state, absoluteDay, hooks = {}) {
         }
       } else {
         // Village approves; schedule council for the *next* day.
-        petition.councilVoteDay = absoluteDay + 1;
+        petition.councilVoteDay = day + 1;
         // No extra log here — the population-vote log already hints that
         // the matter will be put before the council after a pause.
       }
@@ -1168,7 +1317,7 @@ export function handleTownHallDayTick(state, absoluteDay, hooks = {}) {
       typeof petition.popularSupportPercent === "number" &&
       petition.popularApproved &&
       typeof petition.councilVoteDay === "number" &&
-      absoluteDay >= petition.councilVoteDay
+      day >= petition.councilVoteDay
     ) {
       const popSupport = petition.popularSupportPercent;
       const popApproved = petition.popularApproved;
@@ -1183,7 +1332,7 @@ export function handleTownHallDayTick(state, absoluteDay, hooks = {}) {
           popSupport,
           popApproved
         );
-        const yes = Math.random() < chance;
+        const yes = rngFloat(null, 'townHall.voteCitizen') < chance;
         votes.push({ member, yes });
       });
 
@@ -1197,7 +1346,7 @@ export function handleTownHallDayTick(state, absoluteDay, hooks = {}) {
         approved,
         yesVotes,
         noVotes,
-        resolvedOnDay: absoluteDay,
+        resolvedOnDay: day,
         popularApproved: popApproved,
         popularSupportPercent: popSupport
       };
@@ -1237,10 +1386,10 @@ export function handleTownHallDayTick(state, absoluteDay, hooks = {}) {
       effects &&
       effects.petitionId &&
       typeof effects.expiresOnDay === "number" &&
-      absoluteDay <= effects.expiresOnDay;
+      day <= effects.expiresOnDay;
 
     if (!hasActiveDecree) {
-      const roll = Math.random();
+      const roll = rngFloat(null, 'townHall.autoPetitionRoll');
       const councilPetitionChance = 0.06; // ~6% per in-game day
 
       if (roll < councilPetitionChance && council.length) {
@@ -1251,7 +1400,7 @@ export function handleTownHallDayTick(state, absoluteDay, hooks = {}) {
 
         const voteDelay = randInt(MIN_VOTE_DELAY, MAX_VOTE_DELAY);
 
-        const today = absoluteDay;
+        const today = day;
         hall.currentPetition = {
           petitionId,
           submittedBy: "council:" + sponsor.id,

@@ -9,6 +9,7 @@
 //   with compounding and show a summary of what happened.
 
 import { getVillageEconomySummary } from "./villageEconomy.js";
+import { sanitizeGold } from "../../Systems/safety.js";
 
 const BANK_DAYS_PER_WEEK = 7;
 
@@ -16,12 +17,10 @@ const BANK_DAYS_PER_WEEK = 7;
 
 function getCurrentDayIndex(state) {
   // timeSystem.js maintains time.dayIndex as "absolute day" already.
-  // If for some reason it's missing, treat as day 0.
+  // If it's missing or corrupted (NaN/Infinity/negative), treat as day 0.
   const t = state.time;
-  if (t && typeof t.dayIndex === "number") {
-    return t.dayIndex;
-  }
-  return 0;
+  const raw = t && typeof t.dayIndex === "number" ? Number(t.dayIndex) : 0;
+  return Number.isFinite(raw) && raw >= 0 ? Math.floor(raw) : 0;
 }
 
 // --- Bank state ------------------------------------------------------------
@@ -36,12 +35,30 @@ function initBankState(state) {
       lastInterestDay: null // last calendar day (time.dayIndex) interest was applied
     };
   } else {
-    if (typeof state.bank.balance !== "number") state.bank.balance = 0;
-    if (typeof state.bank.investments !== "number") state.bank.investments = 0;
-    if (!state.bank.loan) state.bank.loan = null;
-    if (typeof state.bank.visits !== "number") state.bank.visits = 0;
-    if (typeof state.bank.lastInterestDay !== "number") {
+    state.bank.balance = sanitizeGold(state.bank.balance);
+    state.bank.investments = sanitizeGold(state.bank.investments);
+    if (!state.bank.loan) {
+      state.bank.loan = null;
+    } else {
+      // sanitize existing loan
+      state.bank.loan.balance = sanitizeGold(state.bank.loan.balance);
+      const br = Number(state.bank.loan.baseRate);
+      state.bank.loan.baseRate = Number.isFinite(br) ? br : 0;
+    }
+    if (!Number.isFinite(Number(state.bank.visits))) state.bank.visits = 0;
+    // NOTE: lastInterestDay may be:
+    //  - null/undefined (uninitialized)
+    //  - a number (including negative values in dev/smoke scenarios)
+    //  - a numeric string (legacy saves)
+    // We keep null/undefined as-is so the interest engine can treat it as
+    // "first ever run". We preserve negative values to allow backfilling
+    // in controlled scenarios (e.g., automated tests).
+    const rawLid = state.bank.lastInterestDay;
+    if (rawLid === null || typeof rawLid === "undefined") {
       state.bank.lastInterestDay = null;
+    } else {
+      const lid = Number(rawLid);
+      state.bank.lastInterestDay = Number.isFinite(lid) ? Math.floor(lid) : null;
     }
   }
   return state.bank;
@@ -67,24 +84,27 @@ function getCurrentRates(state) {
   if (f < 0) f = 0;
   if (f > 1) f = 1;
 
-  // Base curves:
+  // Base curves (BEFORE tier/decree modifiers):
   // - Better economy (f high) → better deposit/investment rates, lower loan rates
   // - Worse economy (f low) → weak deposit returns, punishing loan interest
-  let depositRate = 0.002 + f * 0.010;    // 0.2% .. 1.2% per week
-  let investmentRate = 0.004 + f * 0.026; // 0.4% .. 3.0% per week
-  let loanRate = 0.040 + (1 - f) * 0.060; // 4.0% .. 10.0% per week
+  const baseDepositRate = 0.002 + f * 0.010;    // 0.2% .. 1.2% per week
+  const baseInvestmentRate = 0.004 + f * 0.026; // 0.4% .. 3.0% per week
+  const baseLoanRate = 0.040 + (1 - f) * 0.060; // 4.0% .. 10.0% per week
 
   // Tier tweaks (from villageEconomy tiers)
+  let tierMultDeposit = 1;
+  let tierMultInvestment = 1;
+  let tierMultLoan = 1;
   if (tier.id === "struggling") {
     // Struggling: savings are weak, loans harsh
-    depositRate *= 0.7;
-    investmentRate *= 0.9;
-    loanRate *= 1.2;
+    tierMultDeposit = 0.7;
+    tierMultInvestment = 0.9;
+    tierMultLoan = 1.2;
   } else if (tier.id === "thriving") {
     // Thriving: village rewards savers/investors, loans a bit kinder
-    depositRate *= 1.3;
-    investmentRate *= 1.1;
-    loanRate *= 0.8;
+    tierMultDeposit = 1.3;
+    tierMultInvestment = 1.1;
+    tierMultLoan = 0.8;
   }
 
   // Town Hall / council petitions can place a short-lived modifier on
@@ -92,8 +112,13 @@ function getCurrentRates(state) {
   // while it is active for the current in-game day.
   const g = state.government;
   const t = state.time;
-  const today =
-    t && typeof t.dayIndex === "number" ? t.dayIndex : 0;
+  const todayRaw = t && typeof t.dayIndex === "number" ? Number(t.dayIndex) : 0;
+  const today = Number.isFinite(todayRaw) && todayRaw >= 0 ? Math.floor(todayRaw) : 0;
+
+  let decreeMultDeposit = 1;
+  let decreeMultInvestment = 1;
+  let decreeMultLoan = 1;
+  let decreeTitle = null;
 
   if (g && g.townHallEffects) {
     const eff = g.townHallEffects;
@@ -102,18 +127,16 @@ function getCurrentRates(state) {
       : null;
 
     if (expiresOnDay != null && today <= expiresOnDay) {
+      decreeTitle = eff.title || eff.petitionId || null;
       if (typeof eff.depositRateMultiplier === "number") {
-        depositRate *= eff.depositRateMultiplier;
+        decreeMultDeposit = eff.depositRateMultiplier;
       }
       if (typeof eff.investmentRateMultiplier === "number") {
-        investmentRate *= eff.investmentRateMultiplier;
+        decreeMultInvestment = eff.investmentRateMultiplier;
       }
       if (typeof eff.loanRateMultiplier === "number") {
-        loanRate *= eff.loanRateMultiplier;
+        decreeMultLoan = eff.loanRateMultiplier;
       }
-    } else if (expiresOnDay != null && today > expiresOnDay) {
-      // Effect has expired; clean it up so old saves don't carry junk forever.
-      delete g.townHallEffects;
     }
   }
 
@@ -125,10 +148,38 @@ function getCurrentRates(state) {
     return r;
   };
 
+  const depositRate = clampRate(baseDepositRate * tierMultDeposit * decreeMultDeposit);
+  const investmentRate = clampRate(baseInvestmentRate * tierMultInvestment * decreeMultInvestment);
+  const loanRate = clampRate(baseLoanRate * tierMultLoan * decreeMultLoan);
+
   return {
-    depositRate: clampRate(depositRate),
-    investmentRate: clampRate(investmentRate),
-    loanRate: clampRate(loanRate)
+    depositRate,
+    investmentRate,
+    loanRate,
+    breakdown: {
+      avgScore: Math.round(avgScore * 10) / 10,
+      economyFactor: Math.round(f * 1000) / 1000,
+      tierId: tier?.id || null,
+      tierName: tier?.name || null,
+      base: {
+        deposit: baseDepositRate,
+        investment: baseInvestmentRate,
+        loan: baseLoanRate
+      },
+      tierMultipliers: {
+        deposit: tierMultDeposit,
+        investment: tierMultInvestment,
+        loan: tierMultLoan
+      },
+      decree: {
+        title: decreeTitle,
+        multipliers: {
+          deposit: decreeMultDeposit,
+          investment: decreeMultInvestment,
+          loan: decreeMultLoan
+        }
+      }
+    }
   };
 }
 
@@ -158,6 +209,9 @@ function applyInterest(state, addLog) {
   const bank = initBankState(state);
   bank.visits += 1;
 
+  // addLog is optional; guard so applyInterest can be reused safely.
+  const log = typeof addLog === "function" ? addLog : null;
+
   const currentDay = getCurrentDayIndex(state);
   const { depositRate, investmentRate, loanRate } = getCurrentRates(state);
 
@@ -168,8 +222,21 @@ function applyInterest(state, addLog) {
   let loanInterestTotal = 0;
 
   // First-ever run: initialize the reference day and bail.
-  if (typeof bank.lastInterestDay !== "number") {
+  // (Treat null/undefined as uninitialized; do not coerce with Number(null) -> 0.)
+  if (bank.lastInterestDay === null || typeof bank.lastInterestDay === "undefined" || !Number.isFinite(Number(bank.lastInterestDay))) {
     bank.lastInterestDay = currentDay;
+
+    // Patch/migration quality-of-life: give a one-time note so it doesn't feel "broken".
+    // This runs the first time the player opens the bank after the weekly-interest system exists.
+    if (!bank._weeklyInterestInitialized) {
+      bank._weeklyInterestInitialized = true;
+      if (log) {
+        log(
+          "The bank updates its ledgers to weekly interest cycles.",
+          "system"
+        );
+      }
+    }
     return {
       anyChange: false,
       weeksApplied: 0,
@@ -178,10 +245,36 @@ function applyInterest(state, addLog) {
     };
   }
 
-  const daysDelta = currentDay - bank.lastInterestDay;
+  // Defensive: if the calendar ever goes backwards (save rollback, dev tools, etc.),
+  // don't strand the interest engine in a negative delta.
+  let daysDelta = currentDay - Number(bank.lastInterestDay);
+  if (!Number.isFinite(daysDelta)) {
+    bank.lastInterestDay = currentDay;
+    daysDelta = 0;
+  }
+  if (daysDelta < 0) {
+    bank.lastInterestDay = currentDay;
+    daysDelta = 0;
+    if (!bank._weeklyInterestRecalibrated) {
+      bank._weeklyInterestRecalibrated = true;
+      if (log) {
+        log("The bank recalibrates its ledgers after a calendar discrepancy.", "system");
+      }
+    }
+  }
 
   if (daysDelta >= BANK_DAYS_PER_WEEK) {
     weeksApplied = Math.floor(daysDelta / BANK_DAYS_PER_WEEK);
+  }
+
+  // Defensive cap: if something corrupted lastInterestDay far into the past,
+  // don't explode balances with thousands of compounded weeks.
+  const MAX_WEEKS_BACKLOG = 260; // ~5 in-game years of weekly ticks
+  const remainderDays = daysDelta >= 0 ? (daysDelta % BANK_DAYS_PER_WEEK) : 0;
+  let backlogCapped = false;
+  if (weeksApplied > MAX_WEEKS_BACKLOG) {
+    weeksApplied = MAX_WEEKS_BACKLOG;
+    backlogCapped = true;
   }
 
   // No full weeks passed -> just return current rates snapshot
@@ -229,20 +322,20 @@ function applyInterest(state, addLog) {
   }
 
   // Aggregate logs so you don't get spammed if many weeks passed
-  if (savingsInterestTotal > 0) {
-    addLog(
+  if (log && savingsInterestTotal > 0) {
+    log(
       `Since your last banking week, your savings earn ${savingsInterestTotal} gold in interest.`,
       "system"
     );
   }
-  if (investInterestTotal > 0) {
-    addLog(
+  if (log && investInterestTotal > 0) {
+    log(
       `Since your last banking week, your investments yield ${investInterestTotal} gold in returns.`,
       "good"
     );
   }
-  if (loanInterestTotal > 0) {
-    addLog(
+  if (log && loanInterestTotal > 0) {
+    log(
       `Since your last banking week, interest adds ${loanInterestTotal} gold to your outstanding loan.`,
       "danger"
     );
@@ -250,8 +343,23 @@ function applyInterest(state, addLog) {
 
   // Move lastInterestDay forward by the number of *whole* weeks we consumed.
   // This preserves any "leftover" days towards the next week.
+  // If we capped the backlog, snap the reference point to avoid repeated
+  // re-application on every bank visit.
   const daysConsumed = weeksApplied * BANK_DAYS_PER_WEEK;
+  bank.lastInterestDay = Number(bank.lastInterestDay);
+  if (!Number.isFinite(bank.lastInterestDay)) bank.lastInterestDay = currentDay;
   bank.lastInterestDay += daysConsumed;
+
+  if (backlogCapped) {
+    bank.lastInterestDay = currentDay - remainderDays;
+    if (log && !bank._weeklyInterestBacklogCapped) {
+      bank._weeklyInterestBacklogCapped = true;
+      log(
+        "The bank's ledgers are unusually old; weekly interest has been capped to protect account stability.",
+        "system"
+      );
+    }
+  }
 
   return {
     anyChange,
@@ -271,6 +379,7 @@ export function openBankModalImpl({
   state,
   openModal,
   addLog,
+  recordInput,
   updateHUD,
   saveGame
 }) {
@@ -286,6 +395,9 @@ export function openBankModalImpl({
     totals,
     rates
   } = applyInterest(state, addLog);
+
+  // Pull a fresh rate snapshot (with a breakdown) for UI explanation.
+  const rateExplain = getCurrentRates(state);
 
   // Pull the current village economy summary for display
   const econSummary = getVillageEconomySummary(state);
@@ -335,6 +447,56 @@ export function openBankModalImpl({
       `Investments: ${formatPercent(rates.investmentRate)}, ` +
       `Loans: ${formatPercent(rates.loanRate)}.`;
     econRow.appendChild(rateLine);
+
+    // --- Rate breakdown -------------------------------------------------
+    // Players should be able to see *why* the bank offers these numbers.
+    const bd = rateExplain?.breakdown;
+    if (bd) {
+      const details = document.createElement('details');
+      details.style.marginTop = '6px';
+
+      const summaryEl = document.createElement('summary');
+      summaryEl.textContent = 'Rate breakdown';
+      summaryEl.style.cursor = 'pointer';
+      summaryEl.style.userSelect = 'none';
+      details.appendChild(summaryEl);
+
+      const list = document.createElement('ul');
+      list.style.margin = '6px 0 0 1rem';
+      list.style.padding = '0';
+      list.style.fontSize = '0.78rem';
+
+      const tierName = bd.tierName || 'Normal';
+      const decreeTitle = bd.decree?.title ? String(bd.decree.title) : null;
+
+      const lineFor = (label, base, tierMult, decreeMult, final) => {
+        const li = document.createElement('li');
+        const parts = [];
+        parts.push(`${label}: base ${formatPercent(base)}`);
+        if (tierMult !== 1) parts.push(`${tierName} ×${tierMult}`);
+        if (decreeMult !== 1) parts.push(`${decreeTitle || 'Decree'} ×${decreeMult}`);
+        parts.push(`= ${formatPercent(final)}`);
+        li.textContent = parts.join(' · ');
+        return li;
+      };
+
+      list.appendChild(
+        lineFor('Savings', bd.base.deposit, bd.tierMultipliers.deposit, bd.decree.multipliers.deposit, rateExplain.depositRate)
+      );
+      list.appendChild(
+        lineFor('Investments', bd.base.investment, bd.tierMultipliers.investment, bd.decree.multipliers.investment, rateExplain.investmentRate)
+      );
+      list.appendChild(
+        lineFor('Loans', bd.base.loan, bd.tierMultipliers.loan, bd.decree.multipliers.loan, rateExplain.loanRate)
+      );
+
+      const liMeta = document.createElement('li');
+      liMeta.textContent = `Economy health score: ${bd.avgScore}/100 (used to shape base rates).`;
+      list.appendChild(liMeta);
+
+      details.appendChild(list);
+      econRow.appendChild(details);
+    }
 
     if (anyChange) {
       const note = document.createElement("p");
@@ -510,6 +672,8 @@ export function openBankModalImpl({
         return;
       }
 
+      try { recordInput?.('bank.deposit', { amt }) } catch (_) {}
+
       p.gold -= amt;
       bank.balance += amt;
       addLog(
@@ -542,6 +706,8 @@ export function openBankModalImpl({
         addLog("You do not have that much in savings.", "system");
         return;
       }
+
+      try { recordInput?.('bank.withdraw', { amt }) } catch (_) {}
 
       bank.balance -= amt;
       p.gold += amt;
@@ -611,6 +777,8 @@ export function openBankModalImpl({
         addLog("You do not have that much gold.", "system");
         return;
       }
+
+      try { recordInput?.('bank.invest', { amt }) } catch (_) {}
 
       p.gold -= amt;
       bank.investments += amt;
