@@ -2,263 +2,584 @@
 
 A single‑page, browser RPG + village simulation where **daily decisions** (resting, shopping, banking, local politics, and tavern games) ripple through a living settlement — and where combat, loot, and quests feed back into that world loop.
 
-> Current patch: **v1.2.70 — The Blackbark Oath — Hardening & Bug Squash**  
-> Changelog: open the in‑game **Changelog** modal.
+> **Current patch:** v1.2.70 — *The Blackbark Oath — Hardening & Bug Squash*  
+> **In‑game changelog:** open **Changelog** from the main menu.
+
+This repository is intentionally **no-build** and **static-host friendly**:
+
+- Runs entirely in the browser (no backend).
+- Uses **native ES modules** (no bundler required).
+- Saves persist via `localStorage` (single-player, device-local).
+- Includes **Developer Cheats / QA tools** (Smoke Tests, Scenario Runner, Bug Report bundle) intended for testing and balancing.
 
 ---
 
-## What this project is
+## Table of contents
 
-Emberwood is built like a **self‑contained game “appliance”**:
-- Runs entirely in the browser (no backend required).
-- Uses **native ES modules** for code organization.
-- Saves persist to the local browser via `localStorage`.
-- Includes an optional **Developer Cheats / QA** menu for testing and reproducibility.
-
-It’s designed to be easy to iterate on: most systems are isolated into small modules (economy, bank, town hall, RNG, time, loot, quests) with a single coordinating “game” module.
+- [Quick start](#quick-start)
+- [Deploy to GitHub Pages](#deploy-to-github-pages)
+- [Project layout](#project-layout)
+- [Architecture overview](#architecture-overview)
+- [Gameplay systems](#gameplay-systems)
+  - [State model & save schema](#state-model--save-schema)
+  - [Time system & daily ticks](#time-system--daily-ticks)
+  - [RNG & determinism](#rng--determinism)
+  - [Combat](#combat)
+  - [Abilities & effects](#abilities--effects)
+  - [Status effects & synergies](#status-effects--synergies)
+  - [Elements, affinities & resistances](#elements-affinities--resistances)
+  - [Classes, resources & progression](#classes-resources--progression)
+  - [Talents](#talents)
+  - [Items, inventory & equipment](#items-inventory--equipment)
+  - [Loot generation](#loot-generation)
+  - [Enemies, rarity & affixes](#enemies-rarity--affixes)
+  - [Quests](#quests)
+  - [Village simulation](#village-simulation)
+  - [Logging & UI](#logging--ui)
+  - [Diagnostics & QA tools](#diagnostics--qa-tools)
+- [Adding content](#adding-content)
+- [Testing & debugging](#testing--debugging)
+- [Contributing guidelines](#contributing-guidelines)
+- [Versioning & releases](#versioning--releases)
+- [License](#license)
 
 ---
 
 ## Quick start
 
-### Run locally (recommended)
+### Run locally
 
-Because the project uses ES modules, it should be served via a local web server. Opening `index.html` via `file://` can block imports on many browsers (and is especially unreliable on mobile Safari).
+Because Emberwood uses ES modules, you should run it from a local web server.
 
 #### Python
+
 ```bash
 python -m http.server 8000
 ```
 
 #### Node
+
 ```bash
 npx serve .
 ```
 
-Open:
-- `http://localhost:8000`
+Open `http://localhost:8000`.
 
-### Host it (static hosting)
+### iOS / `file://` note
 
-Any static host works (GitHub Pages, Netlify, etc.). The project does not require server-side logic.
-
----
-
-## Project layout (Patch 1.2.70)
-
-The codebase is now organized around *purpose* (boot vs engine vs systems vs locations) to make large refactors safer.
-
-- `js/boot/` — early boot scripts (version selection, acceptance gate, boot loader overlay, optional module preflight)
-- `js/shared/` — dependency-light utilities shared by boot + game
-- `js/game/engine/` — engine entry + engine-only helpers (perf, storage diagnostics)
-- `js/game/combat/` — combat runtime helpers (post-turn sequencing, ability effects)
-- `js/game/data/` — large data tables (abilities, talents, etc.) separated from engine orchestration
-- `js/game/systems/` — core gameplay systems (time, RNG, loot, safety, validation, etc.)
-- `js/game/systems/enemy/` — enemy builder/rarity/affix pipeline
-- `js/game/locations/village/` — village modules (bank, merchant, tavern, town hall, economy, population)
-- `js/game/quests/` — quest definitions + progression pipeline
-- `js/game/changelog/` — in-game changelog data
-- `assets/audio/` — audio assets
-
-## How to play (game loop)
-
-1. **Create a hero** (name, class, difficulty).
-2. Start in **Emberwood Village**. Typical day:
-   - **Merchant**: buy/sell, prices respond to the economy
-   - **Bank**: deposit/withdraw, loans, investment behavior and periodic interest rules
-   - **Town Hall**: petitions & decrees that temporarily affect rates/costs
-   - **Tavern**: rest (advances time) + gambling mini‑games
-3. **Explore** into nearby zones to trigger encounters, earn loot, and progress quests.
-4. **Resting** is the main “world tick”:
-   - advances the in‑game day / day‑part
-   - runs daily simulation hooks (economy, government, population, merchant)
-   - expires decrees and updates timing-dependent systems
-
-Progress is saved locally on this device/browser.
+The project includes extra guards for iOS Safari, but **serving from HTTP is still recommended**.
+Loading modules from `file://` can be inconsistent and can surface stricter module semantics.
 
 ---
 
-## Core systems overview
+## Deploy to GitHub Pages
 
-### Combat
-- Turn‑based battles (player vs enemy AI).
-- Enemies can have **templates** that define stats, moves, and behaviors.
-- Critical hit behavior includes:
-  - normal crit flow
-  - QA toggles (always crit / never crit) for balance testing
-- “God Mode” and other dev toggles exist strictly for testing.
+Emberwood is a static site. GitHub Pages works well.
 
-### Classes, resources, and spell systems
-- Classes define a hero’s identity and (where applicable) resource system.
-- Spellcasting support is class-aware (only eligible classes should see spell UI).
-- The engine includes safety guards to prevent NaN/Infinity cascades from corrupting runs.
+### Option A: Deploy from the repo root
 
-### Loot and economy pressure
-- Loot generation produces items with varying power/rarity.
-- Merchant prices can react to economy drift and events.
-- Sell value/spread logic is centralized so changes propagate consistently.
+1. In GitHub: **Settings → Pages**
+2. **Build and deployment → Source:** “Deploy from a branch”
+3. Select branch (e.g. `main`) and folder `/ (root)`
+4. Save
 
-### Time and daily ticks
-Time is tracked with:
-- `dayIndex` (integer day count)
-- `partIndex` / `part` (day-part state)
+### Option B: Deploy from `/docs`
 
-A centralized daily tick runner keeps **rest, explore, and other day advances** consistent and prevents “double tick” or “missed tick” bugs.
+If you prefer keeping source separate from the site output:
 
-### Village simulation
-The village loop is modeled as several stateful subsystems:
-- **Economy** (tiers/summaries, derived costs like rest price and merchant price multipliers)
-- **Population** (mood drift and summary)
-- **Government / Town Hall** (petitions and time-limited decrees)
-- **Merchant** (stock/restock hooks)
+1. Move `index.html`, `style.css`, `assets/`, `js/` into `/docs`
+2. GitHub: **Settings → Pages → Source:** `main` + `/docs`
+
+### Pathing
+
+All scripts/styles use **relative paths**, so Pages works whether deployed at the root domain or under a repository subpath.
 
 ---
 
-## Developer Cheats / QA menu
+## Project layout
 
-Developer cheats are intended for **testing only**.
-
-### Enabling
-Enable on the **Create Hero** screen via **“Enable developer cheats”**. When enabled, a **Cheat Menu** button becomes available in‑game for that character.
-
-### What it’s for
-- Reproducing issues quickly (teleport, force an enemy, grant items).
-- Creating deterministic bug reports (seeded RNG, RNG logging).
-- Sanity checks (smoke tests, state audit).
-- Capturing **bug report JSON** bundles suitable for sharing.
-
-### QA tools you’ll see
-- Deterministic RNG toggle + seed set
-- RNG logging toggle
-- Smoke tests runner
-- “Copy Bug Report (JSON)” bundle builder
-- Spawn & Teleport utilities
-- Simulation/time fast-forward (runs daily ticks)
-
-> Cheats modify the **active save immediately**.
-
----
-
-## Saving, schema, and persistence
-
-### Storage
-- Saves are stored in `localStorage` under versioned keys.
-- Storage is wrapped with “safe” helpers so private mode / quota failures don’t crash the game.
-
-### State shape (high level)
-The game uses a single top‑level `state` object. Common buckets include:
-- `player`: stats, level, hp/resource, inventory, gear, class configuration
-- `time`: day index + day part
-- `flags`: debug/progression toggles (dev cheats, god mode, crit mode, etc.)
-- `quests`: quest state + flags/bindings
-- `village`: economy + population state
-- `government`: town hall / decree state
-- `bank`: deposits/loans/investment timers
-- `log`: structured log entries and filters
-- `ui`: modal state and UI routing helpers
-
-### Troubleshooting saves
-If saves don’t persist:
-- Browser storage may be blocked (private mode / iOS limitations).
-- Quota may be exceeded.
-- The game will attempt to log a warning and preserve a breadcrumb for debugging.
-
----
-
-## Project structure
+Top level:
 
 ```
-/
-├─ index.html
-├─ bootstrap.js
-├─ userAcceptance.js
-├─ style.css
+Emberwood_patch_1.2.70_core_systems/
+  index.html
+  style.css
+  assets/
+  js/
+  README.md
+```
 
+JavaScript modules:
 
-### Key entry points
-- **`index.html`**: UI shell + modal host.
-- **`bootstrap.js`**: version selector/label + module bootstrapping.
-- **`js/game/engine/engine.js`**: main game orchestration (state, UI wiring, combat, saves, cheat menu).
-- **Systems modules**: pure-ish logic for time, RNG, validation, loot, government.
-- **Village modules**: simulation + modal UI implementations.
+- `js/boot/` — early boot scripts
+  - `bootstrap.js` — boot sequencing + optional preflight checks
+  - `bootLoader.js` — boot overlay + timing
+  - `userAcceptance.js` — acceptance gate / user prompt logic
+  - `lib/safeStorage.js` — minimal boot-safe storage wrapper
+
+- `js/shared/` — dependency-light utilities shared by boot + game
+  - `storage/safeStorage.js`
+
+- `js/game/engine/` — orchestration, persistence, UI wiring
+  - `engine.js` — main entry (state orchestration, gameplay flow)
+  - `saveManager.js` — save/load + migrations + save-slot helpers
+  - `storageRuntime.js` — runtime storage diagnostics / safe wrappers
+  - `perf.js` — performance capture helpers
+  - `ui/`
+    - `uiRuntime.js` — screen switching, modal runtime, log renderer helpers
+    - `uiBindings.js` — DOM event wiring (menu buttons, HUD gestures, chips)
+  - `devtools/`
+    - `diagnosticsUI.js` — Smoke Tests modal UI + dev pill visibility
+
+- `js/game/data/` — large data tables
+  - `abilities.js`, `items.js`, `talents.js`
+
+- `js/game/combat/` — combat math + runtime helpers
+  - `math.js` — damage/heal calculations, crit handling, mitigation
+  - `statusEngine.js` — status ticking / application / stacking rules
+  - `abilityEffects.js` — ability implementations
+  - `postTurnSequence.js` — end-of-turn sequencing
+
+- `js/game/systems/` — core systems (mostly logic-focused)
+  - `timeSystem.js` — day/day‑part handling + normalization
+  - `rng.js` — deterministic RNG option + logging
+  - `lootGenerator.js` — item generation pipeline
+  - `kingdomGovernment.js` — king behavior + decree logic
+  - `assertState.js`, `safety.js` — invariants and guardrails
+  - `enemy/` — enemy generation pipeline (templates/rarity/affixes)
+
+- `js/game/locations/village/` — village modules
+  - `merchant.js`, `bank.js`, `townHall.js`, `tavern.js`, `tavernGames.js`
+  - `villageEconomy.js`, `villagePopulation.js`
+
+- `js/game/quests/` — quest system
+  - `questDefs.js`, `questDefaults.js`, `questBindings.js`
+  - `questSystem.js`, `questTriggerRegistry.js`
+
+- `js/game/changelog/` — in-game changelog data
 
 ---
 
-## Adding content (practical guide)
+## Architecture overview
 
-### Enemies
-Enemy behavior is driven by templates (commonly exposed as `ENEMY_TEMPLATES`).
-Typical workflow:
-1. Add/modify a template definition.
-2. Use the Cheat Menu → **Spawn & Teleport** → **Start Battle** with the `templateId`.
-3. Iterate on stats/behavior until it feels right.
+Emberwood is designed around a single **authoritative game state object** plus a set of systems that read/update it.
 
-### Items
-Items are driven by item definitions (commonly exposed as `ITEM_DEFS`).
-Typical workflow:
-1. Add a new item id + properties.
-2. Use Cheat Menu → **Give Item** to grant the item by id.
-3. Confirm:
-   - inventory display
-   - equip/sell behavior
-   - loot generator interaction (if applicable)
+### Boot sequence
+
+1. `js/boot/bootstrap.js` runs first.
+2. A boot overlay is shown and basic diagnostics are captured.
+3. If required, user acceptance is handled (`userAcceptance.js`).
+4. The game engine entry (`js/game/engine/engine.js`) is imported.
+
+### Engine orchestration
+
+`engine.js` coordinates:
+
+- Building/initializing state
+- Calling **saveManager** for load/save/migrate
+- Wiring UI via `uiRuntime` + `uiBindings`
+- Delegating to systems (time, RNG, loot, quests, village)
+- Delegating to combat modules during fights
+
+Key refactors in 1.2.70:
+
+- **Save/migrations** extracted to `saveManager.js`
+- **UI runtime + bindings** extracted to `uiRuntime.js` / `uiBindings.js`
+- **Diagnostics/QA UI** extracted to `devtools/diagnosticsUI.js`
+
+These extractions reduce circular imports and avoid iOS `file://` pitfalls (temporal dead zones, read‑only imported bindings).
+
+---
+
+## Gameplay systems
+
+### State model & save schema
+
+The game uses one top-level `state` object. The save payload is a normalized subset of runtime state (plus metadata).
+
+Common state buckets:
+
+- `player`: stats, level, HP/resource, inventory, equipment, class config
+- `time`: day index + day part
+- `combat`: current encounter runtime (only present when in combat)
+- `quests`: quest progression data
+- `village`: economy + population state
+- `government`: decrees/petitions/king state
+- `bank`: deposits/loans/interest timing
+- `flags`: toggles (dev cheats, deterministic RNG, debug modes)
+- `log`: structured log entries + filters
+- `ui`: current screen, modal state, UI toggles
+
+Persistence:
+
+- Stored in `localStorage` using safe wrappers (private mode / quota failures are guarded).
+- Multiple save slots are supported through an index + per-slot blob keys.
+
+Migration:
+
+- `saveManager.js` applies ordered migrations when loading.
+- Migrations normalize missing/older fields and keep forward-compat safety (unknown keys are tolerated).
+
+### Time system & daily ticks
+
+`timeSystem.js` tracks time as **day index** + **day part**.
+
+- `normalizeTime()` clamps time into valid ranges.
+- `advanceTime()` advances day-part and wraps to the next day as needed.
+
+Daily ticks:
+
+When time advances in ways that represent a “world tick” (resting, end-of-day), the engine runs a deterministic daily pipeline:
+
+- Economy adjustments
+- Merchant restock + pruning
+- Decree expiration / effects
+- Bank interest timing
+- Population mood drift
+
+There is an idempotence guard to prevent “double tick” bugs.
+
+### RNG & determinism
+
+`rng.js` supports:
+
+- Normal RNG (non-deterministic)
+- Deterministic RNG for reproducing bugs
+- Optional RNG logging (capped)
+
+This is used across loot rolls, enemy generation, and combat variance.
+
+### Combat
+
+Combat is turn-based and supports single-enemy and multi-enemy battles.
+
+Core components:
+
+- `combat/math.js`: damage/heal computations, crit, mitigation
+- `combat/statusEngine.js`: status application and ticking
+- `combat/abilityEffects.js`: ability implementations (damage, heal, buffs)
+- `combat/postTurnSequence.js`: end-of-turn cleanup, status expiry, intent ticking
+
+Key mechanics:
+
+- **Enemy intent**: enemies can “wind up” actions that execute after a countdown.
+- **Interrupt**: player can interrupt certain intents (resource cost + posture interaction).
+- **Posture**: posture break disrupts enemy intent.
+- **AoE**: group abilities apply to all enemies and now correctly resolve multi-enemy defeats.
+
+Safety:
+
+- Damage/heal values are clamped and validated to prevent NaN/Infinity cascades.
+- Combat runtime fields are repaired/initialized during load for forward compatibility.
+
+### Abilities & effects
+
+Abilities are defined in `js/game/data/abilities.js` and implemented in `combat/abilityEffects.js`.
+
+Each ability specifies:
+
+- Cost (resource)
+- Targeting (self, enemy, group)
+- Classification (physical or elemental)
+- Effect pipeline (damage/heal + status application)
+
+Effects are kept separate from UI so they can be tested deterministically.
+
+### Status effects & synergies
+
+Status effects are handled by `statusEngine.js`.
+
+Typical status fields:
+
+- `duration` (turns)
+- `stacks` or magnitude (where applicable)
+- Optional per-turn tick behavior
+
+Synergies (examples):
+
+- Bleed + Fire can ignite (Burning)
+- Chilled + Physical can Shatter and consume Chill
+
+### Elements, affinities & resistances
+
+Damage classification:
+
+- Physical or elemental
+- Elemental types normalized via helpers to avoid mismatched keys
+
+Enemies:
+
+- Can have affinity multipliers (weakness/resistance)
+- Can have flat resist percentages
+
+Players:
+
+- Can gain elemental bonuses/resists from gear and talents
+- Elemental resist reduces incoming elemental damage
+
+The combat math stacks affinity and resist effects multiplicatively and avoids printing misleading “0% resist” breakdown lines.
+
+### Classes, resources & progression
+
+Classes define:
+
+- Base stats and growth
+- Resource type (e.g., mana)
+- Unlock tables (abilities/spells at specific levels)
+
+Progression systems:
+
+- Leveling grants skill points and talent points.
+- Cheats can grant max level and auto-distribute skill points (testing).
+
+### Talents
+
+Talents are defined in `js/game/data/talents.js`.
+
+Talents can:
+
+- Modify derived stats immediately
+- Add elemental bonuses/resists
+- Change combat thresholds (e.g., rhythm mechanics)
+- Add conditional passives
+
+Talent changes are applied via stat recomputation to ensure idempotence.
+
+### Items, inventory & equipment
+
+Items are defined in `js/game/data/items.js`.
+
+Inventory rules:
+
+- Stackable items (e.g., potions) normalize to a `quantity` integer.
+- Equipment does **not** stack; each piece is an instance.
+- Equip/unequip updates derived stats and guards against double-application.
+- Selling equipped gear clears the slot and uses centralized `getSellValue`.
+
+Traits:
+
+- Equipment can carry traits that trigger on-hit, on-kill, etc.
+
+### Loot generation
+
+`lootGenerator.js` creates items with:
+
+- Weighted rarity rolls
+- Deterministic results under seeded RNG
+- Safety guarantees (finite stats, normalized elements)
+
+Loot stress tests ensure the generator remains stable under large batches.
+
+### Enemies, rarity & affixes
+
+Enemy creation is pipeline-driven in `systems/enemy/`:
+
+- `rarity.js`: rarity selection & reward scaling
+- `elite.js`: elite/boss rules
+- `affixes.js`: affix selection and behavior flags
+- `builder.js`: builds a runtime enemy instance from a template
+- `display.js`: naming and presentation helpers
+
+Enemies can have:
+
+- Elemental affinities/resists
+- Affixes (thorns, vampiric, regenerating, frozen, etc.)
+- Difficulty-scaled stats
 
 ### Quests
-Quests are defined in `js/game/quests/`:
-- definitions (`questDefs.js`)
-- default state/flags (`questDefaults.js`)
-- bindings/side effects (`questBindings.js`)
 
-Add a quest by:
-1. Defining it in `questDefs.js`
-2. Providing default state and flags
-3. Binding triggers to world actions (explore, battles, visiting locations, etc.)
+The quest system is split across:
+
+- `questDefs.js`: quest definitions (steps, requirements)
+- `questDefaults.js`: default state and flags
+- `questBindings.js`: side effects and trigger wiring
+- `questTriggerRegistry.js`: registry of trigger types
+- `questSystem.js`: lifecycle helpers (init/start/advance/complete)
+
+Design goal: keep quests data-driven, with bindings used only for world integration.
+
+### Village simulation
+
+Village modules live in `js/game/locations/village/`.
+
+Core sub-systems:
+
+- **Merchant (`merchant.js`)**: stock, buy/sell, restock guards, price behavior
+- **Economy (`villageEconomy.js`)**: derived multipliers and cost models
+- **Population (`villagePopulation.js`)**: mood drift and summaries
+- **Bank (`bank.js`)**: deposits/withdrawals, loans, weekly interest timing
+- **Town Hall (`townHall.js`)**: petitions and time-limited decrees
+- **Tavern (`tavern.js`, `tavernGames.js`)**: resting and gambling mini-games
+
+These are invoked through location UI and through daily tick hooks.
+
+### Logging & UI
+
+UI is separated into runtime vs bindings:
+
+- `uiRuntime.js`:
+  - `switchScreen()` with missing-DOM guards
+  - modal runtime (open/close, focus trap)
+  - log helpers + rendering
+  - breakdown formatting helpers used by combat logs
+
+- `uiBindings.js`:
+  - Menu buttons (New/Load/Settings)
+  - HUD gestures (tap/swipe)
+  - Log filter chips (pills)
+  - Modal dismissal / close wiring
+
+Log entries are structured with a `type` (system/good/danger) and optional metadata (combat breakdowns, procs, etc.).
+
+### Diagnostics & QA tools
+
+Developer tools are intended for testing and balance work.
+
+- Enable cheats during character creation.
+- When enabled, HUD pills appear for:
+  - **Cheat Menu**
+  - **Smoke Tests & Bug Report**
+
+`devtools/diagnosticsUI.js` owns the Diagnostics modal UI and pill visibility.
+
+Tools included:
+
+- **Smoke Tests**: isolated in-memory QA suite (does not modify the active save)
+- **Scenario Runner**: simulates multiple days and loot generation to catch regressions
+- **Bug Report Bundle**: exports a JSON bundle (state snapshot + perf + recent log)
+- **Perf Snapshot**: boot/FPS summary for profiling
+- **Live Save Audit**: checks invariants on the current save
+
+Implementation note (important for iOS Safari):
+
+- QA uses adapters/hooks instead of reassigning imported ES-module bindings, because imported bindings are read-only.
 
 ---
 
-## Debugging and diagnostics
+## Adding content
 
-### Reproducible bug reports (best practice)
-1. Enable **Deterministic RNG**
-2. Set a known **Seed**
-3. Reproduce the issue
-4. Use **Copy Bug Report (JSON)** and attach the result to an issue report
+### Add an enemy
 
-### State validation
-The project includes a state validation/assertion system used by smoke tests and diagnostics. It’s intended to catch:
-- missing fields in old saves
-- invalid ranges (negative HP, NaN resource)
-- inventory inconsistencies
+1. Find the enemy template table (commonly in engine or enemy builder inputs).
+2. Add a new template ID and base stats/move list.
+3. Use Cheat Menu → spawn/start battle by `templateId`.
+4. Iterate until the encounter feels right.
+
+### Add an item
+
+1. Add an entry in `js/game/data/items.js`.
+2. Confirm:
+   - Inventory display
+   - Equip rules (if equipment)
+   - Sell value
+   - Loot generator behavior
+3. Use Cheat Menu to grant by item ID for fast iteration.
+
+### Add an ability
+
+1. Add the ability definition in `js/game/data/abilities.js`.
+2. Implement its logic in `js/game/combat/abilityEffects.js`.
+3. Add unlock rules for a class if needed.
+4. Run Smoke Tests (abilities classification checks will fail fast if misconfigured).
+
+### Add a talent
+
+1. Add the talent in `js/game/data/talents.js`.
+2. Ensure it updates derived stats through the stat recompute pipeline.
+3. Run Smoke Tests (talent integrity + summary checks will catch many mistakes).
+
+### Add a quest
+
+1. Define in `js/game/quests/questDefs.js`.
+2. Add default state in `questDefaults.js`.
+3. Bind triggers in `questBindings.js` using the trigger registry.
+4. Verify lifecycle with Smoke Tests (quest init/start/advance/complete).
 
 ---
 
-## UI notes (PC vs mobile)
+## Testing & debugging
 
-- The UI is designed to work on both desktop and mobile.
-- On mobile Safari, ES module loading and `localStorage` reliability can vary if running from `file://`.
-  If you’re testing on iPhone/iPad, serving via a local server (or hosting) is strongly recommended.
+### Smoke Tests
+
+Open **Smoke Tests & Bug Report** and click **Run**.
+
+- The suite swaps game state in-memory so it won’t corrupt your save.
+- Mobile runs may default to a “quick mode” to keep runtime low.
+- Full mode is available for deeper runs.
+
+### Scenario Runner
+
+Use **Scenario** to simulate multiple days and loot batches. This catches:
+
+- Daily tick idempotence bugs
+- Economy drift issues
+- Loot generator invalid outputs
+
+### Bug reports
+
+Use **Copy JSON** to export a bundle containing:
+
+- Patch label + save schema
+- UA/locale
+- State snapshot
+- Recent input log tail
+- Recent game log tail
+- Perf snapshot
+
+For reproducible reports:
+
+1. Enable deterministic RNG
+2. Set a seed
+3. Reproduce
+4. Copy JSON and attach to a GitHub issue
 
 ---
 
-## Roadmap ideas
-- More village locations (blacksmith, temple, barracks)
-- Seasonal events / festivals
-- Crafting + scarcity pressure on merchant stock
-- Deeper companion progression (unique passives, affinity)
-- More enemy factions tied to town security/prosperity
-- Expanded diagnostics and automated regression checks
+## Contributing guidelines
+
+### Design goals
+
+- Keep systems small and single-purpose.
+- Prefer **pure logic modules** (no DOM) for core mechanics.
+- Use UI adapters/hooks rather than importing gameplay code into UI modules.
+
+### iOS / ES module pitfalls to avoid
+
+- **Temporal dead zones**: avoid referencing late-bound functions during module evaluation.
+- **Read-only imports**: never assign to an imported binding; use adapters.
+- Keep boot + version modules dependency-light.
+
+### Style
+
+- Keep helpers dependency-light.
+- Avoid cross-layer imports (systems → UI).
+- Add changelog entries for behavior changes and major refactors.
 
 ---
 
-## Credits
-Built by the repository author(s).
+## Versioning & releases
 
-If you add third‑party assets (fonts, icons, music, SFX), list sources and licenses here.
+### Patch label
+
+The build label lives in `js/game/systems/version.js`:
+
+- `GAME_PATCH`
+- `GAME_PATCH_NAME`
+- `GAME_FULL_LABEL`
+
+### In-game changelog
+
+Changelog entries live in `js/game/changelog/changelog.js`.
+
+### Save schema
+
+The smoke tests print the current **save schema**. When changing save structure:
+
+- Add/adjust migrations in `saveManager.js`.
+- Keep migrations tolerant of unknown keys for forward compatibility.
 
 ---
 
 ## License
-Add a `LICENSE` file that matches your intent:
-- MIT (permissive)
-- GPLv3 (copyleft)
-- Proprietary (private projects)
+
+Add a `LICENSE` file that matches your intent (MIT/GPL/Proprietary). If you add third‑party assets, list sources and licenses in this README.
