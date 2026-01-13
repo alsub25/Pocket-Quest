@@ -54,7 +54,7 @@ function initBankState(state) {
     // "first ever run". We preserve negative values to allow backfilling
     // in controlled scenarios (e.g., automated tests).
     const rawLid = state.bank.lastInterestDay;
-    if (rawLid === null || typeof rawLid === "undefined") {
+    if (rawLid == null) {
       state.bank.lastInterestDay = null;
     } else {
       const lid = Number(rawLid);
@@ -223,7 +223,7 @@ function applyInterest(state, addLog) {
 
   // First-ever run: initialize the reference day and bail.
   // (Treat null/undefined as uninitialized; do not coerce with Number(null) -> 0.)
-  if (bank.lastInterestDay === null || typeof bank.lastInterestDay === "undefined" || !Number.isFinite(Number(bank.lastInterestDay))) {
+  if (bank.lastInterestDay == null || !Number.isFinite(Number(bank.lastInterestDay))) {
     bank.lastInterestDay = currentDay;
 
     // Patch/migration quality-of-life: give a one-time note so it doesn't feel "broken".
