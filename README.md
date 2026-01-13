@@ -126,6 +126,29 @@ This repository is intentionally **no-build** and **static-host friendly**:
 
 ---
 
+## 📸 Screenshots & Demo
+
+> 🎮 **[Play the live demo](https://alsub25.github.io/Emberwood-The-Blackbark-Oath/)**
+
+### Game Features Preview
+
+<details>
+<summary>🖼️ <b>View Screenshots (Coming Soon)</b></summary>
+
+*Screenshots will be added here to showcase:*
+- 🎭 Character creation and class selection
+- ⚔️ Turn-based combat system
+- 🏰 Village simulation and interactions
+- 🎒 Inventory and equipment management
+- 📜 Quest journal and progression
+- 🛠️ Developer tools and diagnostics
+
+*To add screenshots: Place images in `/assets` and link them here*
+
+</details>
+
+---
+
 ## 🚀 Quick Start
 
 ### 🏃 Run Locally
@@ -194,7 +217,56 @@ Install "Live Server" extension and click "Go Live" button
 
 ---
 
-## Deploy to GitHub Pages
+## 🛠️ Technology Stack
+
+Emberwood is built with modern web technologies, focusing on simplicity and maintainability:
+
+<table>
+<tr>
+<td width="50%">
+
+### 🎨 **Frontend**
+- **Vanilla JavaScript** (ES6+ modules)
+- **HTML5** & **CSS3**
+- **LocalStorage API** for persistence
+- **No frameworks or libraries required**
+
+</td>
+<td width="50%">
+
+### 🏗️ **Architecture**
+- **Event-driven** state management
+- **Modular** design pattern
+- **Data-driven** content system
+- **Pure functions** for game logic
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+### 📦 **Development**
+- **No build step** required
+- **Native ES modules** import/export
+- **Git** for version control
+- **Built-in dev tools** for testing
+
+</td>
+<td width="50%">
+
+### 🎯 **Key Features**
+- **Zero dependencies** (no node_modules!)
+- **Static hosting** compatible
+- **Mobile-friendly** responsive design
+- **Offline-capable** after first load
+
+</td>
+</tr>
+</table>
+
+---
+
+## 🌐 Deploy to GitHub Pages
 
 Emberwood is a static site. GitHub Pages works well.
 
@@ -641,48 +713,48 @@ Implementation note (important for iOS Safari):
 
 ---
 
-## Adding content
+## ➕ Adding Content
 
-### Add an enemy
+### 👹 Add an Enemy
 
-1. Find the enemy template table (commonly in engine or enemy builder inputs).
-2. Add a new template ID and base stats/move list.
-3. Use Cheat Menu → spawn/start battle by `templateId`.
-4. Iterate until the encounter feels right.
+1. 📝 Find the enemy template table (commonly in engine or enemy builder inputs)
+2. ➕ Add a new template ID and base stats/move list
+3. 🎮 Use **Cheat Menu → spawn/start battle** by `templateId`
+4. 🔄 Iterate until the encounter feels right
 
-### Add an item
+### 🗡️ Add an Item
 
-1. Add an entry in `js/game/data/items.js`.
-2. Confirm:
-   - Inventory display
-   - Equip rules (if equipment)
-   - Sell value
-   - Loot generator behavior
-3. Use Cheat Menu to grant by item ID for fast iteration.
+1. 📝 Add an entry in `js/game/data/items.js`
+2. ✅ Confirm:
+   - 📦 Inventory display
+   - ⚔️ Equip rules (if equipment)
+   - 💰 Sell value
+   - 🎲 Loot generator behavior
+3. 🎮 Use **Cheat Menu** to grant by item ID for fast iteration
 
-### Add an ability
+### ✨ Add an Ability
 
-1. Add the ability definition in `js/game/data/abilities.js`.
-2. Implement its logic in `js/game/combat/abilityEffects.js`.
-3. Add unlock rules for a class if needed.
-4. Run Smoke Tests (abilities classification checks will fail fast if misconfigured).
+1. 📝 Add the ability definition in `js/game/data/abilities.js`
+2. 💻 Implement its logic in `js/game/combat/abilityEffects.js`
+3. 🔓 Add unlock rules for a class if needed
+4. 🧪 Run **Smoke Tests** (abilities classification checks will fail fast if misconfigured)
 
-### Add a talent
+### 🌟 Add a Talent
 
-1. Add the talent in `js/game/data/talents.js`.
-2. Ensure it updates derived stats through the stat recompute pipeline.
-3. Run Smoke Tests (talent integrity + summary checks will catch many mistakes).
+1. 📝 Add the talent in `js/game/data/talents.js`
+2. 📊 Ensure it updates derived stats through the stat recompute pipeline
+3. 🧪 Run **Smoke Tests** (talent integrity + summary checks will catch many mistakes)
 
-### Add a quest
+### 📖 Add a Quest
 
-1. Define in `js/game/quests/questDefs.js`.
-2. Add default state in `questDefaults.js`.
-3. Bind triggers in `questBindings.js` using the trigger registry.
-4. Verify lifecycle with Smoke Tests (quest init/start/advance/complete).
+1. 📝 Define in `js/game/quests/questDefs.js`
+2. 🔧 Add default state in `questDefaults.js`
+3. 🔗 Bind triggers in `questBindings.js` using the trigger registry
+4. ✅ Verify lifecycle with **Smoke Tests** (quest init/start/advance/complete)
 
 ---
 
-## Testing & debugging
+## 🧪 Testing & Debugging
 
 ### Smoke Tests
 
@@ -720,51 +792,92 @@ For reproducible reports:
 
 ---
 
-## Contributing guidelines
+## 🤝 Contributing Guidelines
 
-### Design goals
+We welcome contributions! Here's how to get started:
 
-- Keep systems small and single-purpose.
-- Prefer **pure logic modules** (no DOM) for core mechanics.
-- Use UI adapters/hooks rather than importing gameplay code into UI modules.
+### 🎯 Design Goals
 
-### iOS / ES module pitfalls to avoid
+- 📦 **Keep systems small and single-purpose** — Modular architecture
+- 🧩 **Prefer pure logic modules** (no DOM) for core mechanics
+- 🔌 **Use UI adapters/hooks** rather than importing gameplay code into UI modules
+- 📝 **Document your changes** in the changelog for significant updates
 
-- **Temporal dead zones**: avoid referencing late-bound functions during module evaluation.
-- **Read-only imports**: never assign to an imported binding; use adapters.
-- Keep boot + version modules dependency-light.
+### ⚠️ iOS / ES Module Pitfalls to Avoid
 
-### Style
+- 🚫 **Temporal dead zones**: Avoid referencing late-bound functions during module evaluation
+- 🚫 **Read-only imports**: Never assign to an imported binding; use adapters
+- ✅ **Keep boot + version modules dependency-light**
 
-- Keep helpers dependency-light.
-- Avoid cross-layer imports (systems → UI).
-- Add changelog entries for behavior changes and major refactors.
+### 💅 Style Guidelines
+
+- ✨ Keep helpers dependency-light
+- 🔗 Avoid cross-layer imports (systems → UI)
+- 📋 Add changelog entries for behavior changes and major refactors
+- 🧪 Run Smoke Tests before submitting PRs
+
+### 🔄 Pull Request Process
+
+1. 🍴 Fork the repository
+2. 🌿 Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. 💾 Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. 🚀 Push to the branch (`git push origin feature/AmazingFeature`)
+5. 📬 Open a Pull Request
 
 ---
 
-## Versioning & releases
+## 📋 Versioning & Releases
 
-### Patch label
+### 🏷️ Patch Label
 
 The build label lives in `js/game/systems/version.js`:
 
-- `GAME_PATCH`
-- `GAME_PATCH_NAME`
-- `GAME_FULL_LABEL`
+- **`GAME_PATCH`** — Version number (e.g., "1.2.70")
+- **`GAME_PATCH_NAME`** — Patch name (e.g., "The Blackbark Oath")
+- **`GAME_FULL_LABEL`** — Combined label for display
 
-### In-game changelog
+### 📝 In-Game Changelog
 
 Changelog entries live in `js/game/changelog/changelog.js`.
 
-### Save schema
+- Visible from the main menu **Changelog** button
+- Documents new features, fixes, and improvements
+- Organized by patch version
+
+### 💾 Save Schema
 
 The smoke tests print the current **save schema**. When changing save structure:
 
-- Add/adjust migrations in `saveManager.js`.
-- Keep migrations tolerant of unknown keys for forward compatibility.
+- ✅ Add/adjust migrations in `saveManager.js`
+- ✅ Keep migrations tolerant of unknown keys for forward compatibility
+- ✅ Test loading saves from previous versions
 
 ---
 
-## License
+## 📜 License
 
-Add a `LICENSE` file that matches your intent (MIT/GPL/Proprietary). If you add third‑party assets, list sources and licenses in this README.
+This project is open source. Please add a `LICENSE` file that matches your intent (MIT/GPL/Proprietary).
+
+**Third-party assets:**  
+If you add third-party assets, list sources and licenses in this section.
+
+---
+
+<div align="center">
+
+## 🌟 Support The Project
+
+If you enjoy Emberwood: The Blackbark Oath, consider:
+
+⭐ **Starring the repository**  
+🐛 **Reporting bugs** via [Issues](https://github.com/alsub25/Emberwood-The-Blackbark-Oath/issues)  
+💡 **Suggesting features** via [Issues](https://github.com/alsub25/Emberwood-The-Blackbark-Oath/issues)  
+🤝 **Contributing** via Pull Requests
+
+---
+
+Made with ❤️ by the Emberwood community
+
+**[⬆ Back to Top](#-emberwood-the-blackbark-oath-️)**
+
+</div>
