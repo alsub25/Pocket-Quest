@@ -746,22 +746,60 @@ const DIFFICULTY_CONFIG = {
 // --- Progression / special encounters --------------------------------------
 const MAX_PLAYER_LEVEL = 50 // used by dev cheats; raise if you want a longer grind
 
-// Enemy rarity & scaling helpers live in Systems/Enemy.
+/**
+ * Applies rarity scaling to an enemy.
+ * Enemy rarity & scaling helpers live in Systems/Enemy.
+ * 
+ * @param {Object} enemy - The enemy object to apply rarity to
+ * @returns {Object} The modified enemy
+ */
 function applyEnemyRarity(enemy) {
-    return applyEnemyRarityImpl(enemy, { diffCfg: getActiveDifficultyConfig(), rand })
+    if (!enemy || typeof enemy !== 'object') {
+        console.error('[Engine] applyEnemyRarity: Invalid enemy object')
+        return enemy
+    }
+    
+    try {
+        return applyEnemyRarityImpl(enemy, { diffCfg: getActiveDifficultyConfig(), rand })
+    } catch (err) {
+        console.error('[Engine] applyEnemyRarity: Error applying rarity:', err)
+        return enemy
+    }
 }
 
-// After difficulty/elite/rarity/affix scaling, ensure baseAttack/baseMagic match the current stats.
+/**
+ * After difficulty/elite/rarity/affix scaling, ensure baseAttack/baseMagic match the current stats.
+ * 
+ * @param {Object} enemy - The enemy object to sync stats for
+ * @returns {Object} The modified enemy
+ */
 function syncEnemyBaseStats(enemy) {
-    return syncEnemyBaseStatsImpl(enemy)
+    if (!enemy || typeof enemy !== 'object') {
+        console.error('[Engine] syncEnemyBaseStats: Invalid enemy object')
+        return enemy
+    }
+    
+    try {
+        return syncEnemyBaseStatsImpl(enemy)
+    } catch (err) {
+        console.error('[Engine] syncEnemyBaseStats: Error syncing stats:', err)
+        return enemy
+    }
 }
 
 
 
 
+/**
+ * Gets the active difficulty configuration for the current game.
+ * Handles both static difficulties (easy/normal/hard) and dynamic difficulty scaling.
+ * 
+ * @returns {Object} Difficulty configuration with multipliers and AI settings
+ */
 function getActiveDifficultyConfig() {
     // Before state exists, just use Normal
     if (typeof state === 'undefined' || !state) {
+        console.warn('[Engine] getActiveDifficultyConfig: No state available, using Normal difficulty')
         return { ...DIFFICULTY_CONFIG.normal, band: 0, closestId: 'normal' }
     }
 
@@ -828,6 +866,10 @@ function getActiveDifficultyConfig() {
 
     const closestName = DIFFICULTY_CONFIG[closestId].name
     const label = `Dynamic (${closestName})`
+
+    if (state.debug && state.debug.verboseLogging) {
+        console.log(`[Engine] Dynamic difficulty: band=${band}, closest=${closestId}`)
+    }
 
     return {
         id: 'dynamic',
@@ -5371,49 +5413,69 @@ if (devCheatsPill && devCheatsCheckbox) {
     })
 }
 
+/**
+ * Creates a new game from the character creation screen.
+ * Initializes all game systems and creates the player character.
+ */
 function startNewGameFromCreation() {
-    const nameInput = document.getElementById('inputName')
-    let name = nameInput.value.trim()
-    if (!name) name = 'Nameless One'
-
-    // ✅ FIX: use .class-card for class selection
-    const classCard = document.querySelector(
-        '#classOptions .class-card.selected'
-    )
-    const diffOption = document.querySelector(
-        '#difficultyOptions .pill-option.selected'
-    )
-
-    const classId = classCard ? classCard.dataset.classId : 'warrior'
-    const diffId = diffOption ? diffOption.dataset.diffId : 'normal'
-
-    state = createEmptyState()
-    state.difficulty = diffId
-    syncGlobalStateRef()
-
-    // -------------------- SYSTEM INIT (NEW GAME) --------------------
-    // Keep this list inline so adding a new persisted system is a one-line edit.
-    // IMPORTANT: order matters.
-    const NEW_GAME_INIT_STEPS = [
-        { id: 'rng', run: () => initRngState(state) },
-        { id: 'time', run: () => initTimeState(state) },
-        { id: 'economy', run: () => initVillageEconomyState(state) },
-        { id: 'government', run: () => initGovernmentState(state, 0) },
-        { id: 'population', run: () => ensureVillagePopulation(state) }
-    ]
-
-    for (const step of NEW_GAME_INIT_STEPS) {
-        try {
-            step.run()
-        } catch (_) {
-            // New-game init should never hard-crash; a missing system can be repaired later.
+    try {
+        const nameInput = document.getElementById('inputName')
+        let name = nameInput && nameInput.value ? nameInput.value.trim() : ''
+        if (!name) {
+            console.warn('[Engine] startNewGameFromCreation: No name provided, using default')
+            name = 'Nameless One'
         }
-    }
-    // 🔹 NEW: read dev-cheat toggle from character creation screen
-    const devToggle = document.getElementById('devCheatsToggle')
-    if (devToggle && devToggle.checked) {
-        state.flags.devCheatsEnabled = true
-    }
+
+        // ✅ FIX: use .class-card for class selection
+        const classCard = document.querySelector(
+            '#classOptions .class-card.selected'
+        )
+        const diffOption = document.querySelector(
+            '#difficultyOptions .pill-option.selected'
+        )
+
+        const classId = classCard && classCard.dataset && classCard.dataset.classId 
+            ? classCard.dataset.classId 
+            : 'warrior'
+        const diffId = diffOption && diffOption.dataset && diffOption.dataset.diffId 
+            ? diffOption.dataset.diffId 
+            : 'normal'
+
+        console.log(`[Engine] Creating new game: name="${name}", class="${classId}", difficulty="${diffId}"`)
+
+        state = createEmptyState()
+        state.difficulty = diffId
+        syncGlobalStateRef()
+
+        // -------------------- SYSTEM INIT (NEW GAME) --------------------
+        // Keep this list inline so adding a new persisted system is a one-line edit.
+        // IMPORTANT: order matters.
+        const NEW_GAME_INIT_STEPS = [
+            { id: 'rng', run: () => initRngState(state) },
+            { id: 'time', run: () => initTimeState(state) },
+            { id: 'economy', run: () => initVillageEconomyState(state) },
+            { id: 'government', run: () => initGovernmentState(state, 0) },
+            { id: 'population', run: () => ensureVillagePopulation(state) }
+        ]
+
+        for (const step of NEW_GAME_INIT_STEPS) {
+            try {
+                if (state.debug && state.debug.verboseLogging) {
+                    console.log(`[Engine] Initializing system: ${step.id}`)
+                }
+                step.run()
+            } catch (err) {
+                console.error(`[Engine] Error initializing ${step.id}:`, err)
+                // New-game init should never hard-crash; a missing system can be repaired later.
+            }
+        }
+        
+        // 🔹 NEW: read dev-cheat toggle from character creation screen
+        const devToggle = document.getElementById('devCheatsToggle')
+        if (devToggle && devToggle.checked) {
+            state.flags.devCheatsEnabled = true
+            console.log('[Engine] Developer cheats enabled for this character')
+        }
 
     const classDef = PLAYER_CLASSES[classId] || PLAYER_CLASSES['warrior']
     const base = classDef.baseStats
