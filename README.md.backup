@@ -218,165 +218,102 @@ All scripts/styles use **relative paths**, so Pages works whether deployed at th
 
 ---
 
-## 📂 Project Layout
+## Project layout
 
-### 📁 Top Level Structure
+Top level:
 
 ```
-Emberwood-The-Blackbark-Oath/
-├── index.html          # Main entry point
-├── style.css           # Game styling
-├── assets/             # Images and resources
-├── js/                 # JavaScript modules
-│   ├── boot/          # Boot sequence
-│   ├── game/          # Core game logic
-│   └── shared/        # Shared utilities
-└── README.md          # This file
+Emberwood_patch_1.2.70_core_systems/
+  index.html
+  style.css
+  assets/
+  js/
+  README.md
 ```
 
-### 🗂️ JavaScript Module Organization
+JavaScript modules:
 
-<details>
-<summary><b>📦 Boot System</b> <code>js/boot/</code></summary>
+- `js/boot/` — early boot scripts
+  - `bootstrap.js` — boot sequencing + optional preflight checks
+  - `bootLoader.js` — boot overlay + timing
+  - `userAcceptance.js` — acceptance gate / user prompt logic
+  - `lib/safeStorage.js` — minimal boot-safe storage wrapper
 
-- **`bootstrap.js`** — Boot sequencing + optional preflight checks
-- **`bootLoader.js`** — Boot overlay + timing
-- **`userAcceptance.js`** — Acceptance gate / user prompt logic
-- **`lib/safeStorage.js`** — Minimal boot-safe storage wrapper
+- `js/shared/` — dependency-light utilities shared by boot + game
+  - `storage/safeStorage.js`
 
-</details>
+- `js/game/engine/` — orchestration, persistence, UI wiring
+  - `engine.js` — main entry (state orchestration, gameplay flow)
+  - `saveManager.js` — save/load + migrations + save-slot helpers
+  - `storageRuntime.js` — runtime storage diagnostics / safe wrappers
+  - `perf.js` — performance capture helpers
+  - `ui/`
+    - `uiRuntime.js` — screen switching, modal runtime, log renderer helpers
+    - `uiBindings.js` — DOM event wiring (menu buttons, HUD gestures, chips)
+  - `devtools/`
+    - `diagnosticsUI.js` — Smoke Tests modal UI + dev pill visibility
 
-<details>
-<summary><b>🔧 Shared Utilities</b> <code>js/shared/</code></summary>
+- `js/game/data/` — large data tables
+  - `abilities.js`, `items.js`, `talents.js`
 
-- **`storage/safeStorage.js`** — Dependency-light utilities shared by boot + game
+- `js/game/combat/` — combat math + runtime helpers
+  - `math.js` — damage/heal calculations, crit handling, mitigation
+  - `statusEngine.js` — status ticking / application / stacking rules
+  - `abilityEffects.js` — ability implementations
+  - `postTurnSequence.js` — end-of-turn sequencing
 
-</details>
+- `js/game/systems/` — core systems (mostly logic-focused)
+  - `timeSystem.js` — day/day‑part handling + normalization
+  - `rng.js` — deterministic RNG option + logging
+  - `lootGenerator.js` — item generation pipeline
+  - `kingdomGovernment.js` — king behavior + decree logic
+  - `assertState.js`, `safety.js` — invariants and guardrails
+  - `enemy/` — enemy generation pipeline (templates/rarity/affixes)
 
-<details>
-<summary><b>🎮 Game Engine</b> <code>js/game/engine/</code></summary>
+- `js/game/locations/village/` — village modules
+  - `merchant.js`, `bank.js`, `townHall.js`, `tavern.js`, `tavernGames.js`
+  - `villageEconomy.js`, `villagePopulation.js`
 
-**Core Orchestration:**
-- **`engine.js`** — Main entry (state orchestration, gameplay flow)
-- **`saveManager.js`** — Save/load + migrations + save-slot helpers
-- **`storageRuntime.js`** — Runtime storage diagnostics / safe wrappers
-- **`perf.js`** — Performance capture helpers
+- `js/game/quests/` — quest system
+  - `questDefs.js`, `questDefaults.js`, `questBindings.js`
+  - `questSystem.js`, `questTriggerRegistry.js`
 
-**UI Layer:**
-- `ui/uiRuntime.js` — Screen switching, modal runtime, log renderer helpers
-- `ui/uiBindings.js` — DOM event wiring (menu buttons, HUD gestures, chips)
-
-**Developer Tools:**
-- `devtools/diagnosticsUI.js` — Smoke Tests modal UI + dev pill visibility
-
-</details>
-
-<details>
-<summary><b>📊 Game Data</b> <code>js/game/data/</code></summary>
-
-- **`abilities.js`** — All ability definitions (spells, attacks, etc.)
-- **`items.js`** — Item definitions and equipment data
-- **`talents.js`** — Talent tree definitions
-
-</details>
-
-<details>
-<summary><b>⚔️ Combat System</b> <code>js/game/combat/</code></summary>
-
-- **`math.js`** — Damage/heal calculations, crit handling, mitigation
-- **`statusEngine.js`** — Status ticking / application / stacking rules
-- **`abilityEffects.js`** — Ability implementations
-- **`postTurnSequence.js`** — End-of-turn sequencing
-
-</details>
-
-<details>
-<summary><b>🔄 Core Systems</b> <code>js/game/systems/</code></summary>
-
-- **`timeSystem.js`** — Day/day-part handling + normalization
-- **`rng.js`** — Deterministic RNG option + logging
-- **`lootGenerator.js`** — Item generation pipeline
-- **`kingdomGovernment.js`** — King behavior + decree logic
-- **`assertState.js`, `safety.js`** — Invariants and guardrails
-- **`enemy/`** — Enemy generation pipeline (templates/rarity/affixes)
-
-</details>
-
-<details>
-<summary><b>🏘️ Village System</b> <code>js/game/locations/village/</code></summary>
-
-- **`merchant.js`** — Shop system and trading
-- **`bank.js`** — Financial system
-- **`townHall.js`** — Politics and decrees
-- **`tavern.js`, `tavernGames.js`** — Rest and gambling
-- **`villageEconomy.js`** — Economic simulation
-- **`villagePopulation.js`** — Population mood and behavior
-
-</details>
-
-<details>
-<summary><b>📜 Quest System</b> <code>js/game/quests/</code></summary>
-
-- **`questDefs.js`** — Quest definitions
-- **`questDefaults.js`** — Default state and flags
-- **`questBindings.js`** — Side effects and trigger wiring
-- **`questSystem.js`** — Lifecycle helpers
-- **`questTriggerRegistry.js`** — Registry of trigger types
-
-</details>
-
-<details>
-<summary><b>📝 Changelog</b> <code>js/game/changelog/</code></summary>
-
-- **`changelog.js`** — In-game changelog data
-
-</details>
+- `js/game/changelog/` — in-game changelog data
 
 ---
 
-## 🏗️ Architecture Overview
+## Architecture overview
 
 Emberwood is designed around a single **authoritative game state object** plus a set of systems that read/update it.
 
-### 🚀 Boot Sequence
+### Boot sequence
 
-```mermaid
-graph LR
-    A[bootstrap.js] --> B[Boot Overlay]
-    B --> C[User Acceptance]
-    C --> D[Engine Load]
-    D --> E[Game Start]
-```
+1. `js/boot/bootstrap.js` runs first.
+2. A boot overlay is shown and basic diagnostics are captured.
+3. If required, user acceptance is handled (`userAcceptance.js`).
+4. The game engine entry (`js/game/engine/engine.js`) is imported.
 
-1. **`js/boot/bootstrap.js`** runs first
-2. Boot overlay displays with diagnostics
-3. User acceptance handled (`userAcceptance.js`)
-4. Game engine entry (`js/game/engine/engine.js`) imports
-5. Game initializes and loads
+### Engine orchestration
 
-### 🎯 Engine Orchestration
+`engine.js` coordinates:
 
-The `engine.js` module coordinates all major systems:
+- Building/initializing state
+- Calling **saveManager** for load/save/migrate
+- Wiring UI via `uiRuntime` + `uiBindings`
+- Delegating to systems (time, RNG, loot, quests, village)
+- Delegating to combat modules during fights
 
-- 🏗️ **Building/initializing state** — Creates the initial game state
-- 💾 **Save Management** — Calls `saveManager` for load/save/migrate operations
-- 🎨 **UI Wiring** — Delegates to `uiRuntime` + `uiBindings` for all UI interactions
-- ⚙️ **System Delegation** — Manages time, RNG, loot, quests, village systems
-- ⚔️ **Combat Modules** — Handles turn-based combat during fights
+Key refactors in 1.2.70:
 
-### 🔧 Key Refactors in v1.2.70
+- **Save/migrations** extracted to `saveManager.js`
+- **UI runtime + bindings** extracted to `uiRuntime.js` / `uiBindings.js`
+- **Diagnostics/QA UI** extracted to `devtools/diagnosticsUI.js`
 
-The **Hardening & Bug Squash** patch introduced major architectural improvements:
-
-- ✅ **Save/Migrations** — Extracted to dedicated `saveManager.js`
-- ✅ **UI Runtime + Bindings** — Separated into `uiRuntime.js` / `uiBindings.js`
-- ✅ **Diagnostics/QA UI** — Moved to `devtools/diagnosticsUI.js`
-
-> 💡 These extractions reduce circular imports and avoid iOS `file://` pitfalls (temporal dead zones, read-only imported bindings).
+These extractions reduce circular imports and avoid iOS `file://` pitfalls (temporal dead zones, read‑only imported bindings).
 
 ---
 
-## ⚙️ Gameplay Systems
+## Gameplay systems
 
 ### State model & save schema
 
