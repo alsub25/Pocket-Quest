@@ -160,7 +160,12 @@ export function createVillagePopulationService(engine) {
 
     const delta = newMood - before;
 
-    // Immutable update
+    // Create immutable update with shared base properties
+    const baseChange = { day: absoluteDay };
+    const lastMoodChange = delta
+      ? { ...baseChange, delta, reasons }
+      : { ...baseChange, delta: 0, reasons: [] };
+
     const newState = {
       ...stateWithPop,
       village: {
@@ -169,9 +174,7 @@ export function createVillagePopulationService(engine) {
           ...pop,
           mood: newMood,
           lastDayUpdated: absoluteDay,
-          lastMoodChange: delta
-            ? { day: absoluteDay, delta, reasons }
-            : { day: absoluteDay, delta: 0, reasons: [] }
+          lastMoodChange
         }
       }
     };

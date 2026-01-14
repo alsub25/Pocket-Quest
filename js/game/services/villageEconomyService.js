@@ -24,6 +24,10 @@ const PURCHASE_TRADE_MAX = 5;          // Maximum trade boost per purchase
 const PURCHASE_PROSPERITY_DIVISOR = 25; // Gold/25 = prosperity boost (max 4)
 const PURCHASE_PROSPERITY_MAX = 4;     // Maximum prosperity boost per purchase
 
+// Prosperity multipliers for battle rewards
+const BOSS_PROSPERITY_MULTIPLIER = 0.6;     // Prosperity as % of boss security bonus
+const NORMAL_PROSPERITY_MULTIPLIER = 0.6;   // Prosperity as % of normal security bonus
+
 function clamp(val, min, max) {
   const n = Number(val);
   if (!Number.isFinite(n)) return min;
@@ -170,7 +174,8 @@ export function createVillageEconomyService(engine) {
 
     const isBoss = enemy && enemy.isBoss;
     const securityBonus = isBoss ? BOSS_SECURITY_BONUS : NORMAL_SECURITY_BONUS;
-    const prosperityBonus = securityBonus * BOSS_PROSPERITY_MULTIPLIER;
+    const prosperityMultiplier = isBoss ? BOSS_PROSPERITY_MULTIPLIER : NORMAL_PROSPERITY_MULTIPLIER;
+    const prosperityBonus = securityBonus * prosperityMultiplier;
     
     const newSecurity = clamp((econ.security || 40) + securityBonus, 0, 100);
     const newProsperity = clamp(econ.prosperity + prosperityBonus, 0, 100);

@@ -97,9 +97,15 @@ export function createVillageServicesPlugin() {
     dispose(engine) {
       // Unregister services
       try {
-        engine.unregisterService('village.economy');
-        engine.unregisterService('village.population');
-      } catch (_) {}
+        if (economyService) {
+          engine.unregisterService('village.economy');
+        }
+        if (populationService) {
+          engine.unregisterService('village.population');
+        }
+      } catch (e) {
+        engine.log?.error?.('village', 'Failed to unregister services', { error: e.message });
+      }
 
       economyService = null;
       populationService = null;

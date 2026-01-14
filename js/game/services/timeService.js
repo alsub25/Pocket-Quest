@@ -151,16 +151,9 @@ export function createTimeService(engine) {
 
     const before = getTimeInfo(stateWithTime);
 
-    let newDayIndex = time.dayIndex;
-    let newPartIndex = 0;
-
-    if (time.partIndex === 0) {
-      // Already morning – push one full day
-      newDayIndex++;
-    } else {
-      // Move to the next day, morning
-      newDayIndex++;
-    }
+    // Always advance to next day at morning (part 0)
+    const newDayIndex = time.dayIndex + 1;
+    const newPartIndex = 0;
 
     const normalized = normalizeTimeObject({ dayIndex: newDayIndex, partIndex: newPartIndex });
 
