@@ -4,7 +4,7 @@
 
 ### A Browser-Based Fantasy RPG & Living Village Simulator
 
-[![Version](https://img.shields.io/badge/version-1.2.72-blue.svg)](https://github.com/alsub25/Emberwood-The-Blackbark-Oath)
+[![Version](https://img.shields.io/badge/version-1.2.81-blue.svg)](https://github.com/alsub25/Emberwood-The-Blackbark-Oath)
 [![License](https://img.shields.io/badge/license-See%20License%20Section-green.svg)](#-license)
 [![No Build Required](https://img.shields.io/badge/build-none-brightgreen.svg)](#%EF%B8%8F-architecture-overview)
 [![ES Modules](https://img.shields.io/badge/modules-native%20ES-orange.svg)](#%EF%B8%8F-architecture-overview)
