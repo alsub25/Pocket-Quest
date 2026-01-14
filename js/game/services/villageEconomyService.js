@@ -16,7 +16,6 @@ const PROSPERITY_DRIFT_BIAS = 0.45;  // Slight upward bias in daily drift
 const PROSPERITY_DRIFT_RANGE = 6;    // Max drift amount per day (-3.0 to +3.3)
 const BOSS_SECURITY_BONUS = 8;       // Security boost for defeating bosses
 const NORMAL_SECURITY_BONUS = 2;     // Security boost for normal enemies
-const BOSS_PROSPERITY_MULTIPLIER = 0.6;  // Prosperity gain as % of security bonus
 
 // Purchase impact on economy
 const PURCHASE_TRADE_DIVISOR = 20;     // Gold/20 = trade boost (max 5)
