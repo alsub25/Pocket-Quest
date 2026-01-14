@@ -1,6 +1,6 @@
 /* =============================================================================
  * Item Definitions (items.js)
- * Patch: 1.2.65 — The Blackbark Oath Patch
+ * Patch: 1.2.65 — The Protocol
  *
  * Authored item catalog extracted from engine.js for modularization.
  * ============================================================================= */
@@ -8,7 +8,7 @@
 export const ITEM_DEFS = {
     potionSmall: {
         id: 'potionSmall',
-        name: 'Minor Healing Potion',
+        name: 'Minor Med-Kit',
         type: 'potion',
         hpRestore: 40,
         price: 18,
@@ -16,47 +16,47 @@ export const ITEM_DEFS = {
     },
     potionMana: {
         id: 'potionMana',
-        name: 'Small Mana Potion',
+        name: 'Small Energy Cell',
         type: 'potion',
         resourceKey: 'mana',
         resourceRestore: 35,
         price: 20,
-        desc: 'Restore 35 Mana.'
+        desc: 'Restore 35 Energy.'
     },
     potionFury: {
         id: 'furyDraft',
-        name: 'Draft of Rage',
+        name: 'Adrenaline Stim',
         type: 'potion',
         resourceKey: 'fury',
         resourceRestore: 40,
         price: 22,
-        desc: 'Instantly generate 40 Fury.'
+        desc: 'Instantly generate 40 Adrenaline.'
     },
     potionEssence: {
         id: 'essenceVial',
-        name: 'Shadowed Essence Vial',
+        name: 'Power Core Fragment',
         type: 'potion',
         resourceKey: 'essence',
         resourceRestore: 30,
         price: 24,
-        desc: 'Distilled soul energy that restores 30 Essence.'
+        desc: 'Extracted power core energy that restores 30 Essence.'
     },
     potionBlood: {
         id: 'bloodVial',
-        name: 'Crimson Vial',
+        name: 'Bio-Energy Injector',
         type: 'potion',
         resourceKey: 'blood',
         resourceRestore: 30,
         price: 22,
-        desc: 'Condensed blood to fuel your arts.'
+        desc: 'Concentrated bio-matter to fuel your augments.'
     },
     swordIron: {
         id: 'swordIron',
-        name: 'Iron Longsword',
+        name: 'Plasma Blade',
         type: 'weapon',
         attackBonus: 6,
         price: 45,
-        desc: '+6 Attack. Favored by warriors.',
+        desc: '+6 Attack. Favored by soldiers.',
         bleedChance: 0.18,
         bleedTurns: 2,
         bleedDmgPct: 0.12,
@@ -64,28 +64,28 @@ export const ITEM_DEFS = {
     },
     staffOak: {
         id: 'staffOak',
-        name: 'Runed Oak Staff',
+        name: 'Tech Rod',
         type: 'weapon',
         magicBonus: 5,
         price: 45,
-        desc: '+5 Magic. Smooth channeling for spellcasters.',
+        desc: '+5 Tech. Smooth energy channeling for specialists.',
         onShieldCastNextDmgPct: 10,
         elementalBonuses: { arcane: 8 },
     },
     bladeSanguine: {
         id: 'bladeSanguine',
-        name: 'Sanguine Edge',
+        name: 'Sanguine Blade',
         type: 'weapon',
         attackBonus: 4,
         magicBonus: 3,
         price: 60,
-        desc: '+4 Attack, +3 Magic. Whispers for blood.',
+        desc: '+4 Attack, +3 Tech. Bio-enhanced weaponry.',
         onKillGain: { key: 'resource', amount: 6 },
         elementalBonuses: { shadow: 6 },
     },
     armorLeather: {
         id: 'armorLeather',
-        name: 'Hardened Leather',
+        name: 'Reinforced Bodysuit',
         type: 'armor',
         slot: 'armor',
         armorBonus: 4,
@@ -95,13 +95,13 @@ export const ITEM_DEFS = {
     },
     robeApprentice: {
         id: 'robeApprentice',
-        name: 'Apprentice Robe',
+        name: 'Tech Suit',
         type: 'armor',
         slot: 'armor',
         armorBonus: 2,
         maxResourceBonus: 20,
         price: 40,
-        desc: '+2 Armor, +20 Mana.',
+        desc: '+2 Armor, +20 Energy.',
         elementalResists: { arcane: 10 }
     },
 
@@ -110,7 +110,7 @@ export const ITEM_DEFS = {
     // renderer without needing a new item tab. They are NOT usable/sellable/droppable.
     stolenGrainPouch: {
         id: 'stolenGrainPouch',
-        name: 'Stolen Grain Pouch',
+        name: 'Stolen Supply Cache',
         type: 'potion',
         price: 0,
         rarity: 'common',
@@ -118,11 +118,11 @@ export const ITEM_DEFS = {
         usable: false,
         noSell: true,
         noDrop: true,
-        desc: 'A pouch of Emberwood grain taken by goblin thieves. (Quest Item)'
+        desc: 'Colony supplies taken by raiders. (Quest Item)'
     },
     runnersSatchel: {
         id: 'runnersSatchel',
-        name: 'Runner\'s Satchel',
+        name: 'Courier Data Pad',
         type: 'potion',
         price: 0,
         rarity: 'common',
@@ -130,13 +130,13 @@ export const ITEM_DEFS = {
         usable: false,
         noSell: true,
         noDrop: true,
-        desc: 'A satchel with a village clasp — proof someone intercepted the runner. (Quest Item)'
+        desc: 'A data pad with a colony seal — proof someone intercepted the courier. (Quest Item)'
     },
 
     // --- Main Quest Proof Items -------------------------------------------
     goblinTrailMark: {
         id: 'goblinTrailMark',
-        name: 'Goblin Trail‑Mark',
+        name: 'Raider Beacon',
         type: 'potion',
         price: 0,
         rarity: 'common',
@@ -144,7 +144,7 @@ export const ITEM_DEFS = {
         usable: false,
         noSell: true,
         noDrop: true,
-        desc: 'A crude charm used by goblin raiders to mark safe routes. (Quest Item)'
+        desc: 'A signal device used by raiders to mark safe routes. (Quest Item)'
     },
     // Chapter I (expanded) proof items
     bitterleaf: {
