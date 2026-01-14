@@ -13371,8 +13371,6 @@ function openInGameSettingsModal() {
             row.appendChild(control)
             secDisplay.appendChild(row)
         }
-            secDisplay.appendChild(row)
-        }
 
         // Text speed
         {
