@@ -87,13 +87,24 @@ export const CHANGELOG = [
             ]
           },
           {
-            "title": "Enhanced engine integration for settings and audio",
+            "title": "Enhanced Settings Menu with new options",
             "bullets": [
-              "Migrated all settings controls (theme, volume, text speed, music, SFX, auto-equip) to consistently use the engine settings service with legacy storage fallbacks.",
-              "Theme selection now reads from engine settings (ui.theme) on startup instead of only legacy storage.",
-              "Audio initialization now checks engine settings first for music/SFX toggles before falling back to legacy storage.",
-              "In-game settings modal now uses engine settings for all controls, ensuring synchronization between main menu and in-game settings.",
-              "Both settings screens (main menu and in-game) are now fully synchronized through the unified engine settings service."
+              "Added Color Scheme setting (Auto/Light/Dark) to allow users to override system preferences for UI appearance.",
+              "Added UI Scale setting (Small/Default/Large/Extra Large) to adjust the size of all UI elements for better readability and accessibility.",
+              "Added Show Combat Numbers toggle to control display of damage and healing numbers in combat.",
+              "Added Auto-save toggle to allow users to enable or disable automatic periodic saving.",
+              "All new settings are properly wired to the engine settings service and persist across sessions.",
+              "UI Scale and Color Scheme settings are applied via the a11y bridge plugin for consistent behavior across the application."
+            ]
+          },
+          {
+            "title": "Improved Engine Integration",
+            "bullets": [
+              "Ensured all game settings route through engine.settings as the single source of truth.",
+              "Settings are now properly mirrored between engine settings and game state for backwards compatibility.",
+              "The a11y bridge plugin now combines UI scale with text scale for proper font sizing.",
+              "Added new gameplay settings (showCombatNumbers, autoSave) to the settings plugin defaults.",
+              "All settings changes trigger engine settings:changed events for reactive updates."
             ]
           }
         ]
