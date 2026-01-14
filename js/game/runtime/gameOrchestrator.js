@@ -48,6 +48,7 @@ import { createRngBridgePlugin } from '../plugins/rngBridgePlugin.js'
 import { createGameCommandsPlugin } from '../plugins/gameCommandsPlugin.js'
 import { createScreenAssetPreloadPlugin } from '../plugins/screenAssetPreloadPlugin.js'
 import { createVillageServicesPlugin } from '../plugins/villageServicesPlugin.js'
+import { createTimeServicePlugin } from '../plugins/timeServicePlugin.js'
 
 /* =============================================================================
  * Emberwood Engine (engine.js)
@@ -20711,10 +20712,13 @@ export function bootGame(engine) {
 	        // 12) Deterministic game RNG exposed as a service
 	        _engine.use(createRngBridgePlugin({ getState: () => state }))
 
-        // 13) Village services (economy, population) - Engine-integrated state management
+        // 13) Time service - Engine-integrated time management
+        _engine.use(createTimeServicePlugin())
+
+        // 14) Village services (economy, population) - Engine-integrated state management
         _engine.use(createVillageServicesPlugin())
 
-        // 14) Replay recorder/player (records command dispatches)
+        // 15) Replay recorder/player (records command dispatches)
         _engine.use(createReplayBridgePlugin({ getState: () => state }))
 
         // Cache service handles as soon as plugins start.
