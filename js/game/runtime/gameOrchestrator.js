@@ -13454,9 +13454,8 @@ function openInGameSettingsModal() {
             const sw = makeSwitch(null, state.settingsShowCombatNumbers !== false, (on) => {
                 state.settingsShowCombatNumbers = !!on
                 try {
-                    const settings = _engine && _engine.getService ? _engine.getService('settings') : null
-                    if (settings && settings.set) {
-                        settings.set('gameplay.showCombatNumbers', !!on)
+                    if (engineSettings && engineSettings.set) {
+                        engineSettings.set('gameplay.showCombatNumbers', !!on)
                     } else {
                         // Legacy fallback
                         safeStorageSet('pq-show-combat-numbers', state.settingsShowCombatNumbers ? '1' : '0')
@@ -13479,9 +13478,8 @@ function openInGameSettingsModal() {
             const sw = makeSwitch(null, state.settingsAutoSave !== false, (on) => {
                 state.settingsAutoSave = !!on
                 try {
-                    const settings = _engine && _engine.getService ? _engine.getService('settings') : null
-                    if (settings && settings.set) {
-                        settings.set('gameplay.autoSave', !!on)
+                    if (engineSettings && engineSettings.set) {
+                        engineSettings.set('gameplay.autoSave', !!on)
                     } else {
                         // Legacy fallback
                         safeStorageSet('pq-auto-save', state.settingsAutoSave ? '1' : '0')
