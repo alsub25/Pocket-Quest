@@ -527,87 +527,21 @@ function sanitizeCoreState() {
  * CRASH CATCHER
  * Captures last-crash info so “black screen” bugs can be debugged from saves.
  * ============================================================================= */
-let lastCrashReport = null
 // Track the most recent save failure so the "Copy Bug Report" bundle can include it.
 // (Safari iOS will throw if a non-declared global is referenced.)
 let lastSaveError = null
 
-function recordCrash(kind, err, extra = {}) {
-    try {
-        const message =
-            (err && err.message) ||
-            (typeof err === 'string' ? err : '') ||
-            'Unknown error'
-        const stack = err && err.stack ? String(err.stack) : ''
-        lastCrashReport = {
-            kind,
-            message: String(message),
-            stack: stack,
-            time: Date.now(),
-            patch: GAME_PATCH,
-            schema: SAVE_SCHEMA,
-            area: state && state.area ? state.area : null,
-            player:
-                state && state.player
-                    ? {
-                          name: state.player.name,
-                          classId: state.player.classId,
-                          level: state.player.level
-                      }
-                    : null,
-            extra
-        }
-
-
-        try {
-            safeStorageSet(_STORAGE_DIAG_KEY_LAST_CRASH, JSON.stringify(lastCrashReport), { action: 'write crash report' })
-        } catch (_) {}
-
-        // Keep a short in-game breadcrumb too.
-        try {
-            if (typeof addLog === 'function') {
-                addLog('⚠️ An error occurred. Use Feedback to copy a report.', 'danger')
-            }
-        } catch (_) {}
-    } catch (_) {
-        // ignore
-    }
-}
-
-function initCrashCatcher() {
-    if (window.__pqCrashCatcherInstalled) return
-    window.__pqCrashCatcherInstalled = true
-
-    // Restore the last crash report (if any) so Feedback can include it after reload.
-    // To reduce confusion, we auto-expire stale crash reports (e.g., from prior patches/sessions).
-    try {
-        const raw = safeStorageGet(_STORAGE_DIAG_KEY_LAST_CRASH)
-        if (raw) {
-            const parsed = JSON.parse(raw)
-            const now = Date.now()
-            const tooOld = parsed && typeof parsed.time === 'number' ? (now - parsed.time) > 1000 * 60 * 60 * 12 : false
-            const wrongPatch = parsed && parsed.patch && typeof GAME_PATCH === 'string' ? parsed.patch !== GAME_PATCH : false
-            if (parsed && typeof parsed === 'object' && !tooOld && !wrongPatch) {
-                lastCrashReport = parsed
-            } else {
-                safeStorageRemove(_STORAGE_DIAG_KEY_LAST_CRASH)
-            }
-        }
-    } catch (_) {}
-
-    window.addEventListener('error', (e) => {
-        recordCrash(
-            'error',
-            e && e.error ? e.error : new Error(e && e.message ? e.message : 'Script error'),
-            { filename: e && e.filename, lineno: e && e.lineno, colno: e && e.colno }
-        )
-    })
-
-    window.addEventListener('unhandledrejection', (e) => {
-        const reason = e && e.reason ? e.reason : new Error('Unhandled promise rejection')
-        recordCrash('unhandledrejection', reason)
+// Wrapper function to initialize crash catcher with game context
+// This is called by uiBindings.js during boot
+function initCrashCatcherWrapper() {
+    initCrashCatcher({
+        GAME_PATCH,
+        SAVE_SCHEMA,
+        getState: () => state,
+        addLog
     })
 }
+
 
 
 // --- Progression / special encounters --------------------------------------
@@ -13820,9 +13754,10 @@ function showCorruptSaveModal(details = '') {
 
             const pre = document.createElement('pre')
             pre.className = 'code-block'
+            const crashReport = getLastCrashReport()
             pre.textContent =
                 'Tip: Open Feedback to copy a report if one exists.\n\n' +
-                (lastCrashReport ? JSON.stringify(lastCrashReport, null, 2) : '(no crash report recorded)')
+                (crashReport ? JSON.stringify(crashReport, null, 2) : '(no crash report recorded)')
             body.appendChild(pre)
 
             const actions = document.createElement('div')
@@ -14877,14 +14812,15 @@ function buildFeedbackPayload(type, text) {
         lines.push('')
     }
 
-    if (lastCrashReport) {
+    const crashReport = getLastCrashReport()
+    if (crashReport) {
         lines.push('Last Crash:')
-        lines.push(`- Kind: ${lastCrashReport.kind}`)
-        lines.push(`- Time: ${new Date(lastCrashReport.time).toISOString()}`)
-        lines.push(`- Message: ${lastCrashReport.message}`)
-        if (lastCrashReport.stack) {
+        lines.push(`- Kind: ${crashReport.kind}`)
+        lines.push(`- Time: ${new Date(crashReport.time).toISOString()}`)
+        lines.push(`- Message: ${crashReport.message}`)
+        if (crashReport.stack) {
             lines.push('- Stack:')
-            lines.push(String(lastCrashReport.stack))
+            lines.push(String(crashReport.stack))
         }
         lines.push('')
     }
@@ -15756,7 +15692,7 @@ function buildBugReportBundle() {
     const scanners = qaCollectBugScannerFindings(state)
 
     const diag = {
-        lastCrashReport: lastCrashReport || null,
+        lastCrashReport: getLastCrashReport() || null,
         lastSaveError: lastSaveError || null,
         perfSnapshot: (() => { try { return qaCollectPerfSnapshotSync(state) } catch (_) { return null } })(),
         logTail: (state && Array.isArray(state.log)) ? state.log.slice(-200) : [],
@@ -20166,28 +20102,6 @@ section('State Invariants')
     }
 }
 
-function copyFeedbackToClipboard(text) {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        return navigator.clipboard.writeText(text)
-    }
-
-    return new Promise((resolve, reject) => {
-        try {
-            const temp = document.createElement('textarea')
-            temp.value = text
-            temp.style.position = 'fixed'
-            temp.style.left = '-9999px'
-            document.body.appendChild(temp)
-            temp.select()
-            const OK = document.execCommand('copy')
-            document.body.removeChild(temp)
-            OK ? resolve() : reject()
-        } catch (e) {
-            reject(e)
-        }
-    })
-}
-
 // --- CHANGELOG MODAL --------------------------------------------------------
 
 function openChangelogModal(opts = {}) {
@@ -20426,7 +20340,7 @@ export function bootGame(engine) {
                 patchLabel: _patchLabel,
                 getState: () => state,
                 // boot/runtime
-                initCrashCatcher,
+                initCrashCatcher: initCrashCatcherWrapper,
                 // character creation / menu
                 resetDevCheatsCreationUI,
                 buildCharacterCreationOptions,
