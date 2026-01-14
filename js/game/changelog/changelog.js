@@ -58,6 +58,28 @@ export const CHANGELOG = [
               "Late-game builds can feel dramatically different based on talent and ability selections",
               "Enhanced replayability through multiple viable build paths per class"
             ]
+          },
+          {
+            "title": "New Passive Skills System",
+            "bullets": [
+              "Added 5 passive skills for each of the 11 playable classes",
+              "Passives are automatically unlocked at levels 1, 5, 10, 14, and 17",
+              "Provide always-active bonuses that enhance class identity and playstyle",
+              "Each passive builds upon the previous to create a cohesive power progression",
+              "Mage passives: Arcane Intellect, Spell Weaving, Arcane Barrier, Elemental Mastery, Mana Surge",
+              "Warrior passives: Warrior Resolve, Combat Reflexes, Battle Hardened, Fury Generation, Unbreakable",
+              "Blood Knight passives: Blood Pact, Sanguine Flow, Crimson Vitality, Blood Shield, Hemomancer's Mastery",
+              "Ranger passives: Hunter's Mark, Swift Footed, Tracker's Insight, Natural Camouflage, Apex Hunter",
+              "Paladin passives: Holy Blessing, Healing Aura, Divine Shield, Righteous Power, Divine Purpose",
+              "Rogue passives: Assassin's Precision, Shadow Step, Deadly Poison, Evasion Mastery, Lethal Strikes",
+              "Cleric passives: Divine Protection, Blessed Recovery, Holy Light, Sanctified Ground, Divine Intervention",
+              "Necromancer passives: Dark Communion, Soul Siphon, Undead Resilience, Plague Bearer, Lich Form",
+              "Shaman passives: Elemental Bond, Spirit Walker, Totemic Power, Nature's Wrath, Ancestral Blessing",
+              "Berserker passives: Primal Rage, Battle Fury, Relentless Assault, Enrage, Titan's Strength",
+              "Vampire passives: Vampiric Essence, Night Hunter, Blood Drinker, Shadow Embrace, Immortal Blood",
+              "Passives include unique mechanics: auto-shields, resource restoration, cheat death, spell echoing, and more",
+              "Total of 55 new passive skills across all classes for deep character customization"
+            ]
           }
         ]
       },
