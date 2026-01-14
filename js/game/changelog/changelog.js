@@ -7,6 +7,61 @@ export const CHANGELOG = [
     "title": "Engine Enhancement & Documentation",
     "sections": [
       {
+        "heading": "Character Progression Expansion",
+        "items": [
+          {
+            "title": "New High-Level Abilities (Levels 15 & 18)",
+            "bullets": [
+              "Added 2 powerful new abilities for each of the 11 playable classes",
+              "Level 15 abilities provide strong tactical options and class identity",
+              "Level 18 abilities are ultimate-tier powers with game-changing effects",
+              "Mage: Time Warp (level 15) slows enemies, Celestial Barrage (level 18) massive AoE arcane damage",
+              "Warrior: Rally Cry (level 15) group heal and buff, Titanic Slam (level 18) stunning AoE slam",
+              "Blood Knight: Sanguine Explosion (level 15) HP-cost AoE, Blood Reaping (level 18) massive lifesteal finisher",
+              "Ranger: Serpent Strike (level 15) poison and armor break, Storm of Arrows (level 18) multi-hit volley",
+              "Paladin: Divine Bulwark (level 15) reflective shield, Wrathed Judgment (level 18) holy fire AoE",
+              "Rogue: Blade Dance (level 15) multi-target whirl, Shadow Assault (level 18) untargetable burst damage",
+              "Cleric: Resurrection Grace (level 15) revival blessing, Holy Nova (level 18) damage and healing wave",
+              "Necromancer: Soul Shackles (level 15) life drain and heal block, Apocalypse (level 18) undead army summon",
+              "Shaman: Ancestral Spirits (level 15) healing and empowerment, Cataclysm (level 18) elemental devastation",
+              "Berserker: Unstoppable Force (level 15) crowd control immunity, Primal Rampage (level 18) rage-fueled AoE",
+              "Vampire: Crimson Pact (level 15) damage linking, Eternal Night (level 18) mass essence drain"
+            ]
+          },
+          {
+            "title": "Extended Talent Trees (Tiers 5 & 6)",
+            "bullets": [
+              "Added 4 new talents per class (2 choices each at levels 15 and 18)",
+              "Tier 5 talents (level 15) provide powerful specialization options",
+              "Tier 6 talents (level 18) offer build-defining capstone abilities",
+              "Each class now has 12 total talents across 6 tiers for deep customization",
+              "New talents include advanced mechanics: spell echoing, damage reflection, resource restoration, and more",
+              "Mage tier 6: Archmage Supremacy (spell power + regen) or Spell Echo (15% double-cast chance)",
+              "Warrior tier 6: Unbreakable Wall (damage reduction + HP) or Devastate (crit power + armor shred)",
+              "Blood Knight tier 6: Blood God (reduced HP costs) or Vampiric Supremacy (lifesteal mastery)",
+              "Ranger tier 6: Master Tracker (auto-mark + eternal marks) or Deadly Precision (massive crit damage + bleed)",
+              "Paladin tier 6: Avatar of Light (damage reduction + regen) or Divine Retribution (reflect + crit)",
+              "Rogue tier 6: Death Mark (damage amplification) or Ultimate Precision (crit CDR)",
+              "Cleric tier 6: Miracle Worker (efficient healing) or Divine Wrath (holy damage + debuff)",
+              "Necromancer tier 6: Lich Lord (shadow lifesteal) or Death Incarnate (DoT mastery + minion revival)",
+              "Shaman tier 6: Storm Caller (chain lightning) or Earth Warden (damage reduction + healing)",
+              "Berserker tier 6: Titan's Wrath (low-HP damage boost) or Blood Frenzy (crit healing + fury)",
+              "Vampire tier 6: Lord of Night (shadow damage mastery) or Eternal Thirst (ultimate lifesteal)"
+            ]
+          },
+          {
+            "title": "Increased Build Diversity and Depth",
+            "bullets": [
+              "Players now have meaningful choices every 3 levels up to level 18",
+              "22 total abilities per class (3 starting + 19 unlockable)",
+              "12 total talents per class (6 tiers with 2 choices each)",
+              "Late-game builds can feel dramatically different based on talent and ability selections",
+              "Enhanced replayability through multiple viable build paths per class"
+            ]
+          }
+        ]
+      },
+      {
         "heading": "Engine Improvements",
         "items": [
           {

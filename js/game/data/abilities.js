@@ -617,5 +617,184 @@ export const ABILITIES = {
         cost: { essence: 45 },
         note: 'A brutal eclipse: huge shadow damage and healing. (Unlocks at level 12)'
     },
+
+
+    // --- PATCH 1.2.82: NEW CLASS UNLOCKS (Lv 15 / Lv 18) --------------------
+
+    // MAGE
+    timeWarp: {
+        id: 'timeWarp',
+        name: 'Time Warp',
+        classId: 'mage',
+        cost: { mana: 35 },
+        note: 'Slow time around your foe, reducing their speed and granting you extra actions. (Unlocks at level 15)'
+    },
+    celestialBarrage: {
+        id: 'celestialBarrage',
+        name: 'Celestial Barrage',
+        classId: 'mage',
+        cost: { mana: 55 },
+        note: 'Call down a meteor storm dealing massive arcane damage to all enemies. (Unlocks at level 18)'
+    },
+
+    // WARRIOR
+    rallyCry: {
+        id: 'rallyCry',
+        name: 'Rally Cry',
+        classId: 'warrior',
+        cost: { fury: 30 },
+        note: 'Inspire yourself and companions, restoring health and boosting attack. (Unlocks at level 15)'
+    },
+    titanicSlam: {
+        id: 'titanicSlam',
+        name: 'Titanic Slam',
+        classId: 'warrior',
+        cost: { fury: 45 },
+        note: 'Slam the ground with devastating force, stunning and damaging all foes. (Unlocks at level 18)'
+    },
+
+    // BLOOD KNIGHT
+    sanguineExplosion: {
+        id: 'sanguineExplosion',
+        name: 'Sanguine Explosion',
+        classId: 'blood',
+        cost: { hp: 20 },
+        note: 'Detonate your own blood in a violent explosion that damages all enemies. (Unlocks at level 15)'
+    },
+    bloodReaping: {
+        id: 'bloodReaping',
+        name: 'Blood Reaping',
+        classId: 'blood',
+        cost: { blood: 35 },
+        note: 'Harvest the life force of bleeding enemies for massive healing and damage. (Unlocks at level 18)'
+    },
+
+    // RANGER
+    serpentStrike: {
+        id: 'serpentStrike',
+        name: 'Serpent Strike',
+        classId: 'ranger',
+        cost: { fury: 28 },
+        note: 'A venomous shot that poisons and weakens armor. (Unlocks at level 15)'
+    },
+    stormOfArrows: {
+        id: 'stormOfArrows',
+        name: 'Storm of Arrows',
+        classId: 'ranger',
+        cost: { fury: 42 },
+        note: 'Unleash a devastating volley that hits all enemies multiple times. (Unlocks at level 18)'
+    },
+
+    // PALADIN
+    divineBulwark: {
+        id: 'divineBulwark',
+        name: 'Divine Bulwark',
+        classId: 'paladin',
+        cost: { mana: 32 },
+        note: 'Summon an impenetrable holy shield that reflects damage. (Unlocks at level 15)'
+    },
+    wrathedJudgment: {
+        id: 'wrathedJudgment',
+        name: 'Wrathed Judgment',
+        classId: 'paladin',
+        cost: { mana: 50 },
+        note: 'Channel divine fury to smite all enemies with holy fire. (Unlocks at level 18)'
+    },
+
+    // ROGUE
+    bladeDance: {
+        id: 'bladeDance',
+        name: 'Blade Dance',
+        classId: 'rogue',
+        cost: { fury: 35 },
+        note: 'Whirl through enemies with lightning speed, striking each multiple times. (Unlocks at level 15)'
+    },
+    shadowAssault: {
+        id: 'shadowAssault',
+        name: 'Shadow Assault',
+        classId: 'rogue',
+        cost: { fury: 40 },
+        note: 'Merge with shadows to deal devastating backstab damage and become untargetable. (Unlocks at level 18)'
+    },
+
+    // CLERIC
+    resurrectionGrace: {
+        id: 'resurrectionGrace',
+        name: 'Resurrection Grace',
+        classId: 'cleric',
+        cost: { mana: 40 },
+        note: 'Grant yourself a divine blessing that revives you if slain this battle. (Unlocks at level 15)'
+    },
+    holyNova: {
+        id: 'holyNova',
+        name: 'Holy Nova',
+        classId: 'cleric',
+        cost: { mana: 50 },
+        note: 'Unleash a wave of radiant energy that damages enemies and heals you. (Unlocks at level 18)'
+    },
+
+    // NECROMANCER
+    soulShackles: {
+        id: 'soulShackles',
+        name: 'Soul Shackles',
+        classId: 'necromancer',
+        cost: { mana: 34 },
+        note: 'Bind enemy souls, draining life and preventing healing. (Unlocks at level 15)'
+    },
+    apocalypse: {
+        id: 'apocalypse',
+        name: 'Apocalypse',
+        classId: 'necromancer',
+        cost: { mana: 55 },
+        note: 'Summon an army of undead and unleash devastating shadow magic. (Unlocks at level 18)'
+    },
+
+    // SHAMAN
+    ancestralSpirits: {
+        id: 'ancestralSpirits',
+        name: 'Ancestral Spirits',
+        classId: 'shaman',
+        cost: { mana: 30 },
+        note: 'Call upon ancient spirits to heal and empower your attacks. (Unlocks at level 15)'
+    },
+    cataclysm: {
+        id: 'cataclysm',
+        name: 'Cataclysm',
+        classId: 'shaman',
+        cost: { mana: 48 },
+        note: 'Unleash the fury of nature with earthquakes, lightning, and fire. (Unlocks at level 18)'
+    },
+
+    // BERSERKER
+    unstoppableForce: {
+        id: 'unstoppableForce',
+        name: 'Unstoppable Force',
+        classId: 'berserker',
+        cost: { fury: 32 },
+        note: 'Become an unstoppable juggernaut, immune to crowd control and dealing massive damage. (Unlocks at level 15)'
+    },
+    primalRampage: {
+        id: 'primalRampage',
+        name: 'Primal Rampage',
+        classId: 'berserker',
+        cost: { fury: 48 },
+        note: 'Enter a primal state of pure rage, attacking all enemies with devastating power. (Unlocks at level 18)'
+    },
+
+    // VAMPIRE
+    crimsonPact: {
+        id: 'crimsonPact',
+        name: 'Crimson Pact',
+        classId: 'vampire',
+        cost: { essence: 32 },
+        note: 'Form a blood pact that links your life to your foe, sharing damage taken. (Unlocks at level 15)'
+    },
+    eternalNight: {
+        id: 'eternalNight',
+        name: 'Eternal Night',
+        classId: 'vampire',
+        cost: { essence: 52 },
+        note: 'Shroud the battlefield in eternal darkness, draining all enemies massively. (Unlocks at level 18)'
+    },
 }
 
