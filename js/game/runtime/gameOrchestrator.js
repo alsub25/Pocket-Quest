@@ -13151,6 +13151,11 @@ function openInGameSettingsModal() {
             return wrap
         }
 
+        // Get engine settings service once for use across all sections
+        const engineSettings = (() => {
+            try { return _engine && _engine.getService ? _engine.getService('settings') : null } catch (_) { return null }
+        })()
+
         // --- Audio ------------------------------------------------------------
         const secAudio = addSection('Audio')
 
@@ -13228,9 +13233,6 @@ function openInGameSettingsModal() {
 
         // --- Display ----------------------------------------------------------
         const secDisplay = addSection('Display')
-        const engineSettings = (() => {
-            try { return _engine && _engine.getService ? _engine.getService('settings') : null } catch (_) { return null }
-        })()
 
         // UI theme
         {
