@@ -116,10 +116,12 @@ export async function showSplashSequence() {
       splash.classList.add('hidden');
     }
   } finally {
-    // Clean up event listeners
-    splash.removeEventListener('click', skipSplash);
-    splash.removeEventListener('touchstart', skipSplash);
-    splash.style.cursor = '';
+    // Clean up event listeners (check for splash existence)
+    if (splash) {
+      splash.removeEventListener('click', skipSplash);
+      splash.removeEventListener('touchstart', skipSplash);
+      splash.style.cursor = '';
+    }
   }
 }
 
@@ -131,20 +133,34 @@ export async function showSplashSequence() {
  */
 function _waitOrSkip(ms, shouldSkip) {
   return new Promise((resolve) => {
+    let timeoutId = null;
+    let rafId = null;
     const startTime = Date.now();
-    const checkInterval = 50; // Check every 50ms
     
     const check = () => {
       if (shouldSkip()) {
+        if (timeoutId) clearTimeout(timeoutId);
         resolve();
       } else if (Date.now() - startTime >= ms) {
         resolve();
       } else {
-        setTimeout(check, checkInterval);
+        // Use requestAnimationFrame for efficient checking
+        rafId = requestAnimationFrame(check);
       }
     };
     
+    // Start checking
     check();
+    
+    // Also set a timeout as a fallback to guarantee completion
+    timeoutId = setTimeout(() => {
+      if (rafId) {
+        try {
+          cancelAnimationFrame(rafId);
+        } catch (_) {}
+      }
+      resolve();
+    }, ms);
   });
 }
 
