@@ -89,6 +89,14 @@ export function createSnapshotManager({
   }
 
   function load(snapshot, { allowMigrate = true } = {}) {
+    // Validate snapshot parameter
+    if (!snapshot || typeof snapshot !== 'object') {
+      const err = new Error('load() requires a valid snapshot object')
+      err.code = 'INVALID_SNAPSHOT'
+      err.details = { snapshotType: typeof snapshot }
+      throw err
+    }
+    
     const v = validate(snapshot)
     if (!v.ok) {
       _log('warn', 'Snapshot validation failed', v)
@@ -109,19 +117,34 @@ export function createSnapshotManager({
         _log('info', 'Migrated snapshot state', { from, to })
       } catch (e) {
         _log('error', 'Migration failed', { from, to, e })
-        throw e
+        const err = new Error(`Migration failed: ${e.message}`)
+        err.code = 'MIGRATION_FAILED'
+        err.details = { from, to, originalError: { message: e.message, stack: e.stack } }
+        throw err
       }
     }
 
+    // Validate state after migration
+    if (!nextState || typeof nextState !== 'object') {
+      const err = new Error('Migrated state is not a valid object')
+      err.code = 'INVALID_STATE'
+      err.details = { stateType: typeof nextState, from, to }
+      throw err
+    }
+
     if (typeof setState === 'function') {
-      // Use metadata-enhanced setState if available (engine.setState accepts 2nd param)
       try {
+        // Use metadata-enhanced setState if available (engine.setState accepts 2nd param)
         setState(nextState, { reason: 'save:loaded', fromVersion: from, toVersion: to })
-      } catch (_) {
-        // Fallback for legacy setState signature
-        setState(nextState)
+      } catch (e) {
+        _log('error', 'setState failed after migration', { from, to, e })
+        const err = new Error(`Failed to set state after migration: ${e.message}`)
+        err.code = 'SETSTATE_FAILED'
+        err.details = { from, to, originalError: { message: e.message, stack: e.stack } }
+        throw err
       }
     }
+    
     try { if (emit) emit('save:loaded', { fromVersion: from, toVersion: to }) } catch (_) {}
     return nextState
   }
