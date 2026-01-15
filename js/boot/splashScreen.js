@@ -144,11 +144,7 @@ function _waitOrSkip(ms, shouldSkip) {
         timeoutId = null;
       }
       if (rafId) {
-        try {
-          cancelAnimationFrame(rafId);
-        } catch (_) {
-          // cancelAnimationFrame may fail if called with invalid ID, which is safe to ignore
-        }
+        cancelAnimationFrame(rafId);
         rafId = null;
       }
     };
