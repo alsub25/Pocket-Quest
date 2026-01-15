@@ -60,6 +60,12 @@ function _errInfo(e) {
 
 function _normId(v) {
   const s = String(v || '').trim()
+  // Warn if ID normalization could cause collisions
+  if (s && s !== String(v)) {
+    if (typeof console !== 'undefined' && console.warn) {
+      console.warn(`[Engine] ID normalized from "${v}" to "${s}" - ensure this is intentional`)
+    }
+  }
   return s
 }
 
@@ -218,7 +224,13 @@ let _autoTickLastT = 0
 
   function disposeOwner(owner) {
     const o = String(owner || '').trim()
-    if (!o) return
+    if (!o) {
+      if (typeof console !== 'undefined' && console.warn) {
+        console.warn('[Engine] disposeOwner() called with empty owner name')
+      }
+      return
+    }
+    
     const set = _ownerDisposables.get(o)
     if (!set || set.size === 0) {
       _ownerDisposables.delete(o)
@@ -226,9 +238,25 @@ let _autoTickLastT = 0
     }
 
     const arr = Array.from(set)
+    // Remove from map first to prevent duplicate disposal
     _ownerDisposables.delete(o)
+    
+    let errors = []
     for (let i = 0; i < arr.length; i++) {
-      try { arr[i]() } catch (_) {}
+      try { 
+        if (typeof arr[i] === 'function') {
+          arr[i]()
+        } else if (typeof console !== 'undefined' && console.warn) {
+          console.warn(`[Engine] Non-function disposer found for owner "${o}"`)
+        }
+      } catch (e) {
+        errors.push(e)
+      }
+    }
+    
+    // Log if any disposers failed
+    if (errors.length > 0 && typeof console !== 'undefined' && console.warn) {
+      console.warn(`[Engine] ${errors.length} disposer(s) failed for owner "${o}"`, errors)
     }
   }
 
