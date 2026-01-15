@@ -1882,6 +1882,46 @@ details[open] > summary.qa-summary::before{
    14) SETTINGS (MENU + IN-GAME)
    ============================================================================= */
 
+/* --- Main Menu Card -------------------------------------------------------- */
+.main-menu-card{
+  max-width:420px;
+  margin:0 auto;
+}
+
+.main-menu-subtitle{
+  margin-top:4px;
+  margin-bottom:12px;
+  font-size:0.78rem;
+}
+
+.main-menu-actions{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin-bottom:12px;
+}
+
+.main-menu-secondary{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(120px, 1fr));
+  gap:6px;
+  margin-bottom:12px;
+}
+
+.main-menu-secondary .btn.small{
+  width:100%;
+  margin-top:0;
+  padding:8px 12px;
+  font-size:0.78rem;
+}
+
+.main-menu-footer{
+  margin-top:6px;
+  margin-bottom:0;
+  font-size:0.72rem;
+  opacity:0.75;
+}
+
 /* --- Main Settings screen -------------------------------------------------- */
 .settings-card{
   max-width:560px;
@@ -2078,39 +2118,40 @@ details[open] > summary.qa-summary::before{
 
 /* --- Compact settings layout (requested): reduces vertical space while keeping readability. --- */
 .settings-card.settings-compact{ max-width:520px; }
-.settings-compact .settings-header{ margin-bottom:6px; }
-.settings-compact .settings-header .hint{ margin:0; font-size:0.72rem; line-height:1.15; }
+.settings-compact .settings-header{ margin-bottom:8px; }
+.settings-compact .settings-header .hint{ margin:2px 0 0; font-size:0.70rem; line-height:1.15; opacity:0.85; }
 
-.settings-compact .settings-sections{ gap:6px; }
-.settings-compact .settings-section{ padding:6px 0; }
-.settings-compact .settings-section-title{ margin:0 0 6px; font-size:0.66rem; letter-spacing:0.16em; }
+.settings-compact .settings-sections{ gap:4px; }
+.settings-compact .settings-section{ padding:4px 0; }
+.settings-compact .settings-section-title{ margin:0 0 4px; font-size:0.64rem; letter-spacing:0.16em; }
 
 .settings-compact .settings-row{
-  padding:6px 0;
-  gap:10px;
-  grid-template-columns:1fr minmax(140px, 220px);
+  padding:4px 0;
+  gap:8px;
+  grid-template-columns:1fr minmax(130px, 200px);
 }
 .settings-compact .settings-left{ gap:0; }
-.settings-compact .settings-label{ font-size:0.88rem; }
+.settings-compact .settings-label{ font-size:0.84rem; }
 
 /* Descriptions are kept, but clamped to a single line to keep the menu tight. */
 .settings-compact .settings-desc{
-  font-size:0.72rem;
+  font-size:0.70rem;
   line-height:1.15;
   display:-webkit-box;
   -webkit-line-clamp:1;
   -webkit-box-orient:vertical;
   overflow:hidden;
+  margin-top:1px;
 }
 
-.settings-compact .settings-select{ padding:6px 10px; font-size:0.80rem; }
+.settings-compact .settings-select{ padding:5px 8px; font-size:0.78rem; }
 
 /* Slightly smaller switches for tighter rows. */
-.settings-compact .switch-track{ width:40px; height:22px; }
-.settings-compact .switch-track::after{ top:3px; left:3px; width:16px; height:16px; }
+.settings-compact .switch-track{ width:38px; height:20px; }
+.settings-compact .switch-track::after{ top:2px; left:2px; width:16px; height:16px; }
 .settings-compact .switch input:checked + .switch-track::after{ transform:translateX(18px); }
 
-.settings-compact .settings-control input[type="range"]{ height:20px; }
+.settings-compact .settings-control input[type="range"]{ height:18px; }
 
 /* In-game settings modal */
 .settings-modal-body{

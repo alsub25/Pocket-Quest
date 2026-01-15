@@ -41,32 +41,33 @@
         <div id="app">
             <!-- MAIN MENU -->
             <div id="mainMenu" class="screen">
-                <div class="card center">
+                <div class="card center main-menu-card">
                     <h1>EMBERWOOD: THE BLACKBARK OATH</h1>
-                    <div class="hint">Fantasy RPG • <span id="versionLabel">V?</span></div>
+                    <div class="hint main-menu-subtitle">Fantasy RPG • <span id="versionLabel">V?</span></div>
 
-                    <button class="btn outline" id="btnNewGame">
-                        New Game
-                    </button>
-                    <button class="btn outline" id="btnLoadGame">
-                        Load Game
-                    </button>
-                    <button class="btn outline" id="btnSettingsMain">
-                        Settings
-                    </button>
+                    <div class="main-menu-actions">
+                        <button class="btn outline" id="btnNewGame">
+                            New Game
+                        </button>
+                        <button class="btn outline" id="btnLoadGame">
+                            Load Game
+                        </button>
+                    </div>
 
-                    <!-- NEW: Changelog button -->
-                    <button class="btn outline" id="btnChangelog">
-                        Changelog
-                    </button>
+                    <div class="main-menu-secondary">
+                        <button class="btn outline small" id="btnSettingsMain">
+                            Settings
+                        </button>
+                        <button class="btn outline small" id="btnChangelog">
+                            Changelog
+                        </button>
+                        <button class="btn outline small" id="btnFeedback">
+                            Feedback / Bug Report
+                        </button>
+                    </div>
 
-                    <button class="btn outline" id="btnFeedback">
-                        Feedback / Bug Report
-                    </button>
-
-                    <p class="hint">
-                        Progress is stored locally on this device using browser
-                        storage.
+                    <p class="hint main-menu-footer">
+                        Progress saved to local storage
                     </p>
                 </div>
             </div>
@@ -268,7 +269,7 @@
                 <div class="card settings-card settings-compact">
                     <div class="settings-header">
                         <h2>Settings</h2>
-                        <p class="hint">Personalize visuals, audio, and accessibility.</p>
+                        <p class="hint">Customize your experience</p>
                     </div>
 
                     <div class="settings-sections">
@@ -279,7 +280,7 @@
                             <div class="settings-row">
                                 <div class="settings-left">
                                     <div class="settings-label">Theme</div>
-                                    <div class="settings-desc">Changes the overall UI palette.</div>
+                                    <div class="settings-desc">UI color palette</div>
                                 </div>
                                 <div class="settings-control">
                                     <select id="themeSelect" class="settings-select">
@@ -296,7 +297,7 @@
                             <div class="settings-row">
                                 <div class="settings-left">
                                     <div class="settings-label">Color scheme</div>
-                                    <div class="settings-desc">Light or dark mode for the UI.</div>
+                                    <div class="settings-desc">Light or dark mode</div>
                                 </div>
                                 <div class="settings-control">
                                     <select id="settingsColorScheme" class="settings-select" aria-label="Color scheme">
@@ -310,7 +311,7 @@
                             <div class="settings-row">
                                 <div class="settings-left">
                                     <div class="settings-label">UI scale</div>
-                                    <div class="settings-desc">Adjusts the size of all UI elements.</div>
+                                    <div class="settings-desc">Size of UI elements</div>
                                 </div>
                                 <div class="settings-control">
                                     <select id="settingsUiScale" class="settings-select" aria-label="UI scale">
@@ -325,7 +326,7 @@
                             <div class="settings-row">
                                 <div class="settings-left">
                                     <div class="settings-label">Text speed</div>
-                                    <div class="settings-desc">How quickly story text advances.</div>
+                                    <div class="settings-desc">Story text pacing</div>
                                 </div>
                                 <div class="settings-control">
                                     <input type="range" id="settingsTextSpeed" min="0" max="100" value="100" />
@@ -340,7 +341,7 @@
                             <div class="settings-row">
                                 <div class="settings-left">
                                     <div class="settings-label">Master volume</div>
-                                    <div class="settings-desc">Overall volume level.</div>
+                                    <div class="settings-desc">Overall volume</div>
                                 </div>
                                 <div class="settings-control">
                                     <input type="range" id="settingsVolume" min="0" max="100" value="80" />
@@ -350,7 +351,7 @@
                             <div class="settings-row">
                                 <div class="settings-left">
                                     <div class="settings-label">Music</div>
-                                    <div class="settings-desc">Background music during play.</div>
+                                    <div class="settings-desc">Background music</div>
                                 </div>
                                 <div class="settings-control">
                                     <label class="switch" aria-label="Toggle music">
@@ -363,7 +364,7 @@
                             <div class="settings-row">
                                 <div class="settings-left">
                                     <div class="settings-label">SFX</div>
-                                    <div class="settings-desc">Combat and UI sound effects.</div>
+                                    <div class="settings-desc">Sound effects</div>
                                 </div>
                                 <div class="settings-control">
                                     <label class="switch" aria-label="Toggle sound effects">
@@ -381,7 +382,7 @@
                             <div class="settings-row">
                                 <div class="settings-left">
                                     <div class="settings-label">Difficulty</div>
-                                    <div class="settings-desc">Adjust challenge and enemy scaling.</div>
+                                    <div class="settings-desc">Challenge and scaling</div>
                                 </div>
                                 <div class="settings-control">
                                     <select id="settingsDifficulty" class="settings-select">
@@ -395,8 +396,8 @@
 
                             <div class="settings-row">
                                 <div class="settings-left">
-                                    <div class="settings-label">Show combat numbers</div>
-                                    <div class="settings-desc">Display damage and healing numbers in combat.</div>
+                                    <div class="settings-label">Combat numbers</div>
+                                    <div class="settings-desc">Show damage/healing</div>
                                 </div>
                                 <div class="settings-control">
                                     <label class="switch" aria-label="Toggle combat numbers">
@@ -409,7 +410,7 @@
                             <div class="settings-row">
                                 <div class="settings-left">
                                     <div class="settings-label">Auto-save</div>
-                                    <div class="settings-desc">Automatically save your progress periodically.</div>
+                                    <div class="settings-desc">Save periodically</div>
                                 </div>
                                 <div class="settings-control">
                                     <label class="switch" aria-label="Toggle auto-save">
@@ -427,7 +428,7 @@
                             <div class="settings-row">
                                 <div class="settings-left">
                                     <div class="settings-label">Reduce motion</div>
-                                    <div class="settings-desc">Turns off animated HUD effects.</div>
+                                    <div class="settings-desc">Disable animations</div>
                                 </div>
                                 <div class="settings-control">
                                     <label class="switch" aria-label="Toggle reduce motion">
@@ -440,7 +441,7 @@
                             <div class="settings-row">
                                 <div class="settings-left">
                                     <div class="settings-label">Text size</div>
-                                    <div class="settings-desc">Scales UI text for readability.</div>
+                                    <div class="settings-desc">Scale text readability</div>
                                 </div>
                                 <div class="settings-control">
                                     <select id="settingsTextSize" class="settings-select" aria-label="Text size">
@@ -455,7 +456,7 @@
                             <div class="settings-row">
                                 <div class="settings-left">
                                     <div class="settings-label">High contrast</div>
-                                    <div class="settings-desc">Boosts contrast to improve readability.</div>
+                                    <div class="settings-desc">Boost readability</div>
                                 </div>
                                 <div class="settings-control">
                                     <select id="settingsHighContrast" class="settings-select" aria-label="High contrast">
@@ -468,7 +469,7 @@
                             <div class="settings-row">
                                 <div class="settings-left">
                                     <div class="settings-label">Auto-equip loot</div>
-                                    <div class="settings-desc">When you gain a new weapon or armor piece and the slot is empty, equip it automatically.</div>
+                                    <div class="settings-desc">Equip items automatically</div>
                                 </div>
                                 <div class="settings-control">
                                     <label class="switch" aria-label="Toggle auto-equip loot">
