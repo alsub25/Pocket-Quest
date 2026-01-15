@@ -67,7 +67,6 @@ export const CHANGELOG = [
               "Safe transform boundaries prevent content clipping on phones"
             ]
           }
-          }
         ]
       },
       {
