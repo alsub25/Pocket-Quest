@@ -392,7 +392,15 @@ let _autoTickLastT = 0
     }
   }
 function _startAutoTickLoop() {
-  if (!_autoTickEnabled || _autoTickRunning) return
+  // Atomic check and set to prevent race conditions
+  if (!_autoTickEnabled) return
+  if (_autoTickRunning) {
+    if (typeof console !== 'undefined' && console.warn) {
+      console.warn('[Engine] Auto-tick loop already running, skipping start')
+    }
+    return
+  }
+  
   _autoTickRunning = true
   try { _autoTickLastT = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now() } catch (_) { _autoTickLastT = Date.now() }
 
@@ -400,7 +408,9 @@ function _startAutoTickLoop() {
   const useRaf = (_autoTickMode === 'raf') && hasRaf
 
   function step(now) {
+    // Double-check running flag to prevent stale callbacks
     if (!_autoTickRunning) return
+    
     const t = (typeof now === 'number') ? now : (() => {
       try { return (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now() } catch (_) { return Date.now() }
     })()
@@ -408,14 +418,24 @@ function _startAutoTickLoop() {
     _autoTickLastT = t
     // Clamp absurd deltas (background tabs / iOS resume) to avoid huge catch-up bursts.
     if (!Number.isFinite(dt) || dt < 0) dt = 0
-    if (dt > 250) dt = 250
+    if (dt > 250) {
+      // Log warning for large time jumps
+      try { 
+        if (emit) emit('engine:warn', { where: 'autoTick', message: 'Large time delta clamped', dt, clamped: 250 }) 
+      } catch (_) {}
+      dt = 250
+    }
     try { tick(dt) } catch (e) {
       try { emit('engine:error', { where: 'autoTick', e: String(e && e.message ? e.message : e) }) } catch (_) {}
     }
-    if (useRaf) {
-      try { _autoTickHandle = requestAnimationFrame(step) } catch (_) { _autoTickHandle = setTimeout(step, 16) }
-    } else {
-      _autoTickHandle = setTimeout(step, 16)
+    
+    // Only schedule next tick if still running
+    if (_autoTickRunning) {
+      if (useRaf) {
+        try { _autoTickHandle = requestAnimationFrame(step) } catch (_) { _autoTickHandle = setTimeout(step, 16) }
+      } else {
+        _autoTickHandle = setTimeout(step, 16)
+      }
     }
   }
 
@@ -546,6 +566,14 @@ function _stopAutoTickLoop() {
   const scheduler = createScheduler(clockSvc)
 
   function tick(dtMs = 16) {
+    // Validate dtMs is a valid number
+    if (!Number.isFinite(dtMs) || dtMs < 0) {
+      if (typeof console !== 'undefined' && console.warn) {
+        console.warn(`[Engine] tick() called with invalid dtMs: ${dtMs}, using 0`)
+      }
+      dtMs = 0
+    }
+    
     const used = clockSvc.tick(dtMs)
     try { scheduler.pump() } catch (_) {}
     emit('clock:tick', { dtMs: used, nowMs: clockSvc.nowMs })
