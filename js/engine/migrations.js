@@ -77,8 +77,7 @@ export function createMigrationRegistry() {
       } catch (e) {
         const err = new Error(`Migration failed at step ${step.from} -> ${step.to}: ${e.message}`)
         err.code = 'MIGRATION_ERROR'
-        err.details = { from: step.from, to: step.to, originalError: e }
-        err.cause = e
+        err.details = { from: step.from, to: step.to, originalError: { message: e.message, stack: e.stack } }
         throw err
       }
       

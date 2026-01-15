@@ -119,8 +119,7 @@ export function createSnapshotManager({
         _log('error', 'Migration failed', { from, to, e })
         const err = new Error(`Migration failed: ${e.message}`)
         err.code = 'MIGRATION_FAILED'
-        err.details = { from, to, originalError: e }
-        err.cause = e
+        err.details = { from, to, originalError: { message: e.message, stack: e.stack } }
         throw err
       }
     }
@@ -141,8 +140,7 @@ export function createSnapshotManager({
         _log('error', 'setState failed after migration', { from, to, e })
         const err = new Error(`Failed to set state after migration: ${e.message}`)
         err.code = 'SETSTATE_FAILED'
-        err.details = { from, to, originalError: e }
-        err.cause = e
+        err.details = { from, to, originalError: { message: e.message, stack: e.stack } }
         throw err
       }
     }
