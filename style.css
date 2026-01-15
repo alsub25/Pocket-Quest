@@ -342,41 +342,6 @@ h3{ font-size:0.95rem; }
     filter var(--t-med) var(--ease);
 }
 
-/* Shimmer effect on buttons */
-.btn::before{
-  content:"";
-  position:absolute;
-  top:-25%;
-  left:-25%;
-  width:150%;
-  height:150%;
-  background:linear-gradient(
-    45deg,
-    transparent 30%,
-    rgba(255,255,255,0.08) 50%,
-    transparent 70%
-  );
-  transform:translateX(-100%);
-  transition:transform 0.6s var(--ease);
-  pointer-events:none;
-}
-
-/* Only trigger shimmer on hover for devices with hover capability */
-@media (hover:hover) and (pointer:fine){
-  .btn:hover::before{
-    transform:translateX(100%);
-  }
-}
-
-/* For touch devices, shimmer on tap/focus instead of active
-   Using :focus:not(:focus-visible) limits shimmer to touch/tap only,
-   preventing unexpected animations for keyboard users */
-@media (hover:none) or (pointer:coarse){
-  .btn:focus:not(:focus-visible)::before{
-    transform:translateX(100%);
-  }
-}
-
 @media (hover:hover) and (pointer:fine){
   .btn:hover{
     transform:translateY(-1px) scale(1.005);
@@ -1307,12 +1272,6 @@ h3{ font-size:0.95rem; }
   #enemyModalPanel{
     animation:none !important;
   }
-
-  /* Disable button shimmer effect */
-  .btn::before{
-    opacity:0 !important;
-    visibility:hidden !important;
-  }
 }
 
 /* In-game setting: Reduce motion (also honors OS setting above). */
@@ -1360,12 +1319,6 @@ body.no-motion #enemyModal,
 body.no-motion #modalPanel,
 body.no-motion #enemyModalPanel{
   animation:none !important;
-}
-
-/* Disable button shimmer effect */
-body.no-motion .btn::before{
-  opacity:0 !important;
-  visibility:hidden !important;
 }
 
 #hud-bottom{
