@@ -1934,7 +1934,25 @@ Simulates extended gameplay to catch edge cases.
 
 Export detailed debugging information for issue reports.
 
-**Steps to Create Reproducible Bug Report:**
+**Quick GitHub Issue Creation:**
+
+The game now features a one-click GitHub issue creation button in the Feedback modal:
+
+1. Click "Feedback / Bug Report" from the main menu
+2. Select feedback type (Bug, UI Issue, Balance, Suggestion, Other)
+3. Describe the issue in the details box
+4. Click "📝 Create GitHub Issue" to open a pre-filled GitHub issue form
+
+The GitHub issue will automatically include:
+- Feedback type and description
+- Game version and patch information
+- Player context (level, class, location, combat status)
+- System information (timestamp, user agent)
+- Any recent crash reports
+
+**Manual Bug Report Creation:**
+
+For more detailed reports or offline submission:
 
 1. Enable Dev Cheats during character creation
 2. Enable "Deterministic RNG" in Cheat Menu
