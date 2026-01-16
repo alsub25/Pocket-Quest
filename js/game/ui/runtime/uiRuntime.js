@@ -853,6 +853,9 @@ export function closeModalDom() {
     if (_uiDisabled) return
 
     if (!modalEl) return
+    
+    // Don't close if the modal is already hidden or closing
+    if (modalEl.classList.contains('hidden') || modalEl.classList.contains('modal-closing')) return
 
     // If another subsystem owns/locks the modal (e.g., user acceptance), don't close it.
     try {
@@ -1089,6 +1092,9 @@ export function openEnemyModal(title, builderFn) {
 export function closeEnemyModal() {
     if (_uiDisabled) return
     if (!enemyModalEl) return
+    
+    // Don't close if the modal is already hidden or closing
+    if (enemyModalEl.classList.contains('hidden') || enemyModalEl.classList.contains('modal-closing')) return
 
     // Cancel any outstanding tasks owned by this modal.
     const _closingOwner = (() => {

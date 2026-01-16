@@ -306,6 +306,17 @@ export const CHANGELOG = [
               "Applied fix to both main modal (openModalDom) and enemy modal (openEnemyModal) functions",
               "Modals now open reliably regardless of previous animation state"
             ]
+          },
+          {
+            "title": "Modal Immediate Close Prevention",
+            "bullets": [
+              "Fixed issue where modals (settings, save/load) would open and immediately close",
+              "Added guard checks in closeModalDom() and closeEnemyModal() to prevent closing already-hidden or already-closing modals",
+              "Prevents duplicate close calls from interrupting modal display",
+              "closeModalDom() now checks for 'hidden' and 'modal-closing' classes before starting close animation",
+              "closeEnemyModal() includes same protection against redundant close operations",
+              "Eliminates race conditions where close is called multiple times or before modal fully opens"
+            ]
           }
         ]
       }
