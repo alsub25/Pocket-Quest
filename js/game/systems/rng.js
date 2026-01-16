@@ -161,9 +161,20 @@ export function setRngLoggingEnabled(state, enabled) {
 /**
  * Generate a random floating-point number in the range [0, 1).
  * Uses deterministic mode when enabled, otherwise uses Math.random().
- * @param {Object} [state] - Game state object (optional, will attempt to find global state)
- * @param {string} [tag] - Optional tag for logging and stream separation (e.g., 'loot', 'combat')
- * @returns {number} Random float in [0, 1)
+ * 
+ * Note: If state is not provided or is null/undefined, the function will attempt to find
+ * the global game state automatically. This allows for convenient calling without state.
+ * 
+ * @param {Object|null|undefined} [state=null] - Game state object. If omitted, will auto-find global state.
+ * @param {string} [tag=''] - Optional tag for logging and stream separation (e.g., 'loot', 'combat')
+ * @returns {number} Random float in [0, 1). Returns Math.random() if state cannot be found.
+ * @example
+ * // With state
+ * const roll = rngFloat(gameState, 'combat');
+ * 
+ * // Without state (auto-finds global state)
+ * const roll = rngFloat(null, 'loot');
+ * const roll = rngFloat(undefined, 'loot');
  */
 export function rngFloat(state, tag) {
   const d = _ensureDebug(state)
@@ -216,11 +227,21 @@ export function rngFloat(state, tag) {
 /**
  * Generate a random integer in the range [min, max] (inclusive).
  * Uses deterministic mode when enabled, otherwise uses Math.random().
- * @param {Object} [state] - Game state object (optional)
+ * 
+ * Note: If state is not provided or is null/undefined, the function will attempt to find
+ * the global game state automatically.
+ * 
+ * @param {Object|null|undefined} [state=null] - Game state object. If omitted, will auto-find global state.
  * @param {number} min - Minimum value (inclusive)
  * @param {number} max - Maximum value (inclusive)
- * @param {string} [tag] - Optional tag for logging and stream separation
- * @returns {number} Random integer in [min, max]
+ * @param {string} [tag=''] - Optional tag for logging and stream separation
+ * @returns {number} Random integer in [min, max]. Returns 0 if min/max are invalid.
+ * @example
+ * // Roll a d20 with state
+ * const roll = rngInt(gameState, 1, 20, 'combat');
+ * 
+ * // Roll a d6 without state (auto-finds global state)
+ * const roll = rngInt(null, 1, 6, 'loot');
  */
 export function rngInt(state, min, max, tag) {
   const a = Math.floor(Number(min))
@@ -235,10 +256,20 @@ export function rngInt(state, min, max, tag) {
 /**
  * Pick a random element from an array.
  * Uses deterministic mode when enabled, otherwise uses Math.random().
- * @param {Object} [state] - Game state object (optional)
+ * 
+ * Note: If state is not provided or is null/undefined, the function will attempt to find
+ * the global game state automatically.
+ * 
+ * @param {Object|null|undefined} [state=null] - Game state object. If omitted, will auto-find global state.
  * @param {Array} list - Array to pick from
- * @param {string} [tag] - Optional tag for logging and stream separation
- * @returns {*} Random element from the array, or null if array is empty
+ * @param {string} [tag=''] - Optional tag for logging and stream separation
+ * @returns {*} Random element from the array, or null if array is empty or invalid
+ * @example
+ * // Pick with state
+ * const item = rngPick(gameState, ['sword', 'shield', 'potion'], 'loot');
+ * 
+ * // Pick without state (auto-finds global state)
+ * const enemy = rngPick(null, enemyList, 'encounter');
  */
 export function rngPick(state, list, tag) {
   if (!Array.isArray(list) || list.length === 0) return null

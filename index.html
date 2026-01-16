@@ -6,7 +6,12 @@
         <meta
             name="viewport"
             content="width=device-width, initial-scale=1" />
-        <!-- Content Security Policy for defense-in-depth against XSS -->
+        <!-- Content Security Policy for defense-in-depth against XSS
+             Note: 'unsafe-inline' is required because:
+             1. ES6 module scripts are loaded inline (<script type="module">)
+             2. Zero-build architecture means no bundler to add nonces/hashes
+             3. Inline styles are used for dynamic theme switching
+             Future improvement: Consider using nonces when adding a minimal build step -->
         <meta http-equiv="Content-Security-Policy" 
               content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self';" />
         <link rel="stylesheet" href="style.css" />

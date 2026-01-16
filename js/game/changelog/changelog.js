@@ -162,8 +162,10 @@ export const CHANGELOG = [
             "bullets": [
               "Added Content Security Policy (CSP) meta tag to index.html for defense-in-depth against XSS attacks",
               "CSP restricts script sources to same-origin with explicit inline allowances for ES6 modules",
+              "Documented why 'unsafe-inline' is required for zero-build architecture (ES6 modules, inline styles for themes)",
               "Protects against script injection and improves overall security compliance",
-              "Maintains compatibility with existing inline scripts while preventing unauthorized external scripts"
+              "Maintains compatibility with existing inline scripts while preventing unauthorized external scripts",
+              "Future enhancement path documented for nonce-based CSP when adding build step"
             ]
           },
           {
@@ -184,6 +186,8 @@ export const CHANGELOG = [
             "bullets": [
               "Added comprehensive JSDoc comments to all RNG system functions (rng.js)",
               "Documented function parameters, return types, and behavior for: rngFloat, rngInt, rngPick, setRngSeed, initRngState, setDeterministicRngEnabled, setRngLoggingEnabled",
+              "Clarified optional state parameter behavior with detailed notes about auto-finding global state",
+              "Added usage examples demonstrating both explicit state passing and auto-find patterns",
               "JSDoc improves IDE autocomplete, type checking, and developer experience",
               "Reduces bugs from type confusion and parameter misuse",
               "Sets standard for future function documentation across the codebase"
