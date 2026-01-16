@@ -75,7 +75,8 @@ export function createIntegrityScannersModule(deps) {
         updateHUD,
         recordInput,
         quests,
-        lastSaveError
+        lastSaveError,
+        _engine
     } = deps
 
     function qaScanNonFiniteNumbers(rootObj, opts = {}) {
@@ -930,7 +931,6 @@ export function createIntegrityScannersModule(deps) {
         // Locus services: attach small, privacy-safe tails that help debugging.
         const locus = (() => {
             try {
-                const _engine = deps._engine
                 const flagsSvc = _engine && (_engine.getService ? _engine.getService('flags') : _engine.flags)
                 const i18nSvc = _engine && (_engine.getService ? _engine.getService('i18n') : _engine.i18n)
                 const savePolicySvc = _engine && (_engine.getService ? _engine.getService('savePolicy') : _engine.savePolicy)
