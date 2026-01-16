@@ -48,6 +48,10 @@ import { createRngBridgePlugin } from '../plugins/rngBridgePlugin.js'
 import { createGameCommandsPlugin } from '../plugins/gameCommandsPlugin.js'
 import { createScreenAssetPreloadPlugin } from '../plugins/screenAssetPreloadPlugin.js'
 import { createVillageServicesPlugin } from '../plugins/villageServicesPlugin.js'
+import { createBankServicePlugin } from '../plugins/bankServicePlugin.js'
+import { createMerchantServicePlugin } from '../plugins/merchantServicePlugin.js'
+import { createTavernServicePlugin } from '../plugins/tavernServicePlugin.js'
+import { createTownHallServicePlugin } from '../plugins/townHallServicePlugin.js'
 import { createTimeServicePlugin } from '../plugins/timeServicePlugin.js'
 import { createKingdomGovernmentPlugin } from '../plugins/kingdomGovernmentPlugin.js'
 import { createLootGeneratorPlugin } from '../plugins/lootGeneratorPlugin.js'
@@ -68,26 +72,38 @@ import {
 } from './debugHelpers.js'
 
 /* =============================================================================
- * Emberwood Engine (engine.js)
+ * Emberwood Game Orchestrator (gameOrchestrator.js)
  * Patch: 1.2.72 — The Blackbark Oath — Spell Book, Companions & Changelog UX
  *
- * WHAT THIS FILE DOES IN-GAME
- * - Boots the game runtime after the UI shell loads.
- * - Owns the single `state` object (new game, load, save, migrations).
- * - Wires UI buttons/modals to gameplay actions.
- * - Runs the “daily tick” simulation pipeline (quests → government → economy → merchants → bank → population).
+ * ENGINE-FIRST ARCHITECTURE
+ * This module implements engine-first architecture where the Locus Engine is
+ * the central orchestrator and all game systems run through it.
+ *
+ * WHAT THIS FILE DOES
+ * - Registers game-specific plugins with the engine
+ * - Starts the engine (making all systems operational)
+ * - Wires UI buttons/modals to gameplay actions via engine services
+ * - Coordinates the "daily tick" simulation pipeline through engine events
+ * - Manages state through engine's state management system
+ *
+ * BOOT FLOW (Engine-First)
+ * 1. Engine created (core services ready: clock, scheduler, events, etc.)
+ * 2. bootGame() called - registers all game plugins with engine
+ * 3. engine.start() called within bootGame - initializes and starts all systems
+ * 4. Game fully operational - everything runs through the engine
  *
  * ADDING A NEW SYSTEM (quick checklist)
  * 1) Create your module in js/game/systems/ (or a Location module).
- * 2) Hook it into the engine:
+ * 2) Register it as an engine plugin or hook into existing plugins:
  *    - Daily simulation: add ONE entry to `DAILY_STEPS` inside `runDailyTicks()`.
  *    - New save defaults: add ONE entry to `NEW_GAME_INIT_STEPS` inside `startNewGameFromCreation()`.
  *    - Load repair (missing fields): add ONE entry to `LOAD_REPAIR_STEPS` inside `loadGame()`.
- * 3) If it needs UI: add a modal/open function and wire it in the UI section.
+ * 3) If it needs UI: add a modal/open function and wire it through engine commands/events.
  *
  * NOTE
- * This file is intentionally “single file orchestration”. Core logic lives in
- * js/game/systems/* and js/game/locations/* modules.
+ * This file orchestrates the game layer. Core logic lives in js/game/systems/*
+ * and js/game/locations/* modules. The engine (js/engine/*) provides the
+ * infrastructure for all systems to communicate and coordinate.
  * ============================================================================= */
 
 import { CHANGELOG } from '../changelog/changelog.js'
@@ -20273,7 +20289,8 @@ export function bootGame(engine) {
     // =============================================================================
 
     // Register Emberwood runtime systems as Engine plugins.
-    // NOTE: init/start happens during engine.start() (main.js) immediately after bootGame().
+    // NOTE: Plugins are registered here, then engine.start() is called at the end
+    // of this function to initialize and start all systems in dependency order.
     try {
         const _patchLabel = `Emberwood Patch V${GAME_PATCH} — ${GAME_PATCH_NAME}`
 
@@ -20612,13 +20629,25 @@ export function bootGame(engine) {
         // 14) Village services (economy, population) - Engine-integrated state management
         _engine.use(createVillageServicesPlugin())
 
-        // 15) Kingdom government service - Engine-integrated kingdom/government state management
+        // 15) Bank service - Engine-integrated banking operations (deposits, loans, investments)
+        _engine.use(createBankServicePlugin())
+
+        // 16) Merchant service - Engine-integrated commerce operations (buying, selling, restocking)
+        _engine.use(createMerchantServicePlugin())
+
+        // 17) Tavern service - Engine-integrated tavern operations (resting, rumors)
+        _engine.use(createTavernServicePlugin())
+
+        // 18) Town Hall service - Engine-integrated town hall operations (announcements, proposals)
+        _engine.use(createTownHallServicePlugin())
+
+        // 19) Kingdom government service - Engine-integrated kingdom/government state management
         _engine.use(createKingdomGovernmentPlugin())
 
-        // 16) Loot generator service - Engine-integrated loot generation with event emissions
+        // 20) Loot generator service - Engine-integrated loot generation with event emissions
         _engine.use(createLootGeneratorPlugin())
 
-        // 17) Quest system service - Engine-integrated quest state management
+        // 21) Quest system service - Engine-integrated quest state management
         _engine.use(createQuestSystemPlugin())
 
         // 18) Replay recorder/player (records command dispatches)
@@ -20640,6 +20669,21 @@ export function bootGame(engine) {
         })
     } catch (e) {
         try { console.error('[bootGame] plugin registration failed', e) } catch (_) {}
+    }
+
+    // =============================================================================
+    // START ENGINE (Engine-First Architecture)
+    // =============================================================================
+    // All plugins are now registered. Start the engine to initialize and activate
+    // all systems. This ensures the engine is fully operational before returning
+    // control to the game layer.
+    try {
+        if (_engine && typeof _engine.start === 'function') {
+            _engine.start()
+            console.log('[bootGame] Engine started successfully')
+        }
+    } catch (e) {
+        try { console.error('[bootGame] Engine start failed', e) } catch (_) {}
     }
 
     // Emit an initial area enter event once the engine loop starts so plugins

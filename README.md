@@ -449,17 +449,19 @@ Emberwood-The-Blackbark-Oath/
 
 ### Module Organization
 
-The codebase follows a **layered architecture** to prevent circular dependencies and maintain clear boundaries:
+The codebase follows an **engine-first layered architecture** to ensure modularity and clear boundaries:
 
 ```
 ┌─────────────────────────────────────────┐
 │         Game Layer (js/game/)           │
+│  - Registers as Engine plugins          │
 │  - Game-specific logic & content        │
 │  - Depends on: Engine, Shared           │
 └─────────────────────────────────────────┘
                    ↓
 ┌─────────────────────────────────────────┐
 │       Engine Layer (js/engine/)         │
+│  - Central orchestrator (runs first)    │
 │  - Platform-agnostic game engine        │
 │  - State, events, plugins, services     │
 │  - Depends on: Shared                   │
@@ -474,7 +476,7 @@ The codebase follows a **layered architecture** to prevent circular dependencies
 ┌─────────────────────────────────────────┐
 │        Boot Layer (js/boot/)            │
 │  - First code to execute                │
-│  - Minimal dependencies                 │
+│  - Loads and initializes engine         │
 │  - Depends on: Shared only              │
 └─────────────────────────────────────────┘
 ```
@@ -485,6 +487,7 @@ The codebase follows a **layered architecture** to prevent circular dependencies
    - Executes before game engine loads
    - Handles storage checks and user acceptance
    - Shows loading screen
+   - Creates and hands off to engine
    - Minimal dependencies for fast startup
 
 2. **Shared Layer** (`js/shared/`)
@@ -492,16 +495,20 @@ The codebase follows a **layered architecture** to prevent circular dependencies
    - No dependencies on other layers
    - Safe for import anywhere
 
-3. **Engine Layer** (`js/engine/`)
+3. **Engine Layer** (`js/engine/`) - **RUNS FIRST**
    - Generic game engine (not Emberwood-specific)
+   - Central orchestrator for all systems
    - State management, events, services
-   - Plugin architecture
+   - Plugin architecture with dependency resolution
+   - Initializes and starts before game systems
    - Could theoretically power other games
 
 4. **Game Layer** (`js/game/`)
    - All Emberwood-specific content
+   - Registers as engine plugins
    - Game rules, data, UI
    - Organized by feature domain
+   - Systems communicate through engine
 
 ### File Naming Conventions
 
@@ -533,9 +540,9 @@ import { rollDice } from '~/systems/rng';
 
 ## 🏗️ Architecture Overview
 
-Emberwood uses a **single authoritative state object** combined with modular systems that read and update it. This architecture provides predictability, testability, and easy save/load functionality.
+Emberwood uses an **engine-first architecture** where the Locus Engine serves as the central orchestrator for all game systems. This provides modularity, predictability, testability, and ensures all systems communicate through well-defined engine services.
 
-### Boot Sequence
+### Boot Sequence (Engine-First)
 
 ```
 User Opens Page
@@ -556,18 +563,30 @@ User Opens Page
 ┌─────────────────────────────┐
 │  game/main.js loads         │
 │  - Creates Engine instance  │
-│  - Initializes orchestrator │
+│  - Core services initialized│
 └─────────────────────────────┘
       ↓
 ┌─────────────────────────────┐
-│  Engine.start() called      │
-│  - Loads/creates save       │
+│  bootGame() called          │
+│  - Registers game plugins   │
 │  - Wires UI bindings        │
+│  - Starts engine            │
+└─────────────────────────────┘
+      ↓
+┌─────────────────────────────┐
+│  Engine fully operational   │
+│  - All systems running      │
 │  - Shows main menu          │
 └─────────────────────────────┘
       ↓
     Game Ready!
 ```
+
+**Key Architecture Principles:**
+- **Engine-First**: Engine initializes and starts before game systems become active
+- **Plugin-Based**: All game systems register as engine plugins with dependency management
+- **Service-Oriented**: Systems communicate through engine services (events, commands, state)
+- **Modular**: Clear separation between engine (generic) and game (Emberwood-specific) layers
 
 **Boot Timing Targets:**
 - Storage check: < 50ms
