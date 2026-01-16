@@ -497,6 +497,8 @@ const GAME_PATCH = CURRENT_PATCH // current patch/version
 const GAME_PATCH_NAME = CURRENT_PATCH_NAME
 const SAVE_SCHEMA = 7 // bump when the save structure changes (migrations run on load)
 const GITHUB_REPO_URL = 'https://github.com/alsub25/Emberwood-The-Blackbark-Oath' // repository URL for issue creation
+const GITHUB_ISSUE_TITLE_MAX_LENGTH = 60 // max characters for issue title preview (GitHub supports longer)
+const GITHUB_URL_MAX_LENGTH = 2000 // conservative browser URL length limit
 
 /* =============================================================================
  * SAFETY HELPERS
@@ -14791,7 +14793,7 @@ function handleCreateGitHubIssue() {
         'suggestion': '💡 Suggestion',
         'other': '📝 Feedback'
     }
-    const issueTitle = `${typeLabels[type] || 'Feedback'}: ${text.substring(0, 60)}${text.length > 60 ? '...' : ''}`
+    const issueTitle = `${typeLabels[type] || 'Feedback'}: ${text.substring(0, GITHUB_ISSUE_TITLE_MAX_LENGTH)}${text.length > GITHUB_ISSUE_TITLE_MAX_LENGTH ? '...' : ''}`
 
     // Build issue body with all context
     const payload = buildFeedbackPayload(type, text)
@@ -14802,8 +14804,7 @@ function handleCreateGitHubIssue() {
         `body=${encodeURIComponent(payload)}`
 
     // Validate URL length (conservative browser limit)
-    const MAX_URL_LENGTH = 2000
-    if (githubUrl.length > MAX_URL_LENGTH) {
+    if (githubUrl.length > GITHUB_URL_MAX_LENGTH) {
         status.textContent = '⚠️ Feedback too long for URL. Please use "Copy to Clipboard" instead.'
         return
     }
