@@ -4,10 +4,10 @@
 export const CHANGELOG = [
   {
     "version": "1.2.85",
-    "title": "Overworld Map & World Exploration",
+    "title": "Overworld Map & World Exploration - Engine Integration Expansion",
     "sections": [
       {
-        "heading": "New Features",
+        "heading": "New Features - World Map System",
         "items": [
           {
             "title": "World Map System",
@@ -76,7 +76,7 @@ export const CHANGELOG = [
         ]
       },
       {
-        "heading": "Technical Implementation",
+        "heading": "Technical Implementation - World Map",
         "items": [
           {
             "title": "New Modules",
@@ -98,24 +98,6 @@ export const CHANGELOG = [
           }
         ]
       },
-      {
-        "heading": "Previous Features (Engine Integration Expansion)",
-        "items": [
-          {
-            "title": "Engine-Integrated Services",
-            "bullets": [
-              "Kingdom Government Service with immutable state updates",
-              "Loot Generator Service with event emissions",
-              "Quest System Service with comprehensive event system"
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "version": "1.2.85",
-    "title": "Engine Integration Expansion - Kingdom, Loot & Quest Systems",
     "sections": [
       {
         "heading": "New Engine-Integrated Services",

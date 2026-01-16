@@ -174,7 +174,8 @@ export function canAccessRegion(region, playerLevel, unlockedRegions, completedQ
   // Check if connected to current location
   // (Additional logic could be added here)
   
-  return false;
+  // If all requirements are met, player can access
+  return true;
 }
 
 /**
