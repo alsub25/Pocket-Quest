@@ -65,7 +65,11 @@ export function createEnemyCombatAi(dependencies) {
         perfWrap,
         emit,
         _ensureCombatEnginesBound,
-        _questEventsEnabled
+        _questEventsEnabled,
+        
+        // Optional dependencies (can be null)
+        getStatusEngine,
+        getQuests
     } = dependencies;
 
     // --- ENEMY TURN (ABILITY + LEARNING AI) --------------------------------------
@@ -869,6 +873,7 @@ export function createEnemyCombatAi(dependencies) {
     
     function applyStartOfTurnEffectsPlayer(p) {
         try { _ensureCombatEnginesBound() } catch (_) {}
+        const StatusEngine = getStatusEngine ? getStatusEngine() : null
         if (!StatusEngine) return null
         // Smoke tests (and some legacy call sites) pass the player explicitly.
         // If omitted, fall back to the active engine state.
@@ -906,6 +911,7 @@ export function createEnemyCombatAi(dependencies) {
     
     function tickPlayerTimedStatuses(p) {
         try { _ensureCombatEnginesBound() } catch (_) {}
+        const StatusEngine = getStatusEngine ? getStatusEngine() : null
         if (!StatusEngine) return null
         // Allow call sites to omit the player reference (older engine code + smoke tests).
         if (!p) p = (state && state.player) ? state.player : (typeof PLAYER !== 'undefined' ? PLAYER : null)
@@ -1118,6 +1124,7 @@ export function createEnemyCombatAi(dependencies) {
     
         // Legacy quest hook (fallback when questEvents plugin isn't present)
         if (!_questEventsEnabled()) {
+            const quests = getQuests ? getQuests() : null
             try { quests && quests.applyQuestProgressOnEnemyDefeat && quests.applyQuestProgressOnEnemyDefeat(enemy) } catch (_) {}
         }
     

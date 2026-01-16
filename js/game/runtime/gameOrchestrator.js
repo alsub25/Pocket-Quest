@@ -9413,7 +9413,11 @@ export function bootGame(engine) {
                 } catch (_) {}
             },
             _ensureCombatEnginesBound,
-            _questEventsEnabled
+            _questEventsEnabled,
+            
+            // Optional dependencies
+            getStatusEngine: () => StatusEngine,
+            getQuests: () => quests
         })
     }
 
