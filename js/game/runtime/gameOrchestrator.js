@@ -72,6 +72,10 @@ import {
 } from './debugHelpers.js'
 import { createCheatMenuModal } from '../ui/modals/cheatMenuModal.js'
 import { createInventoryModal } from '../ui/modals/inventoryModal.js'
+import { createCombatActionRenderer } from '../ui/combatActionRenderer.js'
+import { createSettingsModal } from '../ui/modals/settingsModal.js'
+import { createFeedbackModal } from '../ui/modals/feedbackModal.js'
+import { createChangelogModal } from '../ui/modals/changelogModal.js'
 
 /* =============================================================================
  * Emberwood Game Orchestrator (gameOrchestrator.js)
@@ -3988,209 +3992,50 @@ function updateClassMeterHUD() {
 }
 
 
+// Combat Action Renderer (extracted to combatActionRenderer.js)
+let _combatActionRenderer = null
+function _getCombatActionRenderer() {
+    if (_combatActionRenderer) return _combatActionRenderer
+    _combatActionRenderer = createCombatActionRenderer({
+        state,
+        dispatchGameCommand,
+        ensureCombatPointers,
+        canPlayerActNow,
+        addLog,
+        handlers: {
+            quests,
+            openTavernModal,
+            openBankModal,
+            openMerchantModal,
+            openTownHallModal,
+            openGovernmentModal,
+            handleExploreClick,
+            openExploreModal,
+            openInventoryModal,
+            openSpellsModal,
+            playerBasicAttack,
+            playerInterrupt,
+            tryFlee,
+            renderActions: () => _getCombatActionRenderer().renderActions()
+        }
+    })
+    return _combatActionRenderer
+}
 
 function renderActions() {
-    const actionsEl = document.getElementById('actions')
-    actionsEl.innerHTML = ''
-
-    if (!state.player) return
-
-    if (state.inCombat) {
-        // Hardening: never allow Explore actions to render while inCombat.
-        // If combat pointers desync, attempt a quick repair.
-        try { ensureCombatPointers() } catch (_) {}
-
-        if (state.inCombat && state.currentEnemy) {
-            renderCombatActions(actionsEl)
-        } else {
-            // If we still can't recover, fall back safely.
-            state.inCombat = false
-            state.currentEnemy = null
-            state.enemies = []
-            state.targetEnemyIndex = 0
-            if (state.combat) {
-                state.combat.busy = false
-                state.combat.phase = 'player'
-            }
-            renderExploreActions(actionsEl)
-        }
-    } else {
-        renderExploreActions(actionsEl)
-    }
+    return _getCombatActionRenderer().renderActions()
 }
 
 function makeActionButton(label, onClick, extraClass, opts) {
-    // Backwards-compatible: allow makeActionButton(label, onClick, opts)
-    let cls = extraClass
-    let o = opts
-    if (cls && typeof cls === 'object' && !o) {
-        o = cls
-        cls = ''
-    }
-
-    const btn = document.createElement('button')
-    btn.className = 'btn small ' + (cls || '')
-    btn.textContent = label
-
-    const cfg = o || {}
-    if (cfg.title) btn.title = String(cfg.title)
-    if (cfg.disabled) {
-        btn.disabled = true
-        btn.classList.add('disabled')
-    }
-
-    btn.addEventListener('click', (e) => {
-        if (btn.disabled) return
-        onClick(e)
-    })
-    return btn
+    return _getCombatActionRenderer().makeActionButton(label, onClick, extraClass, opts)
 }
 
 function renderExploreActions(actionsEl) {
-    actionsEl.innerHTML = ''
-    if (!state.player) return
-
-    if (!state.ui) state.ui = {}
-    const ui = state.ui
-    const inVillage = state.area === 'village'
-    const showVillageMenu = inVillage && ui.villageActionsOpen
-
-    // 🔹 VILLAGE SUBMENU MODE ---------------------------------------------------
-    if (showVillageMenu) {
-        actionsEl.appendChild(
-            makeActionButton('Elder Rowan', () => {
-                if (!dispatchGameCommand('GAME_OPEN_ELDER_ROWAN', {})) {
-                    if (quests && quests.openElderRowanDialog) quests.openElderRowanDialog()
-                }
-            })
-        )
-
-        actionsEl.appendChild(
-            makeActionButton('Tavern', () => {
-                if (!dispatchGameCommand('GAME_OPEN_TAVERN', {})) openTavernModal()
-            })
-        )
-
-        actionsEl.appendChild(
-            makeActionButton('Bank', () => {
-                if (!dispatchGameCommand('GAME_OPEN_BANK', {})) openBankModal()
-            })
-        )
-
-        actionsEl.appendChild(
-            makeActionButton('Merchant', () => {
-                if (!dispatchGameCommand('GAME_OPEN_MERCHANT', {})) openMerchantModal()
-            })
-        )
-
-        actionsEl.appendChild(
-            makeActionButton('Town Hall', () => {
-                if (!dispatchGameCommand('GAME_OPEN_TOWN_HALL', {})) openTownHallModal()
-            })
-        )
-
-        actionsEl.appendChild(
-            makeActionButton('Back', () => {
-                ui.villageActionsOpen = false
-                renderActions()
-            })
-        )
-
-        return
-    }
-
-    // 🔹 DEFAULT (NON-VILLAGE or VILLAGE NORMAL BAR) ----------------------------
-    // Village-only: button to enter the village submenu
-    if (inVillage) {
-        actionsEl.appendChild(
-            makeActionButton('Village ▸', () => {
-                ui.villageActionsOpen = true
-                renderActions()
-            })
-        )
-
-        // ✅ Only show Realm & Council if you're in the village
-        actionsEl.appendChild(
-            makeActionButton('Realm & Council', () => {
-                if (!dispatchGameCommand('GAME_OPEN_GOVERNMENT', {})) openGovernmentModal()
-            })
-        )
-    }
-
-    actionsEl.appendChild(
-        makeActionButton(
-            'Explore',
-            () => {
-                if (!dispatchGameCommand('GAME_EXPLORE', {})) handleExploreClick()
-            },
-            ''
-        )
-    )
-
-    actionsEl.appendChild(
-        makeActionButton('Change Area', () => {
-            if (!dispatchGameCommand('GAME_CHANGE_AREA', {})) {
-                ui.exploreChoiceMade = false
-                openExploreModal()
-            }
-        })
-    )
-
-    actionsEl.appendChild(
-        makeActionButton('Inventory', () => {
-            if (!dispatchGameCommand('GAME_OPEN_INVENTORY', { inCombat: false })) openInventoryModal(false)
-        })
-    )
-
-    actionsEl.appendChild(
-        makeActionButton('Spells', () => {
-            if (!dispatchGameCommand('GAME_OPEN_SPELLS', { inCombat: false })) openSpellsModal(false)
-        })
-    )
-
-    // Cheats button removed from the main action bar.
-    // In dev-cheat mode, Cheats are accessed via the 🛠️ HUD pill next to 🧪 and the Menu button.
+    return _getCombatActionRenderer().renderExploreActions(actionsEl)
 }
+
 function renderCombatActions(actionsEl) {
-    actionsEl.innerHTML = ''
-
-    const locked = !canPlayerActNow()
-    const lockTitle = locked ? 'Resolve the current turn first.' : ''
-
-    actionsEl.appendChild(
-        makeActionButton('Attack', () => {
-            if (!dispatchGameCommand('COMBAT_ATTACK', {})) playerBasicAttack()
-        }, '', { disabled: locked, title: lockTitle })
-    )
-
-    actionsEl.appendChild(
-        makeActionButton('Interrupt', () => {
-            if (!dispatchGameCommand('COMBAT_INTERRUPT', {})) playerInterrupt()
-        }, 'outline', { disabled: locked, title: lockTitle })
-    )
-
-    actionsEl.appendChild(
-        makeActionButton('Spells', () => {
-            if (!dispatchGameCommand('GAME_OPEN_SPELLS', { inCombat: true })) openSpellsModal(true)
-        }, '', { disabled: locked, title: lockTitle })
-    )
-
-    actionsEl.appendChild(
-        makeActionButton('Items', () => {
-            if (!dispatchGameCommand('GAME_OPEN_INVENTORY', { inCombat: true })) openInventoryModal(true)
-        }, '', { disabled: locked, title: lockTitle })
-    )
-
-    const isBoss = !!(state.currentEnemy && state.currentEnemy.isBoss)
-    actionsEl.appendChild(
-        makeActionButton(isBoss ? 'No Escape' : 'Flee', () => {
-            if (isBoss) {
-                addLog('This foe blocks your escape!', 'danger')
-            } else {
-                if (!dispatchGameCommand('COMBAT_FLEE', {})) tryFlee()
-            }
-        }, isBoss ? 'outline' : '', { disabled: locked, title: lockTitle })
-    )
+    return _getCombatActionRenderer().renderCombatActions(actionsEl)
 }
 
 // HUD swipe tracking
@@ -10137,655 +9982,36 @@ function openGovernmentModal() {
     })
 }
 // --- PAUSE / GAME MENU --------------------------------------------------------
-function openInGameSettingsModal() {
-    openModal('Settings', (body) => {
-        // Safety: if state doesn't exist yet, just show a simple message
-        if (typeof state === 'undefined' || !state) {
-            const msg = document.createElement('p')
-            msg.textContent = 'Settings are unavailable until a game is running.'
-            body.appendChild(msg)
-
-            const actions = document.createElement('div')
-            actions.className = 'modal-actions'
-            const btnBack = document.createElement('button')
-            btnBack.className = 'btn outline'
-            btnBack.textContent = 'Back'
-            btnBack.addEventListener('click', () => closeModal())
-            actions.appendChild(btnBack)
-            body.appendChild(actions)
-            return
-        }
-
-        const intro = document.createElement('p')
-        intro.className = 'modal-subtitle'
-        intro.textContent = 'Changes apply immediately.'
-        body.appendChild(intro)
-
-        const container = document.createElement('div')
-        // Compact settings layout so it fits better on mobile while keeping sections.
-        container.className = 'settings-modal-body settings-sections settings-compact'
-
-        let sectionIdCounter = 0
-
-        const addSection = (title, opts = null) => {
-            const options = opts || {}
-            const collapsible = !!options.collapsible
-            const startCollapsed = !!options.collapsed
-
-            const sec = document.createElement('div')
-            sec.className = 'settings-section'
-            if (collapsible) sec.classList.add('is-collapsible')
-            if (collapsible && startCollapsed) sec.classList.add('is-collapsed')
-
-            const titleEl = document.createElement(collapsible ? 'button' : 'div')
-            if (collapsible) titleEl.type = 'button'
-            titleEl.className = 'settings-section-title'
-            titleEl.textContent = title
-
-            const content = document.createElement('div')
-            content.className = 'settings-section-content'
-
-            if (collapsible) {
-                sectionIdCounter += 1
-                const contentId = 'settingsSec_' + sectionIdCounter
-                content.id = contentId
-                titleEl.setAttribute('aria-controls', contentId)
-                titleEl.setAttribute('aria-expanded', startCollapsed ? 'false' : 'true')
-
-                titleEl.addEventListener('click', () => {
-                    const collapsed = !sec.classList.contains('is-collapsed')
-                    sec.classList.toggle('is-collapsed', collapsed)
-                    titleEl.setAttribute('aria-expanded', collapsed ? 'false' : 'true')
-                })
-            }
-
-            sec.appendChild(titleEl)
-            sec.appendChild(content)
-            container.appendChild(sec)
-            return content
-        }
-
-        const makeRow = (labelText, descText) => {
-            const row = document.createElement('div')
-            row.className = 'settings-row'
-
-            const left = document.createElement('div')
-            left.className = 'settings-left'
-
-            const label = document.createElement('div')
-            label.className = 'settings-label'
-            label.textContent = labelText
-            left.appendChild(label)
-
-            if (descText) {
-                const desc = document.createElement('div')
-                desc.className = 'settings-desc'
-                desc.textContent = descText
-                left.appendChild(desc)
-            }
-
-            row.appendChild(left)
-            return row
-        }
-
-        const makeSwitch = (id, initialChecked, onChange, ariaLabel) => {
-            const wrap = document.createElement('label')
-            wrap.className = 'switch'
-            if (ariaLabel) wrap.setAttribute('aria-label', ariaLabel)
-
-            const input = document.createElement('input')
-            input.type = 'checkbox'
-            if (id) input.id = id
-            input.checked = !!initialChecked
-            input.addEventListener('change', () => onChange(!!input.checked))
-
-            const track = document.createElement('span')
-            track.className = 'switch-track'
-            track.setAttribute('aria-hidden', 'true')
-
-            wrap.appendChild(input)
-            wrap.appendChild(track)
-            return wrap
-        }
-
-        // Get engine settings service once for use across all sections
-        const engineSettings = (() => {
-            try { return _engine && _engine.getService ? _engine.getService('settings') : null } catch (_) { return null }
-        })()
-
-        // --- Audio ------------------------------------------------------------
-        const secAudio = addSection('Audio')
-
-        // Master volume
-        {
-            const row = makeRow('Master volume', 'Overall volume level.')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const slider = document.createElement('input')
-            slider.type = 'range'
-            slider.min = '0'
-            slider.max = '100'
-            slider.step = '5'
-            slider.value = typeof state.settingsVolume === 'number' ? state.settingsVolume : 100
-
-            const value = document.createElement('span')
-            value.className = 'settings-value'
-            value.textContent = slider.value + '%'
-
-            setMasterVolumePercent(slider.value)
-
-            slider.addEventListener('input', () => {
-                const v = Number(slider.value) || 0
-                state.settingsVolume = v
-                // Use engine settings service (locus_settings)
-                try {
-                    const settings = _engine && _engine.getService ? _engine.getService('settings') : null
-                    if (settings && settings.set) {
-                        settings.set('audio.masterVolume', v)
-                    }
-                } catch (e) {}
-                value.textContent = v + '%'
-                setMasterVolumePercent(v)
-            })
-
-            control.appendChild(slider)
-            row.appendChild(control)
-            row.appendChild(value)
-            secAudio.appendChild(row)
-        }
-
-        // Music toggle
-        {
-            const row = makeRow('Music', 'Background music during play.')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const sw = makeSwitch(null, state.musicEnabled !== false, (on) => {
-                setMusicEnabled(on)
-                requestSave('legacy')
-            }, 'Toggle music')
-            control.appendChild(sw)
-            row.appendChild(control)
-            secAudio.appendChild(row)
-        }
-
-        // SFX toggle
-        {
-            const row = makeRow('SFX', 'Combat and UI sound effects.')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const sw = makeSwitch(null, state.sfxEnabled !== false, (on) => {
-                setSfxEnabled(on)
-                requestSave('legacy')
-            }, 'Toggle sound effects')
-            control.appendChild(sw)
-            row.appendChild(control)
-            secAudio.appendChild(row)
-        }
-
-        // --- Display ----------------------------------------------------------
-        const secDisplay = addSection('Display')
-
-        // UI theme
-        {
-            const row = makeRow('Theme', 'Changes the overall UI palette.')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const themeSelectInline = document.createElement('select')
-            themeSelectInline.className = 'settings-select'
-
-            const themeOptions = [
-                { value: 'default', label: 'Default' },
-                { value: 'arcane', label: 'Arcane' },
-                { value: 'inferno', label: 'Inferno' },
-                { value: 'forest', label: 'Forest' },
-                { value: 'holy', label: 'Holy' },
-                { value: 'shadow', label: 'Shadow' }
-            ]
-
-            themeOptions.forEach((t) => {
-                const opt = document.createElement('option')
-                opt.value = t.value
-                opt.textContent = t.label
-                themeSelectInline.appendChild(opt)
-            })
-
-            // Hydrate from engine settings when present
-            try {
-                const settings = _engine && _engine.getService ? _engine.getService('settings') : null
-                if (settings && typeof settings.get === 'function') {
-                    themeSelectInline.value = settings.get('ui.theme', 'default')
-                }
-            } catch (_) {
-                themeSelectInline.value = 'default'
-            }
-            themeSelectInline.addEventListener('change', () => setTheme(themeSelectInline.value))
-
-            control.appendChild(themeSelectInline)
-            row.appendChild(control)
-            secDisplay.appendChild(row)
-        }
-
-        // Color scheme
-        {
-            const row = makeRow('Color scheme', 'Light or dark mode for the UI.')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const sel = document.createElement('select')
-            sel.className = 'settings-select'
-            sel.setAttribute('aria-label', 'Color scheme')
-            ;[
-                { value: 'auto', label: 'Auto' },
-                { value: 'light', label: 'Light' },
-                { value: 'dark', label: 'Dark' }
-            ].forEach((o) => {
-                const opt = document.createElement('option')
-                opt.value = o.value
-                opt.textContent = o.label
-                sel.appendChild(opt)
-            })
-
-            // Hydrate from engine settings when present
-            try {
-                if (engineSettings && engineSettings.get) {
-                    sel.value = engineSettings.get('a11y.colorScheme', 'auto')
-                }
-            } catch (_) {}
-
-            sel.addEventListener('change', () => {
-                const v = String(sel.value || 'auto')
-                try {
-                    if (engineSettings && engineSettings.set) {
-                        engineSettings.set('a11y.colorScheme', v)
-                    }
-                } catch (_) {}
-                requestSave('legacy')
-            })
-
-            control.appendChild(sel)
-            row.appendChild(control)
-            secDisplay.appendChild(row)
-        }
-
-        // UI scale
-        {
-            const row = makeRow('UI scale', 'Adjusts the size of all UI elements.')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const sel = document.createElement('select')
-            sel.className = 'settings-select'
-            sel.setAttribute('aria-label', 'UI scale')
-            ;[
-                { value: '0.9', label: 'Small' },
-                { value: '1', label: 'Default' },
-                { value: '1.1', label: 'Large' },
-                { value: '1.2', label: 'Extra Large' }
-            ].forEach((o) => {
-                const opt = document.createElement('option')
-                opt.value = o.value
-                opt.textContent = o.label
-                sel.appendChild(opt)
-            })
-
-            // Hydrate from engine settings when present
-            try {
-                if (engineSettings && engineSettings.get) {
-                    const scale = Number(engineSettings.get('ui.scale', 1))
-                    sel.value = String(scale)
-                }
-            } catch (_) {}
-
-            sel.addEventListener('change', () => {
-                const v = Number(sel.value) || 1
-                try {
-                    if (engineSettings && engineSettings.set) {
-                        engineSettings.set('ui.scale', v)
-                    }
-                } catch (_) {}
-                requestSave('legacy')
-            })
-
-            control.appendChild(sel)
-            row.appendChild(control)
-            secDisplay.appendChild(row)
-        }
-
-        // Text speed
-        {
-            const row = makeRow('Text speed', 'How quickly story text advances.')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const slider = document.createElement('input')
-            slider.type = 'range'
-            slider.min = '30'
-            slider.max = '200'
-            slider.step = '10'
-            slider.value = typeof state.settingsTextSpeed === 'number' ? state.settingsTextSpeed : 100
-
-            const value = document.createElement('span')
-            value.className = 'settings-value'
-            value.textContent = String(slider.value)
-
-            slider.addEventListener('input', () => {
-                const v = Number(slider.value) || 100
-                state.settingsTextSpeed = v
-                value.textContent = String(v)
-                // Use engine settings service (locus_settings)
-                try {
-                    const settings = _engine && _engine.getService ? _engine.getService('settings') : null
-                    if (settings && settings.set) {
-                        settings.set('ui.textSpeed', v)
-                    }
-                } catch (e) {}
-            })
-
-            control.appendChild(slider)
-            row.appendChild(control)
-            row.appendChild(value)
-            secDisplay.appendChild(row)
-        }
-
-        // --- Gameplay ---------------------------------------------------------
-        const secGameplay = addSection('Gameplay')
-
-        // Difficulty
-        {
-            const row = makeRow('Difficulty', 'Adjust challenge and enemy scaling.')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const diffSelect = document.createElement('select')
-            diffSelect.className = 'settings-select'
-            Object.values(DIFFICULTY_CONFIG).forEach((cfg) => {
-                const opt = document.createElement('option')
-                opt.value = cfg.id
-                opt.textContent = cfg.name
-                diffSelect.appendChild(opt)
-            })
-            diffSelect.value = state.difficulty || 'normal'
-            diffSelect.addEventListener('change', () => {
-                const newDiff = diffSelect.value
-                if (DIFFICULTY_CONFIG[newDiff]) {
-                    state.difficulty = newDiff
-                    updateHUD()
-                    requestSave('legacy')
-                }
-            })
-
-            control.appendChild(diffSelect)
-            row.appendChild(control)
-            secGameplay.appendChild(row)
-        }
-
-        // Show combat numbers
-        {
-            const row = makeRow('Show combat numbers', 'Display damage and healing numbers in combat.')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const sw = makeSwitch(null, state.settingsShowCombatNumbers !== false, (on) => {
-                state.settingsShowCombatNumbers = !!on
-                try {
-                    if (engineSettings && engineSettings.set) {
-                        engineSettings.set('gameplay.showCombatNumbers', !!on)
-                    } else {
-                        // Legacy fallback
-                        safeStorageSet('pq-show-combat-numbers', state.settingsShowCombatNumbers ? '1' : '0')
-                    }
-                } catch (e) {}
-                requestSave('legacy')
-            }, 'Toggle combat numbers')
-
-            control.appendChild(sw)
-            row.appendChild(control)
-            secGameplay.appendChild(row)
-        }
-
-        // Auto-save
-        {
-            const row = makeRow('Auto-save', 'Automatically save your progress periodically.')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const sw = makeSwitch(null, state.settingsAutoSave !== false, (on) => {
-                state.settingsAutoSave = !!on
-                try {
-                    if (engineSettings && engineSettings.set) {
-                        engineSettings.set('gameplay.autoSave', !!on)
-                    } else {
-                        // Legacy fallback
-                        safeStorageSet('pq-auto-save', state.settingsAutoSave ? '1' : '0')
-                    }
-                } catch (e) {}
-                requestSave('legacy')
-            }, 'Toggle auto-save')
-
-            control.appendChild(sw)
-            row.appendChild(control)
-            secGameplay.appendChild(row)
-        }
-
-        // --- Accessibility ----------------------------------------------------
-        const secAccess = addSection('Accessibility')
-        {
-            const row = makeRow('Reduce motion', 'Turns off animated HUD effects.')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const sw = makeSwitch(null, !!state.settingsReduceMotion, (on) => {
-                setReduceMotionEnabled(on)
-                requestSave('legacy')
-            }, 'Toggle reduce motion')
-
-            control.appendChild(sw)
-            row.appendChild(control)
-            secAccess.appendChild(row)
-        }
-
-        // Text size (named buckets -> numeric scale)
-        {
-            const row = makeRow('Text size', 'Scales UI text for readability.')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const sel = document.createElement('select')
-            sel.className = 'settings-select'
-            ;[
-                { value: 'small', label: 'Small' },
-                { value: 'default', label: 'Default' },
-                { value: 'large', label: 'Large' },
-                { value: 'xlarge', label: 'Extra Large' }
-            ].forEach((o) => {
-                const opt = document.createElement('option')
-                opt.value = o.value
-                opt.textContent = o.label
-                sel.appendChild(opt)
-            })
-
-            // Hydrate from engine settings when present.
-            try {
-                if (engineSettings && engineSettings.get) {
-                    const s = Number(engineSettings.get('a11y.textScale', 1))
-                    if (s <= 0.92) sel.value = 'small'
-                    else if (s < 1.05) sel.value = 'default'
-                    else if (s < 1.16) sel.value = 'large'
-                    else sel.value = 'xlarge'
-                }
-            } catch (_) {}
-
-            sel.addEventListener('change', () => {
-                const v = String(sel.value || 'default')
-                const scale = (v === 'small') ? 0.9 : (v === 'large') ? 1.1 : (v === 'xlarge') ? 1.2 : 1
-                try {
-                    if (engineSettings && engineSettings.set) engineSettings.set('a11y.textScale', scale)
-                } catch (_) {}
-                requestSave('legacy')
-            })
-
-            control.appendChild(sel)
-            row.appendChild(control)
-            secAccess.appendChild(row)
-        }
-
-        // High contrast (tri-state: auto/on/off)
-        {
-            const row = makeRow('High contrast', 'Boosts contrast to improve readability.')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const sel = document.createElement('select')
-            sel.className = 'settings-select'
-            ;[
-                { value: 'auto', label: 'Auto' },
-                { value: 'on', label: 'On' },
-                { value: 'off', label: 'Off' }
-            ].forEach((o) => {
-                const opt = document.createElement('option')
-                opt.value = o.value
-                opt.textContent = o.label
-                sel.appendChild(opt)
-            })
-
-            // Hydrate from engine settings when present.
-            try {
-                if (engineSettings && engineSettings.get) {
-                    const pref = engineSettings.get('a11y.highContrast', 'auto')
-                    if (pref === true) sel.value = 'on'
-                    else if (pref === false) sel.value = 'off'
-                    else sel.value = 'auto'
-                }
-            } catch (_) {}
-
-            sel.addEventListener('change', () => {
-                const v = String(sel.value || 'auto')
-                try {
-                    if (engineSettings && engineSettings.set) {
-                        if (v === 'on') engineSettings.set('a11y.highContrast', true)
-                        else if (v === 'off') engineSettings.set('a11y.highContrast', false)
-                        else engineSettings.set('a11y.highContrast', 'auto')
-                    }
-                } catch (_) {}
-                requestSave('legacy')
-            })
-
-            control.appendChild(sel)
-            row.appendChild(control)
-            secAccess.appendChild(row)
-        }
-
-        // Auto-equip loot (QoL)
-        {
-            const row = makeRow('Auto-equip loot', 'When you pick up a weapon/armor piece and the slot is empty, equip it automatically.')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const sw = makeSwitch(null, !!state.settingsAutoEquipLoot, (on) => {
-                state.settingsAutoEquipLoot = !!on
-                // Use engine settings service (locus_settings)
-                try {
-                    const settings = _engine && _engine.getService ? _engine.getService('settings') : null
-                    if (settings && settings.set) {
-                        settings.set('gameplay.autoEquipLoot', !!on)
-                    }
-                } catch (e) {}
-                requestSave('legacy')
-            }, 'Toggle auto-equip loot')
-
-            control.appendChild(sw)
-            row.appendChild(control)
-            secAccess.appendChild(row)
-        }
-
-        // --- Saves ------------------------------------------------------------
-        const secSaves = addSection('Saves', { collapsible: true, collapsed: true })
-
-        // Export current save as a JSON file (editable / backup)
-        {
-            const row = makeRow('Export save (JSON)', 'Downloads your current autosave as a readable .json file so you can back it up or edit it.')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const btn = document.createElement('button')
-            btn.className = 'btn outline'
-            btn.textContent = 'Export'
-            btn.addEventListener('click', () => {
-                try { exportCurrentSaveToFile() } catch (e) {
-                    console.error('Export failed', e)
-                    alert('Export failed.')
-                }
-            })
-
-            control.appendChild(btn)
-            row.appendChild(control)
-            secSaves.appendChild(row)
-        }
-
-        // Import a JSON save (overwrites autosave on this device)
-        {
-            const row = makeRow('Import save (JSON)', 'Imports a .json save file and loads it immediately (overwrites your current autosave).')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const btn = document.createElement('button')
-            btn.className = 'btn outline'
-            btn.textContent = 'Import'
-            btn.addEventListener('click', () => {
-                try { importSaveFromFile() } catch (e) {
-                    console.error('Import failed', e)
-                    alert('Import failed.')
-                }
-            })
-
-            control.appendChild(btn)
-            row.appendChild(control)
-            secSaves.appendChild(row)
-        }
-
-        // Backup all local saves as a bundle
-        {
-            const row = makeRow('Backup all saves', 'Exports autosave + manual slots as a single bundle file (useful before patching or testing).')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const btn = document.createElement('button')
-            btn.className = 'btn outline'
-            btn.textContent = 'Export All'
-            btn.addEventListener('click', () => {
-                try { exportAllSavesBundleToFile() } catch (e) {
-                    console.error('Export all failed', e)
-                    alert('Export failed.')
-                }
-            })
-
-            control.appendChild(btn)
-            row.appendChild(control)
-            secSaves.appendChild(row)
-        }
-
-
-        body.appendChild(container)
-
-        // --- Footer actions ---------------------------------------------------
-        const actions = document.createElement('div')
-        actions.className = 'modal-actions'
-
-        const btnBack = document.createElement('button')
-        btnBack.className = 'btn outline'
-        btnBack.textContent = 'Back'
-        btnBack.addEventListener('click', () => {
-            requestSave('legacy')
-            closeModal()
-        })
-
-        actions.appendChild(btnBack)
-        body.appendChild(actions)
+// Settings Modal (extracted to modals/settingsModal.js)
+let _settingsModal = null
+function _getSettingsModal() {
+    if (_settingsModal) return _settingsModal
+    _settingsModal = createSettingsModal({
+        state,
+        engine: _engine,
+        openModal,
+        closeModal,
+        setMasterVolumePercent,
+        setMusicEnabled,
+        setSfxEnabled,
+        requestSave,
+        updateAreaMusic,
+        applyChannelMuteGains,
+        updateHUD,
+        DIFFICULTY_CONFIG,
+        setTheme,
+        setReduceMotionEnabled,
+        switchScreen,
+        exportCurrentSaveToFile,
+        importSaveFromFile,
+        exportAllSavesBundleToFile,
+        safeStorageSet
     })
+    return _settingsModal
+}
+
+function openInGameSettingsModal() {
+    return _getSettingsModal().openInGameSettingsModal()
 }
 
 function openPauseMenu() {
@@ -11814,225 +11040,44 @@ function setTheme(themeName) {
     setTheme('default')
 })()
 // --- FEEDBACK / BUG REPORT -----------------------------------------------------
+// Feedback Modal (extracted to modals/feedbackModal.js)
+let _feedbackModal = null
+function _getFeedbackModal() {
+    if (_feedbackModal) return _feedbackModal
+    _feedbackModal = createFeedbackModal({
+        state,
+        openModal,
+        isRunningOnGitHubPages,
+        copyFeedbackToClipboard,
+        copyBugReportBundleToClipboard,
+        safeStorageGet,
+        safeStorageRemove,
+        _STORAGE_DIAG_KEY_LAST_CRASH,
+        getLastCrashReport,
+        GAME_PATCH,
+        GAME_PATCH_NAME,
+        SAVE_SCHEMA,
+        GITHUB_REPO_URL,
+        GITHUB_ISSUE_TITLE_MAX_LENGTH,
+        GITHUB_URL_MAX_LENGTH
+    })
+    return _feedbackModal
+}
 
 function openFeedbackModal() {
-    const isGitHubPages = isRunningOnGitHubPages()
-    
-    // Build GitHub issue button HTML only if on GitHub Pages
-    const githubButtonHtml = isGitHubPages ? `
-    <button class="btn primary small" id="btnCreateGitHubIssue">
-      📝 Create GitHub Issue
-    </button>
-    ` : ''
-    
-    // Adjust subtitle based on where the game is running
-    const subtitle = isGitHubPages 
-        ? 'Help improve Emberwood: The Blackbark Oath by sending structured feedback. You can submit directly to GitHub or copy the text manually.'
-        : 'Help improve Emberwood: The Blackbark Oath by sending structured feedback. Copy this text and paste it wherever you\'re tracking issues.'
-    
-    const bodyHtml = `
-    <div class="modal-subtitle">
-      ${subtitle}
-    </div>
-
-    <div class="field">
-      <label for="feedbackType">Type</label>
-      <select id="feedbackType">
-        <option value="ui">UI issue</option>
-        <option value="bug">Bug</option>
-        <option value="balance">Balance issue</option>
-        <option value="suggestion">Suggestion</option>
-        <option value="other">Other</option>
-      </select>
-    </div>
-
-    <div class="field">
-      <label for="feedbackText">Details</label>
-      <textarea id="feedbackText"
-        placeholder="What happened? What did you expect? Steps to reproduce?"
-      ></textarea>
-    </div>
-
-    ${githubButtonHtml}
-
-    <button class="btn ${isGitHubPages ? 'small outline' : 'primary small'}" id="btnFeedbackCopy" style="${isGitHubPages ? 'margin-top:8px;' : ''}">
-      Copy Feedback To Clipboard
-    </button>
-
-    <button class="btn small outline" id="btnBugBundleCopy" style="margin-top:8px;">
-      Copy Bug Report Bundle (JSON)
-    </button>
-
-    <button class="btn small outline" id="btnClearCrash" style="margin-top:8px;">
-      Clear Crash Report
-    </button>
-    <p class="hint" id="feedbackStatus"></p>
-  `
-
-    openModal('Feedback / Bug Report', (bodyEl) => {
-        bodyEl.innerHTML = bodyHtml
-
-        const btnCreateIssue = document.getElementById('btnCreateGitHubIssue')
-        if (btnCreateIssue) {
-            btnCreateIssue.addEventListener('click', handleCreateGitHubIssue)
-        }
-
-        const btnCopy = document.getElementById('btnFeedbackCopy')
-        if (btnCopy) {
-            btnCopy.addEventListener('click', handleFeedbackCopy)
-        }
-
-        const btnBundle = document.getElementById('btnBugBundleCopy')
-        if (btnBundle) {
-            btnBundle.addEventListener('click', () => {
-                const status = document.getElementById('feedbackStatus')
-                copyBugReportBundleToClipboard()
-                    .then(() => status && (status.textContent = '✅ Copied JSON bundle!'))
-                    .catch(() => status && (status.textContent = '❌ Could not access clipboard.'))
-            })
-        }
-
-        const btnClearCrash = document.getElementById('btnClearCrash')
-        if (btnClearCrash) {
-            const status = document.getElementById('feedbackStatus')
-            const existing = safeStorageGet(_STORAGE_DIAG_KEY_LAST_CRASH, null)
-            btnClearCrash.disabled = !existing
-
-            btnClearCrash.addEventListener('click', () => {
-                safeStorageRemove(_STORAGE_DIAG_KEY_LAST_CRASH)
-                if (status) status.textContent = '🧹 Cleared last crash report.'
-                btnClearCrash.disabled = true
-            })
-        }
-    })
+    return _getFeedbackModal().openFeedbackModal()
 }
 
 function handleFeedbackCopy() {
-    const typeEl = document.getElementById('feedbackType')
-    const textEl = document.getElementById('feedbackText')
-    const status = document.getElementById('feedbackStatus')
-    if (!typeEl || !textEl || !status) return
-
-    const type = typeEl.value
-    const text = (textEl.value || '').trim()
-
-    const payload = buildFeedbackPayload(type, text)
-
-    copyFeedbackToClipboard(payload)
-        .then(() => (status.textContent = '✅ Copied! Paste this into your tracker.'))
-        .catch(() => (status.textContent = '❌ Could not access clipboard.'))
+    return _getFeedbackModal().handleFeedbackCopy()
 }
 
 function handleCreateGitHubIssue() {
-    const typeEl = document.getElementById('feedbackType')
-    const textEl = document.getElementById('feedbackText')
-    const status = document.getElementById('feedbackStatus')
-    if (!typeEl || !textEl || !status) return
-
-    const type = typeEl.value
-    const text = (textEl.value || '').trim()
-
-    if (!text) {
-        status.textContent = '⚠️ Please provide some details about your feedback.'
-        return
-    }
-
-    // Build issue title based on type
-    const typeLabels = {
-        'ui': '🎨 UI Issue',
-        'bug': '🐛 Bug Report',
-        'balance': '⚖️ Balance Issue',
-        'suggestion': '💡 Suggestion',
-        'other': '📝 Feedback'
-    }
-    const issueTitle = `${typeLabels[type] || 'Feedback'}: ${text.substring(0, GITHUB_ISSUE_TITLE_MAX_LENGTH)}${text.length > GITHUB_ISSUE_TITLE_MAX_LENGTH ? '...' : ''}`
-
-    // Build issue body with all context
-    const payload = buildFeedbackPayload(type, text)
-    
-    // Encode for URL
-    const githubUrl = `${GITHUB_REPO_URL}/issues/new?` +
-        `title=${encodeURIComponent(issueTitle)}&` +
-        `body=${encodeURIComponent(payload)}`
-
-    // Validate URL length (conservative browser limit)
-    if (githubUrl.length > GITHUB_URL_MAX_LENGTH) {
-        status.textContent = '⚠️ Feedback too long for URL. Please use "Copy to Clipboard" instead.'
-        return
-    }
-
-    // Open in new tab
-    try {
-        window.open(githubUrl, '_blank')
-        status.textContent = '✅ Opening GitHub issue page...'
-    } catch (error) {
-        status.textContent = '❌ Could not open GitHub. Please copy feedback manually.'
-    }
+    return _getFeedbackModal().handleCreateGitHubIssue()
 }
 
 function buildFeedbackPayload(type, text) {
-    const lines = []
-    lines.push('Emberwood: The Blackbark Oath RPG Feedback')
-    lines.push('-------------------------')
-    lines.push(`Type: ${type}`)
-    lines.push('')
-
-    lines.push('Build:')
-    lines.push(`- Patch: ${GAME_PATCH}${GAME_PATCH_NAME ? ' — ' + GAME_PATCH_NAME : ''}`)
-    lines.push(`- Save Schema: ${SAVE_SCHEMA}`)
-    lines.push('')
-
-    if (text) {
-        lines.push('Description:')
-        lines.push(text)
-        lines.push('')
-    }
-
-    if (state && state.player) {
-        const p = state.player
-        lines.push('Game Context:')
-        lines.push(`- Player: ${p.name} (${p.classId})`)
-        lines.push(`- Level: ${p.level} (XP: ${p.xp}/${p.nextLevelXp})`)
-        lines.push(`- Gold: ${p.gold}`)
-        lines.push(`- Area: ${state.area}`)
-        if (state.inCombat && state.currentEnemy) {
-            lines.push(`- In Combat: YES (Enemy: ${state.currentEnemy.name})`)
-        } else {
-            lines.push(`- In Combat: NO`)
-        }
-        lines.push('')
-    }
-
-    const crashReport = getLastCrashReport()
-    if (crashReport) {
-        lines.push('Last Crash:')
-        lines.push(`- Kind: ${crashReport.kind}`)
-        lines.push(`- Time: ${new Date(crashReport.time).toISOString()}`)
-        lines.push(`- Message: ${crashReport.message}`)
-        if (crashReport.stack) {
-            lines.push('- Stack:')
-            lines.push(String(crashReport.stack))
-        }
-        lines.push('')
-    }
-
-    if (state && Array.isArray(state.log) && state.log.length) {
-        const tail = state.log.slice(-30)
-        lines.push('Recent Log (last 30):')
-        tail.forEach((e) => {
-            const tag = e && e.type ? e.type : 'normal'
-            const msg = e && e.text ? e.text : ''
-            lines.push(`- [${tag}] ${msg}`)
-        })
-        lines.push('')
-    }
-
-    lines.push('Client Info:')
-    lines.push(`- Time: ${new Date().toISOString()}`)
-    lines.push(`- User Agent: ${navigator.userAgent}`)
-    lines.push('')
-
-    return lines.join('\n')
+    return _getFeedbackModal().buildFeedbackPayload(type, text)
 }
 
 
@@ -17294,187 +16339,21 @@ section('State Invariants')
 }
 
 // --- CHANGELOG MODAL --------------------------------------------------------
+// Changelog Modal (extracted to modals/changelogModal.js)
+let _changelogModal = null
+function _getChangelogModal() {
+    if (_changelogModal) return _changelogModal
+    _changelogModal = createChangelogModal({
+        openModal,
+        closeModal,
+        CHANGELOG,
+        openPauseMenu
+    })
+    return _changelogModal
+}
 
 function openChangelogModal(opts = {}) {
-    const fromPause = !!(opts && opts.fromPause)
-    const onBack = typeof opts?.onBack === 'function' ? opts.onBack : null
-
-    openModal('Changelog', (body) => {
-        const wrapper = document.createElement('div')
-        wrapper.className = 'changelog-modal'
-
-        // Lock Changelog to vertical scrolling only (prevents sideways panning on touchpads/mobile)
-        ;(() => {
-            let sx = 0
-            let sy = 0
-
-            wrapper.addEventListener(
-                'wheel',
-                (e) => {
-                    // Trackpads can emit horizontal delta even during normal scroll; block it for this modal.
-                    if (Math.abs(e.deltaX || 0) > 0.5) e.preventDefault()
-                },
-                { passive: false }
-            )
-
-            wrapper.addEventListener(
-                'touchstart',
-                (e) => {
-                    const t = e.touches && e.touches[0]
-                    if (!t) return
-                    sx = t.clientX
-                    sy = t.clientY
-                },
-                { passive: true }
-            )
-
-            wrapper.addEventListener(
-                'touchmove',
-                (e) => {
-                    const t = e.touches && e.touches[0]
-                    if (!t) return
-                    const dx = t.clientX - sx
-                    const dy = t.clientY - sy
-                    // If the gesture is primarily horizontal, cancel it so the panel cannot drift sideways.
-                    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 6) e.preventDefault()
-                },
-                { passive: false }
-            )
-        })()
-
-
-        const intro = document.createElement('p')
-        intro.className = 'modal-subtitle'
-        intro.innerHTML =
-            'All notable changes to <strong>Emberwood: The Blackbark Oath</strong> are listed here.'
-        wrapper.appendChild(intro)
-
-        const isV1 = (v) => /^1\.\d+\.\d+$/.test(String(v || '').trim())
-
-        const release = CHANGELOG.filter((e) => isV1(e.version))
-        const alpha = CHANGELOG.filter((e) => !isV1(e.version))
-
-        function normalizeChangelogEntry(entry) {
-            if (!entry || typeof entry !== 'object') {
-                return { version: '', title: '', sections: [] }
-            }
-
-            const version = String(entry.version || '')
-            const title = String(entry.title || entry.date || entry.name || '').trim()
-
-            // Support either legacy schema:
-            //   { version, title, sections:[{ heading, items: [...] }] }
-            // ...or newer schema:
-            //   { version, date, changes:[{ category, items: [...] }] }
-            let sections = []
-            if (Array.isArray(entry.sections)) {
-                sections = entry.sections
-            } else if (Array.isArray(entry.changes)) {
-                sections = entry.changes.map((c) => ({
-                    heading: c.heading || c.category || 'Changes',
-                    items: Array.isArray(c.items) ? c.items : [],
-                }))
-            }
-
-            return { version, title, sections }
-        }
-
-        function renderEntries(entries, host, { openFirst = false } = {}) {
-            const normalized = (entries || []).map(normalizeChangelogEntry)
-            normalized.forEach((entry, index) => {
-                const details = document.createElement('details')
-                if (openFirst && index === 0) details.open = true
-
-                const summary = document.createElement('summary')
-                summary.innerHTML = `<strong>${entry.version}${entry.title ? ' – ' + entry.title : ''}</strong>`
-                details.appendChild(summary)
-
-                entry.sections.forEach((section) => {
-                    const h4 = document.createElement('h4')
-                    h4.textContent = section.heading
-                    details.appendChild(h4)
-
-                    const ul = document.createElement('ul')
-
-                    section.items.forEach((item) => {
-                        const li = document.createElement('li')
-
-                        // Support either simple strings OR {title, bullets}
-                        if (typeof item === 'string') {
-                            li.textContent = item
-                        } else {
-                            const titleSpan = document.createElement('strong')
-                            titleSpan.textContent = item.title
-                            li.appendChild(titleSpan)
-
-                            if (item.bullets && item.bullets.length) {
-                                const innerUl = document.createElement('ul')
-                                item.bullets.forEach((text) => {
-                                    const innerLi = document.createElement('li')
-                                    innerLi.textContent = text
-                                    innerUl.appendChild(innerLi)
-                                })
-                                li.appendChild(innerUl)
-                            }
-                        }
-
-                        ul.appendChild(li)
-                    })
-
-                    details.appendChild(ul)
-                })
-
-                host.appendChild(details)
-            })
-        }
-
-        function renderEraPanel(title, entries, { open = false, openFirstEntry = false } = {}) {
-            const panel = document.createElement('details')
-            panel.open = !!open
-
-            const summary = document.createElement('summary')
-            summary.innerHTML = `<strong>${title}</strong>`
-            panel.appendChild(summary)
-
-            renderEntries(entries, panel, { openFirst: openFirstEntry })
-            wrapper.appendChild(panel)
-        }
-
-        // V1.x.x gets its own collapsible panel (newest open by default)
-        renderEraPanel('Release (V1.x.x)', release, { open: true, openFirstEntry: true })
-
-        // Everything else lives in a collapsible Alpha / Early Access panel
-        renderEraPanel('Alpha / Early Access (pre-1.0.0)', alpha, { open: false, openFirstEntry: false })
-
-        body.appendChild(wrapper)
-
-        // If opened from the pause menu (or provided with a back callback), show an explicit Back button
-        if (fromPause || onBack) {
-            const actions = document.createElement('div')
-            actions.className = 'modal-actions'
-
-            const btnBack = document.createElement('button')
-            btnBack.className = 'btn outline'
-            btnBack.textContent = fromPause ? 'Back to Game Menu' : 'Back'
-            btnBack.addEventListener('click', () => {
-                closeModal()
-                if (onBack) {
-                    try {
-                        onBack()
-                        return
-                    } catch (_) {
-                        // fall through
-                    }
-                }
-                if (fromPause) {
-                    try { openPauseMenu() } catch (_) {}
-                }
-            })
-
-            actions.appendChild(btnBack)
-            body.appendChild(actions)
-        }
-    })
+    return _getChangelogModal().openChangelogModal(opts)
 }
 
 export function bootGame(engine) {
