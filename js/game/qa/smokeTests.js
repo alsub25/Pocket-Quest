@@ -45,7 +45,7 @@ export function createSmokeTestsRunner(dependencies) {
         rngInt, setRngLoggingEnabled, advanceTime, cleanupTownHallEffects,
         openBankModalImpl, formatBugReportBundle, runScenarioRunner,
         calcMagicDamage, calcPhysicalDamage, _setPlayerAbilityContext,
-        setRngSeed as setRngSeedFn, getActiveDifficultyConfig,
+        getActiveDifficultyConfig,
         computeEnemyPostureMax, syncEnemyBaseStats, applyEnemyRarity,
         applyEliteModifiers, getItemPowerScore, formatRarityLabel,
         qaScanNonFiniteNumbers, tickPlayerTimedStatuses,

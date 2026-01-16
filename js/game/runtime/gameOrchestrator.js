@@ -12220,9 +12220,10 @@ function _getSmokeTestsRunner() {
         randInt,
         rngInt,
         
-        // Mutable reference wrappers for variables that smoke tests need to manipulate
+        // Mutable reference wrappers for module-level variables that smoke tests need to manipulate
         _saveTimerRef: { get value() { return _saveTimer }, set value(v) { _saveTimer = v } },
         _saveQueuedRef: { get value() { return _saveQueued }, set value(v) { _saveQueued = v } },
+        // Simple function references (smoke tests read current values, don't mutate parent scope)
         updateHUDRef: { get value() { return updateHUD } },
         updateEnemyPanelRef: { get value() { return updateEnemyPanel } },
         handleEnemyDefeatRef: { get value() { return handleEnemyDefeat } },
