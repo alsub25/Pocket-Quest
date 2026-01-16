@@ -135,6 +135,68 @@ export const CHANGELOG = [
             ]
           }
         ]
+      },
+      {
+        "heading": "Story & Quests",
+        "items": [
+          {
+            "title": "Chapter V — The Ember Throne (Major Story Expansion)",
+            "bullets": [
+              "Added 10 new main quest steps (32-41) continuing the story beyond Chapter IV's tribunal ending",
+              "Introduced the Ashen Peaks, a volcanic region beyond Frostpeak Pass with unique environmental challenges",
+              "Added the Crystal Caverns, an underground area with prismatic enemies and crystalline architecture",
+              "Reintroduced the Ancient Grove in Emberwood Forest for a dawn ritual sequence",
+              "Chapter V explores the discovery and confrontation with an ancient Ember Throne that predates current kingdoms",
+              "Three-choice ending: Unite the realm under the throne, Liberate it by destroying the throne, or Transcend by claiming its power",
+              "Story steps include: realm investigation, volcanic trials, underground exploration, ritual preparation, ally gathering, and final confrontation",
+              "Chapter V connects back to Elder Rowan, the Ruined Spire archives, and village factions for a cohesive narrative arc"
+            ]
+          },
+          {
+            "title": "Chapter V Interactive Objectives",
+            "bullets": [
+              "Step 33: Survive 6 volcanic encounters in Ashen Peaks (Lava Serpents, Ember Elementals, Ash Wraiths)",
+              "Step 34: Hunt 5 Emberkin Guardians and collect 3 Molten Keystones to unlock the throne chamber",
+              "Step 35: Defeat the Crystal Sentinel boss and claim the Prism Heart from the Crystal Caverns",
+              "Step 37: Clear 4 Ancient Grove protectors and gather 3 Dawn Essence for the awakening ritual",
+              "Step 39: Face the Ember Tyrant (final boss) and recover the Throne Shard as proof of victory",
+              "All objectives use the existing kill/collect tracking system for seamless progression"
+            ]
+          },
+          {
+            "title": "New Enemy Types for Chapter V",
+            "bullets": [
+              "Lava Serpent: Fire-based serpent enemy in the Ashen Peaks with burn attacks",
+              "Ember Elemental: Living fire creature with elemental damage and resistance mechanics",
+              "Ash Wraith: Spectral enemy in volcanic zones with shadow and fire hybrid attacks",
+              "Emberkin Guardian: Elite humanoid guards protecting the throne chamber entrances",
+              "Crystal Sentinel: Boss encounter in the Crystal Caverns with prismatic shield mechanics",
+              "Ancient Treant: Massive tree guardian in the Ancient Grove with nature magic",
+              "Grove Protector: Forest sentinel with healing and entangle abilities",
+              "Ember Tyrant: Chapter V final boss with multi-phase fire throne mechanics and devastating AoE attacks"
+            ]
+          },
+          {
+            "title": "Quest Items for Chapter V",
+            "bullets": [
+              "Molten Keystone: Drops from Emberkin Guardians, required to access the throne chamber (3 needed)",
+              "Prism Heart: Rare drop from Crystal Sentinel, used to understand the throne's origins",
+              "Dawn Essence: Drops from Ancient Grove enemies, powers the Ritual of Awakening (3 needed)",
+              "Throne Shard: Final trophy from Ember Tyrant, crystallized fragment of the ancient throne's power"
+            ]
+          },
+          {
+            "title": "Story Depth & World Building",
+            "bullets": [
+              "Elder Rowan provides context about ancient thrones predating the Rootbound Court",
+              "Echo Archivist's successor at the Ruined Spire offers historical insights about the Ember Throne lineage",
+              "Village factions (Tavern, Town Hall, Bank) each offer unique aid based on your relationship with them",
+              "The Ritual of Awakening at dawn ties back to the Blackbark Oath's time-of-day mechanics",
+              "Final choice mirrors earlier oath decisions but with kingdom-wide implications",
+              "Chapter V ending leaves room for future expansions while providing satisfying closure to the Ember Throne arc"
+            ]
+          }
+        ]
       }
     ]
   },

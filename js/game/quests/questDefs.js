@@ -57,7 +57,19 @@ export const QUEST_DEFS = {
             28: 'In the Obsidian Keep, defeat the Oathbinder and take the Seal of Verdict.',
             29: 'At night, return to the Blackbark Gate and face the Rootbound Magistrate.',
             30: 'Return to Emberwood and decide how you answer the Court’s judgement.',
-            31: 'The road forward is unwritten… (to be continued)'
+            31: 'The road forward is unwritten… (to be continued)',
+
+            // Chapter V — The Ember Throne (v1.2.85 story expansion)
+            32: 'Seek Elder Rowan in the Town Hall. The realm stirs with news of an ancient throne.',
+            33: 'Journey to the Ashen Peaks, a new region beyond Frostpeak. Survive the volcanic trials.',
+            34: 'In the Ashen Peaks: hunt Emberkin Guardians and collect 3 Molten Keystones to unlock the throne chamber.',
+            35: 'Descend into the Crystal Caverns beneath the peaks. Find the Prism Heart and face the Crystal Sentinel.',
+            36: 'Return to the Ruined Spire. Speak with the Echo Archivist's successor about the throne's origins.',
+            37: 'In Emberwood Forest at dawn: perform the Ritual of Awakening at the Ancient Grove.',
+            38: 'Gather allies: Visit the Tavern, Town Hall, and Bank. Each faction offers aid for the final confrontation.',
+            39: 'Enter the Throne Chamber in the Ashen Peaks. Face the Ember Tyrant and claim or destroy the throne.',
+            40: 'Return to Emberwood. Shape the future of the realm with your choice: unite, liberate, or transcend.',
+            41: 'A new age dawns over Emberwood… (Chapter V complete)'
         },
 
         // Optional objective metadata used by the quest system to track
@@ -479,6 +491,80 @@ export const QUEST_DEFS = {
                     required: 1,
                     itemId: 'magistrateSigil',
                     dropsFrom: ['rootboundMagistrate'],
+                    dropChance: 1
+                }
+            ],
+
+            // --- Chapter V: The Ember Throne objectives ----------------------
+            33: [
+                {
+                    type: 'kill',
+                    label: 'Survive the volcanic trials',
+                    required: 6,
+                    enemyIds: ['lavaSerpent', 'emberElemental', 'ashWraith']
+                }
+            ],
+            34: [
+                {
+                    type: 'kill',
+                    label: 'Hunt Emberkin Guardians',
+                    required: 5,
+                    enemyIds: ['emberkinGuardian']
+                },
+                {
+                    type: 'collect',
+                    label: 'Collect Molten Keystones',
+                    required: 3,
+                    itemId: 'moltenKeystone',
+                    dropsFrom: ['emberkinGuardian'],
+                    dropChance: 0.75
+                }
+            ],
+            35: [
+                {
+                    type: 'kill',
+                    label: 'Defeat the Crystal Sentinel',
+                    required: 1,
+                    enemyIds: ['crystalSentinel']
+                },
+                {
+                    type: 'collect',
+                    label: 'Claim the Prism Heart',
+                    required: 1,
+                    itemId: 'prismHeart',
+                    dropsFrom: ['crystalSentinel'],
+                    dropChance: 1
+                }
+            ],
+            37: [
+                {
+                    type: 'kill',
+                    label: 'Clear the Ancient Grove',
+                    required: 4,
+                    enemyIds: ['ancientTreant', 'groveProtector']
+                },
+                {
+                    type: 'collect',
+                    label: 'Gather Dawn Essence',
+                    required: 3,
+                    itemId: 'dawnEssence',
+                    dropsFrom: ['ancientTreant', 'groveProtector'],
+                    dropChance: 0.65
+                }
+            ],
+            39: [
+                {
+                    type: 'kill',
+                    label: 'Defeat the Ember Tyrant',
+                    required: 1,
+                    enemyIds: ['emberTyrant']
+                },
+                {
+                    type: 'collect',
+                    label: 'Hold the Throne Shard',
+                    required: 1,
+                    itemId: 'throneShard',
+                    dropsFrom: ['emberTyrant'],
                     dropChance: 1
                 }
             ]
