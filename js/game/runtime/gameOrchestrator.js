@@ -9075,7 +9075,7 @@ function _getIntegrityScannersModule() {
         get recordInput() { return recordInput },
         get quests() { return quests },
         get lastSaveError() { return lastSaveError },
-        _engine
+        get _engine() { return _engine }
     })
     
     return _integrityScanners
