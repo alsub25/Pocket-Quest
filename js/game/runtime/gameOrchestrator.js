@@ -20285,7 +20285,8 @@ export function bootGame(engine) {
     // =============================================================================
 
     // Register Emberwood runtime systems as Engine plugins.
-    // NOTE: init/start happens during engine.start() (main.js) immediately after bootGame().
+    // NOTE: Plugins are registered here, then engine.start() is called at the end
+    // of this function to initialize and start all systems in dependency order.
     try {
         const _patchLabel = `Emberwood Patch V${GAME_PATCH} — ${GAME_PATCH_NAME}`
 

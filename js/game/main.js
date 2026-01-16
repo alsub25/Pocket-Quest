@@ -2,13 +2,13 @@
 // Game entry point - Engine-First Architecture
 //
 // This module creates the Locus Engine and boots the game orchestrator.
-// The engine is now fully initialized and started within bootGame(),
+// The engine is fully initialized and started within bootGame(),
 // ensuring all systems run through the engine from the beginning.
 //
 // ARCHITECTURE:
 // 1. Create engine with core services (state/events/clock/scheduler/etc.)
 // 2. Boot game orchestrator - registers all game-specific plugins
-// 3. Engine auto-starts within bootGame - all systems become operational
+// 3. Engine starts within bootGame - all systems become operational
 // 4. Game is ready - engine is the central orchestrator for all systems
 
 import { createEngine } from '../engine/engine.js'
