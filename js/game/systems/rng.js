@@ -92,10 +92,23 @@ function _hash32(x) {
   return x >>> 0
 }
 
+/**
+ * Initialize RNG state on the game state object.
+ * Ensures all RNG-related fields exist with safe defaults.
+ * @param {Object} state - Game state object
+ * @returns {Object} The same state object (mutated)
+ */
 export function initRngState(state) {
   _ensureDebug(state)
 }
 
+/**
+ * Set the RNG seed for deterministic random number generation.
+ * Updates both game state and engine RNG (if available).
+ * @param {Object} state - Game state object
+ * @param {number} seed - Unsigned 32-bit integer seed value
+ * @returns {void}
+ */
 export function setRngSeed(state, seed) {
   const d = _ensureDebug(state)
   if (!d) return
@@ -111,6 +124,13 @@ export function setRngSeed(state, seed) {
   }
 }
 
+/**
+ * Enable or disable deterministic RNG mode.
+ * When enabled, all RNG calls use the seed for reproducible results.
+ * @param {Object} state - Game state object
+ * @param {boolean} enabled - Whether to enable deterministic RNG
+ * @returns {void}
+ */
 export function setDeterministicRngEnabled(state, enabled) {
   const d = _ensureDebug(state)
   if (!d) return
@@ -124,6 +144,13 @@ export function setDeterministicRngEnabled(state, enabled) {
   }
 }
 
+/**
+ * Enable or disable RNG call logging for debugging.
+ * When enabled, logs the last 200 RNG calls with tags and values.
+ * @param {Object} state - Game state object
+ * @param {boolean} enabled - Whether to enable RNG logging
+ * @returns {void}
+ */
 export function setRngLoggingEnabled(state, enabled) {
   const d = _ensureDebug(state)
   if (!d) return
@@ -131,6 +158,13 @@ export function setRngLoggingEnabled(state, enabled) {
   if (!d.captureRngLog) d.rngLog = []
 }
 
+/**
+ * Generate a random floating-point number in the range [0, 1).
+ * Uses deterministic mode when enabled, otherwise uses Math.random().
+ * @param {Object} [state] - Game state object (optional, will attempt to find global state)
+ * @param {string} [tag] - Optional tag for logging and stream separation (e.g., 'loot', 'combat')
+ * @returns {number} Random float in [0, 1)
+ */
 export function rngFloat(state, tag) {
   const d = _ensureDebug(state)
   if (!d) return Math.random()
@@ -179,6 +213,15 @@ export function rngFloat(state, tag) {
   return v
 }
 
+/**
+ * Generate a random integer in the range [min, max] (inclusive).
+ * Uses deterministic mode when enabled, otherwise uses Math.random().
+ * @param {Object} [state] - Game state object (optional)
+ * @param {number} min - Minimum value (inclusive)
+ * @param {number} max - Maximum value (inclusive)
+ * @param {string} [tag] - Optional tag for logging and stream separation
+ * @returns {number} Random integer in [min, max]
+ */
 export function rngInt(state, min, max, tag) {
   const a = Math.floor(Number(min))
   const b = Math.floor(Number(max))
@@ -189,6 +232,14 @@ export function rngInt(state, min, max, tag) {
   return Math.floor(r * (hi - lo + 1)) + lo
 }
 
+/**
+ * Pick a random element from an array.
+ * Uses deterministic mode when enabled, otherwise uses Math.random().
+ * @param {Object} [state] - Game state object (optional)
+ * @param {Array} list - Array to pick from
+ * @param {string} [tag] - Optional tag for logging and stream separation
+ * @returns {*} Random element from the array, or null if array is empty
+ */
 export function rngPick(state, list, tag) {
   if (!Array.isArray(list) || list.length === 0) return null
   const idx = rngInt(state, 0, list.length - 1, tag)

@@ -174,7 +174,19 @@ export const CHANGELOG = [
               "Includes troubleshooting guide for common ES module issues",
               "Created PLUGIN_ARCHITECTURE.md with complete plugin development guide",
               "Plugin guide covers: lifecycle phases, plugin patterns, testing strategies, and best practices",
+              "Created STATE_API.md documenting the complete game state structure and access patterns",
+              "State API docs include: schema reference, common access patterns, immutable update examples, best practices",
               "Documentation reduces onboarding time and prevents common architectural mistakes"
+            ]
+          },
+          {
+            "title": "JSDoc Type Annotations",
+            "bullets": [
+              "Added comprehensive JSDoc comments to all RNG system functions (rng.js)",
+              "Documented function parameters, return types, and behavior for: rngFloat, rngInt, rngPick, setRngSeed, initRngState, setDeterministicRngEnabled, setRngLoggingEnabled",
+              "JSDoc improves IDE autocomplete, type checking, and developer experience",
+              "Reduces bugs from type confusion and parameter misuse",
+              "Sets standard for future function documentation across the codebase"
             ]
           }
         ]
