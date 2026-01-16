@@ -496,6 +496,7 @@ function advanceWorldDays(stateArg, days, hooks = {}) {
 const GAME_PATCH = CURRENT_PATCH // current patch/version
 const GAME_PATCH_NAME = CURRENT_PATCH_NAME
 const SAVE_SCHEMA = 7 // bump when the save structure changes (migrations run on load)
+const GITHUB_REPO_URL = 'https://github.com/alsub25/Emberwood-The-Blackbark-Oath' // repository URL for issue creation
 
 /* =============================================================================
  * SAFETY HELPERS
@@ -14796,9 +14797,16 @@ function handleCreateGitHubIssue() {
     const payload = buildFeedbackPayload(type, text)
     
     // Encode for URL
-    const githubUrl = `https://github.com/alsub25/Emberwood-The-Blackbark-Oath/issues/new?` +
+    const githubUrl = `${GITHUB_REPO_URL}/issues/new?` +
         `title=${encodeURIComponent(issueTitle)}&` +
         `body=${encodeURIComponent(payload)}`
+
+    // Validate URL length (conservative browser limit)
+    const MAX_URL_LENGTH = 2000
+    if (githubUrl.length > MAX_URL_LENGTH) {
+        status.textContent = '⚠️ Feedback too long for URL. Please use "Copy to Clipboard" instead.'
+        return
+    }
 
     // Open in new tab
     try {
