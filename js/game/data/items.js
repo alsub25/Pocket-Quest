@@ -50,6 +50,36 @@ export const ITEM_DEFS = {
         price: 22,
         desc: 'Condensed blood to fuel your arts.'
     },
+    potionSuperHealing: {
+        id: 'potionSuperHealing',
+        name: 'Greater Healing Potion',
+        type: 'potion',
+        hpRestore: 100,
+        price: 50,
+        desc: 'Restore 100 HP. A powerful healing draught.'
+    },
+    potionFullRestore: {
+        id: 'potionFullRestore',
+        name: 'Elixir of Full Restoration',
+        type: 'potion',
+        hpRestore: 9999,
+        price: 150,
+        desc: 'Completely restore all HP and remove harmful effects.'
+    },
+    elixirExperience: {
+        id: 'elixirExperience',
+        name: 'Elixir of Experience',
+        type: 'potion',
+        price: 80,
+        desc: 'Grants a temporary 50% bonus to experience gained from combat for the next 5 battles.'
+    },
+    tonicGoldFind: {
+        id: 'tonicGoldFind',
+        name: 'Fortune Seeker\'s Tonic',
+        type: 'potion',
+        price: 60,
+        desc: 'Increases gold found from enemies by 30% for the next 3 battles.'
+    },
     swordIron: {
         id: 'swordIron',
         name: 'Iron Longsword',
@@ -83,6 +113,28 @@ export const ITEM_DEFS = {
         onKillGain: { key: 'resource', amount: 6 },
         elementalBonuses: { shadow: 6 },
     },
+    scytheMoonlight: {
+        id: 'scytheMoonlight',
+        name: 'Moonlight Scythe',
+        type: 'weapon',
+        attackBonus: 8,
+        magicBonus: 4,
+        price: 120,
+        desc: '+8 Attack, +4 Magic. A deadly scythe that gleams with pale moonlight. Deals bonus damage to low-health enemies.',
+        onKillGain: { key: 'hp', amount: 15 },
+        elementalBonuses: { shadow: 10, arcane: 8 },
+        critChanceBonus: 0.12
+    },
+    hammerThunder: {
+        id: 'hammerThunder',
+        name: 'Thunderstrike Hammer',
+        type: 'weapon',
+        attackBonus: 10,
+        price: 110,
+        desc: '+10 Attack. A massive hammer infused with lightning. Has a chance to stun enemies on hit.',
+        elementalBonuses: { lightning: 12 },
+        stunChance: 0.15
+    },
     armorLeather: {
         id: 'armorLeather',
         name: 'Hardened Leather',
@@ -103,6 +155,19 @@ export const ITEM_DEFS = {
         price: 40,
         desc: '+2 Armor, +20 Mana.',
         elementalResists: { arcane: 10 }
+    },
+    cloakShadows: {
+        id: 'cloakShadows',
+        name: 'Cloak of Shadows',
+        type: 'armor',
+        slot: 'armor',
+        armorBonus: 3,
+        maxResourceBonus: 15,
+        price: 90,
+        desc: '+3 Armor, +15 to max resource. A mysterious cloak that increases evasion and critical strike chance.',
+        elementalResists: { shadow: 15, arcane: 8 },
+        critChanceBonus: 0.08,
+        evasionBonus: 0.10
     },
 
     // --- Quest Items -------------------------------------------------------

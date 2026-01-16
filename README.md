@@ -4,7 +4,7 @@
 
 ### A Browser-Based Fantasy RPG & Living Village Simulator
 
-[![Version](https://img.shields.io/badge/version-1.2.85-blue.svg)](https://github.com/alsub25/Emberwood-The-Blackbark-Oath)
+[![Version](https://img.shields.io/badge/version-1.2.86-blue.svg)](https://github.com/alsub25/Emberwood-The-Blackbark-Oath)
 [![License](https://img.shields.io/badge/license-See%20License%20Section-green.svg)](#-license)
 [![No Build Required](https://img.shields.io/badge/build-none-brightgreen.svg)](#%EF%B8%8F-architecture-overview)
 [![ES Modules](https://img.shields.io/badge/modules-native%20ES-orange.svg)](#%EF%B8%8F-architecture-overview)
@@ -82,7 +82,7 @@
 - **Forward Compatible**: Migration system ensures old saves work with new versions
 - **Developer-Friendly**: Modular architecture with clear separation of concerns
 
-> **Current Patch:** v1.2.85 — *Engine Integration Expansion - Kingdom, Loot & Quest Systems*  
+> **Current Patch:** v1.2.86 — *Feature Expansion - New Companions, Abilities & Items*  
 > **In-Game Changelog:** Open the **Changelog** button from the main menu for detailed patch notes
 
 ---
@@ -2513,7 +2513,7 @@ To add a license, create a `LICENSE` file in the repository root.
 ### Development
 
 - **Creator**: alsub25
-- **Version**: 1.2.85 - Engine Integration Expansion - Kingdom, Loot & Quest Systems
+- **Version**: 1.2.86 - Feature Expansion - New Companions, Abilities & Items
 - **Repository**: [Emberwood-The-Blackbark-Oath](https://github.com/alsub25/Emberwood-The-Blackbark-Oath)
 
 ### Inspiration

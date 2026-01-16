@@ -3,6 +3,164 @@
 
 export const CHANGELOG = [
   {
+    "version": "1.2.86",
+    "title": "Feature Expansion - New Companions, Abilities & Items",
+    "sections": [
+      {
+        "heading": "New Companions",
+        "items": [
+          {
+            "title": "Dragon Hatchling",
+            "bullets": [
+              "New elemental DPS companion that breathes devastating fire",
+              "Abilities: Dragon Breath (heavy fire damage + burning), Wing Buffet (damage + stun), Scale Armor (shield + armor boost), Inferno (massive damage over time)",
+              "Base Attack: 11, HP Bonus: 10",
+              "Aggressive behavior perfect for dealing high burst damage"
+            ]
+          },
+          {
+            "title": "Shadow Assassin",
+            "bullets": [
+              "New critical striker companion that attacks from the shadows",
+              "Abilities: Backstab (extreme critical damage), Smoke Screen (protection + debuff), Poison Dagger (damage + poison DoT), Execute (massive finishing blow)",
+              "Base Attack: 12, highest damage companion",
+              "Aggressive behavior specializing in critical strikes and precision attacks"
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "New Player Abilities",
+        "items": [
+          {
+            "title": "Frost Nova (Mage - Level 15)",
+            "bullets": [
+              "Costs 28 mana",
+              "Releases a freezing blast that damages all enemies and slows them",
+              "Area-of-effect ability perfect for crowd control"
+            ]
+          },
+          {
+            "title": "Thunder Clap (Warrior - Level 15)",
+            "bullets": [
+              "Costs 30 fury",
+              "Slams the ground with thunderous force, dealing damage to all enemies",
+              "Reduces enemy speed with area-of-effect impact"
+            ]
+          },
+          {
+            "title": "Soul Siphon (Necromancer - Level 15)",
+            "bullets": [
+              "Costs 35 mana",
+              "Drains essence from all enemies, dealing damage",
+              "Heals yourself for a portion of damage dealt",
+              "Powerful sustain ability for necromancers"
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "New Consumable Items",
+        "items": [
+          {
+            "title": "Greater Healing Potion",
+            "bullets": [
+              "Restores 100 HP (more than double the Minor Healing Potion)",
+              "Price: 50 gold",
+              "Perfect for tougher battles"
+            ]
+          },
+          {
+            "title": "Elixir of Full Restoration",
+            "bullets": [
+              "Completely restores all HP",
+              "Removes harmful effects",
+              "Price: 150 gold",
+              "Emergency recovery item for critical situations"
+            ]
+          },
+          {
+            "title": "Elixir of Experience",
+            "bullets": [
+              "Grants 50% bonus to experience gained",
+              "Lasts for the next 5 battles",
+              "Price: 80 gold",
+              "Accelerates character progression"
+            ]
+          },
+          {
+            "title": "Fortune Seeker's Tonic",
+            "bullets": [
+              "Increases gold found from enemies by 30%",
+              "Lasts for the next 3 battles",
+              "Price: 60 gold",
+              "Great for farming gold"
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "New Weapons",
+        "items": [
+          {
+            "title": "Moonlight Scythe",
+            "bullets": [
+              "+8 Attack, +4 Magic",
+              "Deals bonus damage to low-health enemies",
+              "Restores 15 HP on kill",
+              "+10 Shadow, +8 Arcane elemental bonuses",
+              "+12% critical strike chance",
+              "Price: 120 gold",
+              "Powerful hybrid weapon for aggressive playstyles"
+            ]
+          },
+          {
+            "title": "Thunderstrike Hammer",
+            "bullets": [
+              "+10 Attack",
+              "+12 Lightning elemental bonus",
+              "15% chance to stun enemies on hit",
+              "Price: 110 gold",
+              "Perfect for warriors seeking crowd control"
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "New Armor",
+        "items": [
+          {
+            "title": "Cloak of Shadows",
+            "bullets": [
+              "+3 Armor, +15 to max resource",
+              "+15 Shadow, +8 Arcane elemental resists",
+              "+8% critical strike chance",
+              "+10% evasion",
+              "Price: 90 gold",
+              "Versatile armor piece that boosts both offense and defense"
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "Balance & Polish",
+        "items": [
+          {
+            "title": "Content Expansion",
+            "bullets": [
+              "Total of 2 new companions with 8 new companion abilities",
+              "3 new high-level player abilities for endgame progression",
+              "4 new consumable items for various strategic needs",
+              "2 new weapons with unique combat mechanics",
+              "1 new armor piece with powerful stat bonuses",
+              "Enhanced build diversity with new equipment options"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "1.2.85",
     "title": "Engine Integration Expansion - Kingdom, Loot & Quest Systems",
     "sections": [

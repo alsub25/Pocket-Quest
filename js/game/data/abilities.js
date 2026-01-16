@@ -617,5 +617,34 @@ export const ABILITIES = {
         cost: { essence: 45 },
         note: 'A brutal eclipse: huge shadow damage and healing. (Unlocks at level 12)'
     },
+
+    // --- PATCH 1.2.86: NEW ABILITIES --------------------------------------
+
+    // MAGE
+    frostNova: {
+        id: 'frostNova',
+        name: 'Frost Nova',
+        classId: 'mage',
+        cost: { mana: 28 },
+        note: 'Release a freezing blast that damages all enemies and slows them. (Unlocks at level 15)'
+    },
+
+    // WARRIOR
+    thunderClap: {
+        id: 'thunderClap',
+        name: 'Thunder Clap',
+        classId: 'warrior',
+        cost: { fury: 30 },
+        note: 'Slam the ground with thunderous force, dealing damage to all enemies and reducing their speed. (Unlocks at level 15)'
+    },
+
+    // NECROMANCER
+    soulSiphon: {
+        id: 'soulSiphon',
+        name: 'Soul Siphon',
+        classId: 'necromancer',
+        cost: { mana: 35 },
+        note: 'Drain the essence from all enemies, dealing damage and healing yourself for a portion of damage dealt. (Unlocks at level 15)'
+    },
 }
 

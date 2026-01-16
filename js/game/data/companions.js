@@ -106,6 +106,28 @@ export const COMPANION_DEFS = {
         baseHpBonus: 0,
         behavior: 'mimic',
         abilities: ['mirrorBurst', 'echoStrike', 'shadowLatch', 'mimicSurge']
+    },
+    dragon: {
+        id: 'dragon',
+        name: 'Dragon Hatchling',
+        role: 'Elemental DPS',
+        description:
+            'A young dragon that breathes devastating fire and builds power over time.',
+        baseAttack: 11,
+        baseHpBonus: 10,
+        behavior: 'aggressive',
+        abilities: ['dragonBreath', 'wingBuffet', 'scaleArmor', 'inferno']
+    },
+    assassin: {
+        id: 'assassin',
+        name: 'Shadow Assassin',
+        role: 'Critical Striker',
+        description:
+            'A deadly assassin that strikes from the shadows with critical precision.',
+        baseAttack: 12,
+        baseHpBonus: 0,
+        behavior: 'aggressive',
+        abilities: ['backstab', 'smokeScreen', 'poisonDagger', 'execute']
     }
 }
 
@@ -421,5 +443,81 @@ export const COMPANION_ABILITIES = {
         cooldown: 6,
         type: 'damage',
         potency: 1.8
+    },
+
+    // DRAGON HATCHLING
+    dragonBreath: {
+        id: 'dragonBreath',
+        name: 'Dragon Breath',
+        desc: 'Unleashes a cone of fire that deals heavy fire damage and may cause burning.',
+        cooldown: 4,
+        type: 'damage',
+        potency: 1.8,
+        debuffTurns: 2
+    },
+    wingBuffet: {
+        id: 'wingBuffet',
+        name: 'Wing Buffet',
+        desc: 'Powerful wing flap that damages and briefly stuns the target.',
+        cooldown: 5,
+        type: 'damage',
+        potency: 1.3,
+        stunTurns: 1
+    },
+    scaleArmor: {
+        id: 'scaleArmor',
+        name: 'Scale Armor',
+        desc: 'Hardens scales to grant the player a substantial shield and armor boost.',
+        cooldown: 6,
+        type: 'shield+damage',
+        potency: 0.5,
+        shieldBase: 30
+    },
+    inferno: {
+        id: 'inferno',
+        name: 'Inferno',
+        desc: 'A devastating firestorm that deals massive damage over multiple turns.',
+        cooldown: 7,
+        type: 'damage+debuff',
+        potency: 2.2,
+        debuffTurns: 3
+    },
+
+    // SHADOW ASSASSIN
+    backstab: {
+        id: 'backstab',
+        name: 'Backstab',
+        desc: 'Strikes from behind with extreme precision, dealing critical damage.',
+        cooldown: 3,
+        type: 'damage',
+        potency: 2.0,
+        critSpike: 0.6
+    },
+    smokeScreen: {
+        id: 'smokeScreen',
+        name: 'Smoke Screen',
+        desc: 'Creates a cloud that protects the player and reduces enemy accuracy.',
+        cooldown: 5,
+        type: 'shield+damage',
+        potency: 0.3,
+        shieldBase: 20,
+        debuffTurns: 2
+    },
+    poisonDagger: {
+        id: 'poisonDagger',
+        name: 'Poison Dagger',
+        desc: 'Strikes with a poisoned blade that deals damage and applies a deadly poison DoT.',
+        cooldown: 4,
+        type: 'damage+debuff',
+        potency: 1.1,
+        debuffTurns: 4
+    },
+    execute: {
+        id: 'execute',
+        name: 'Execute',
+        desc: 'A finishing blow that deals massive damage to low-health enemies.',
+        cooldown: 6,
+        type: 'damage',
+        potency: 2.5
     }
 }
