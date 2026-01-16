@@ -821,6 +821,7 @@ export function openModalDom(title, builderFn, opts = null) {
     } catch (_) {}
 
     modalEl.classList.remove('hidden')
+    modalEl.classList.remove('modal-closing') // Ensure closing animation is cleared
     _installModalFocusTrap()
 
     // Lifecycle event for plugins.
@@ -1065,6 +1066,7 @@ export function openEnemyModal(title, builderFn) {
     } catch (_) {}
 
     enemyModalEl.classList.remove('hidden')
+    enemyModalEl.classList.remove('modal-closing') // Ensure closing animation is cleared
     _installEnemyModalFocusTrap()
 
     // Lifecycle event for plugins (input contexts, analytics, asset preloads, etc.).

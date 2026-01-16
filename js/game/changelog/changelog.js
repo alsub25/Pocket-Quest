@@ -295,6 +295,17 @@ export const CHANGELOG = [
               "Safari's strict JavaScript parser now correctly handles possessive forms and contractions in quest text",
               "All quest definitions now parse successfully across all browsers including Safari, Chrome, Firefox, and mobile browsers"
             ]
+          },
+          {
+            "title": "Modal Animation State Management Fix",
+            "bullets": [
+              "Fixed modal opening issue where settings screen and save modal wouldn't appear",
+              "Added 'modal-closing' class cleanup when opening modals to prevent animation conflicts",
+              "Opening a new modal now explicitly removes any residual 'modal-closing' class from previous closures",
+              "Prevents edge case where rapid modal open/close cycles could leave modal in closing animation state",
+              "Applied fix to both main modal (openModalDom) and enemy modal (openEnemyModal) functions",
+              "Modals now open reliably regardless of previous animation state"
+            ]
           }
         ]
       }
