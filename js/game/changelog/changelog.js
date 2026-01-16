@@ -195,6 +195,67 @@ export const CHANGELOG = [
               "Final choice mirrors earlier oath decisions but with kingdom-wide implications",
               "Chapter V ending leaves room for future expansions while providing satisfying closure to the Ember Throne arc"
             ]
+          },
+          {
+            "title": "Advanced Quest Branching System (Enhanced Complexity)",
+            "bullets": [
+              "Added 6 major branching decision points throughout Chapter V at steps 32.5, 33.5, 35.5, 36.5, 37.5, and 38.5",
+              "Each decision point offers 2-3 meaningful choices that affect gameplay, story progression, and endings",
+              "Step 32.5: Choose Diplomatic or Aggressive approach - affects reputation and ally availability",
+              "Step 33.5: Select Ancient Trail (stealth) or Molten Bridge (combat) - changes enemy encounters and loot quality",
+              "Step 35.5: Accept Crystal Pact for power or Refuse to earn freedom - grants different abilities and relationships",
+              "Step 36.5: Share knowledge publicly or keep secrets - impacts village trust and personal stats",
+              "Step 37.5: Invoke Light (order), Darkness (chaos), or Balance (harmony) - determines alignment and ritual power, affects final ending",
+              "Step 38.5: Accept one faction's conditions, reject all for independence, or unite all factions - shapes final battle and realm future",
+              "Branching metadata system tracks choice consequences including reputation, alignment, abilities, resources, and ending variations",
+              "Player choices cascade through subsequent story beats, creating unique narrative experiences based on decisions"
+            ]
+          },
+          {
+            "title": "Quest System Consequences Framework",
+            "bullets": [
+              "Introduced 'branches' metadata structure in quest definitions to track decision trees",
+              "Each branch defines available choices, their IDs, labels, and immediate consequences",
+              "Consequences affect multiple game systems: reputation, enemy encounters, abilities, village trust, alignment, and resources",
+              "Alignment system with three axes: Order (light), Chaos (darkness), and Balance (harmony)",
+              "Alliance system tracks relationships with Tavern, Town Hall, and Bank factions",
+              "Path choices (diplomatic vs aggressive, stealth vs combat) modify encounter tables and loot drops",
+              "Pact system allows players to gain supernatural powers with tradeoffs in relationships",
+              "Multiple ending variations based on accumulated choices throughout Chapter V"
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "UI/UX Improvements",
+        "items": [
+          {
+            "title": "Smooth Modal Animations (Enhanced User Experience)",
+            "bullets": [
+              "Added smooth fade-in animation (0.25s) when modals appear with backdrop blur effect",
+              "Implemented elegant slide-up and scale animation (0.3s) for modal panels entering the screen",
+              "Added smooth fade-out and slide-down animation (0.2s) when modals close",
+              "Backdrop now features 4px blur effect for better visual depth and focus",
+              "Modal panels animate from 95% scale and 20px below, smoothly growing to full size",
+              "Closing animation slides panel up 10px and scales down to 98% before fading out",
+              "Enhanced both main modal (#modal) and enemy sheet modal (#enemyModal) with consistent animations",
+              "Animation timing uses CSS custom properties (--ease) for consistent easing curves throughout the UI",
+              "JavaScript closeModal functions now trigger CSS animations before hiding elements for seamless transitions",
+              "200ms delay added to modal closing to allow animation to complete before DOM removal"
+            ]
+          },
+          {
+            "title": "Modal Animation Technical Implementation",
+            "bullets": [
+              "Created dedicated CSS keyframe animations: modalFadeIn, modalFadeOut, modalSlideIn, modalSlideOut",
+              "Modal backdrop uses CSS backdrop-filter for hardware-accelerated blur effect",
+              "Added 'modal-closing' class to trigger exit animations programmatically",
+              "JavaScript setTimeout coordination ensures animations complete before DOM state changes",
+              "Focus trap removal delayed until after animation for smoother user experience",
+              "All modals use transform-based animations for GPU acceleration and 60fps performance",
+              "Animation implementation respects reduced-motion preferences (inherit from existing --t-fast/--t-med timing)",
+              "Both closeModalDom() and closeEnemyModal() functions updated with animation support"
+            ]
           }
         ]
       }

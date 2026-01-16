@@ -871,33 +871,41 @@ export function closeModalDom() {
         if (modalEl.dataset) modalEl.dataset.timerOwner = ''
     } catch (_) {}
 
-    // Tear down focus trap *before* hiding so focus doesn't get stuck.
-    _removeModalFocusTrap()
+    // Add smooth closing animation before hiding (v1.2.85 enhancement)
+    modalEl.classList.add('modal-closing')
+    
+    // Wait for animation to complete before hiding
+    setTimeout(() => {
+        if (!modalEl) return
+        
+        // Tear down focus trap *before* hiding so focus doesn't get stuck.
+        _removeModalFocusTrap()
 
-    modalEl.classList.add('hidden')
+        modalEl.classList.add('hidden')
+        modalEl.classList.remove('modal-closing')
 
-    try {
-        modalEl.setAttribute('aria-hidden', 'true')
-        modalEl.dataset.open = '0'
-        // Release ownership on close.
-        if (modalEl.dataset.owner === 'game') modalEl.dataset.owner = ''
-        // Ensure the modal is unlocked for other subsystems.
-        modalEl.dataset.lock = '0'
-    } catch (_) {}
+        try {
+            modalEl.setAttribute('aria-hidden', 'true')
+            modalEl.dataset.open = '0'
+            // Release ownership on close.
+            if (modalEl.dataset.owner === 'game') modalEl.dataset.owner = ''
+            // Ensure the modal is unlocked for other subsystems.
+            modalEl.dataset.lock = '0'
+        } catch (_) {}
 
-    // Lifecycle event for plugins (input contexts, analytics, etc.).
-    // Emit immediately so it always fires even when audio does a deferred interior-close.
-    try {
-        const engine = _getEngine()
-        if (engine && typeof engine.emit === 'function') {
-            engine.emit('modal:close', { owner: _closingOwner || '' })
-        }
-    } catch (_) {}
+        // Lifecycle event for plugins (input contexts, analytics, etc.).
+        // Emit immediately so it always fires even when audio does a deferred interior-close.
+        try {
+            const engine = _getEngine()
+            if (engine && typeof engine.emit === 'function') {
+                engine.emit('modal:close', { owner: _closingOwner || '' })
+            }
+        } catch (_) {}
 
-    // Always remove any pinned tavern-game footer actions on close so they
-    // can't leak into future modals or leave hidden interactive elements around.
-    try {
-        modalEl.querySelectorAll('.tavern-footer-actions').forEach((el) => el.remove())
+        // Always remove any pinned tavern-game footer actions on close so they
+        // can't leak into future modals or leave hidden interactive elements around.
+        try {
+            modalEl.querySelectorAll('.tavern-footer-actions').forEach((el) => el.remove())
     } catch (_) {
         // ignore
     }
@@ -1089,47 +1097,55 @@ export function closeEnemyModal() {
         if (enemyModalEl.dataset) enemyModalEl.dataset.timerOwner = ''
     } catch (_) {}
 
-    _removeEnemyModalFocusTrap()
+    // Add smooth closing animation (v1.2.85 enhancement)
+    enemyModalEl.classList.add('modal-closing')
+    
+    // Wait for animation to complete before hiding
+    setTimeout(() => {
+        if (!enemyModalEl) return
+        
+        _removeEnemyModalFocusTrap()
 
-    enemyModalEl.classList.add('hidden')
+        enemyModalEl.classList.add('hidden')
+        enemyModalEl.classList.remove('modal-closing')
 
-    try {
-        enemyModalEl.setAttribute('aria-hidden', 'true')
-        enemyModalEl.dataset.open = '0'
-    } catch (_) {}
-
-    // Run any one-shot close hook
-    if (typeof enemyModalOnClose === 'function') {
-        const fn = enemyModalOnClose
-        enemyModalOnClose = null
         try {
-            fn()
-        } catch (err) {
-            console.error(err)
-        }
-    } else {
-        enemyModalOnClose = null
-    }
+            enemyModalEl.setAttribute('aria-hidden', 'true')
+            enemyModalEl.dataset.open = '0'
+        } catch (_) {}
 
-    // Restore focus
-    try {
-        if (
-            _enemyModalLastFocusEl &&
-            typeof _enemyModalLastFocusEl.focus === 'function' &&
-            document.contains(_enemyModalLastFocusEl)
-        ) {
-            _enemyModalLastFocusEl.focus()
+        // Run any one-shot close hook
+        if (typeof enemyModalOnClose === 'function') {
+            const fn = enemyModalOnClose
+            enemyModalOnClose = null
+            try {
+                fn()
+            } catch (err) {
+                console.error(err)
+            }
+        } else {
+            enemyModalOnClose = null
         }
-    } catch (_) {}
-    _enemyModalLastFocusEl = null
 
-    // Lifecycle event for plugins (input contexts, analytics, etc.).
-    try {
-        const engine = _getEngine()
-        if (engine && typeof engine.emit === 'function') {
-            engine.emit('modal:close', { owner: _closingOwner || '' })
-        }
-    } catch (_) {}
+        // Restore focus
+        try {
+            if (
+                _enemyModalLastFocusEl &&
+                typeof _enemyModalLastFocusEl.focus === 'function' &&
+                document.contains(_enemyModalLastFocusEl)
+            ) {
+                _enemyModalLastFocusEl.focus()
+            }
+        } catch (_) {}
+        _enemyModalLastFocusEl = null
+
+        // Lifecycle event for plugins (input contexts, analytics, etc.).
+        try {
+            const engine = _getEngine()
+            if (engine && typeof engine.emit === 'function') {
+                engine.emit('modal:close', { owner: _closingOwner || '' })
+            }
+        } catch (_) {}
 
     _enemyModalOwner = ''
 }

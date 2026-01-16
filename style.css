@@ -1660,10 +1660,22 @@ details[open] > summary.qj-summary::before{
   position:fixed;
   inset:0;
   background:rgba(0,0,0,0.68);
+  backdrop-filter:blur(4px);
+  -webkit-backdrop-filter:blur(4px);
   display:flex;
   justify-content:center;
   align-items:center;
   z-index:20;
+  
+  /* Smooth fade-in animation */
+  animation:modalFadeIn 0.25s var(--ease);
+}
+
+/* Fade-out animation for closing modals */
+#modal.modal-closing,
+#enemyModal.modal-closing{
+  animation:modalFadeOut 0.2s var(--ease);
+  pointer-events:none;
 }
 
 /* Enemy Sheet sits just under the main modal so dev confirms (Smoke Tests) can stack above it. */
@@ -1682,7 +1694,57 @@ details[open] > summary.qj-summary::before{
   flex-direction:column;
   gap:6px;
   box-shadow:var(--shadow-pop);
-  animation:panelPopIn 0.22s var(--ease);
+  
+  /* Enhanced slide-up and scale animation */
+  animation:modalSlideIn 0.3s var(--ease);
+  transform-origin:center center;
+}
+
+/* Panel closing animation */
+.modal-closing #modalPanel,
+.modal-closing #enemyModalPanel{
+  animation:modalSlideOut 0.2s var(--ease);
+}
+
+/* Keyframe animations for smooth modal transitions */
+@keyframes modalFadeIn{
+  from{
+    opacity:0;
+  }
+  to{
+    opacity:1;
+  }
+}
+
+@keyframes modalFadeOut{
+  from{
+    opacity:1;
+  }
+  to{
+    opacity:0;
+  }
+}
+
+@keyframes modalSlideIn{
+  from{
+    opacity:0;
+    transform:translateY(20px) scale(0.95);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0) scale(1);
+  }
+}
+
+@keyframes modalSlideOut{
+  from{
+    opacity:1;
+    transform:translateY(0) scale(1);
+  }
+  to{
+    opacity:0;
+    transform:translateY(-10px) scale(0.98);
+  }
 }
 
 #modalHeader,

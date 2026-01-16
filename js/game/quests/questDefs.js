@@ -59,17 +59,72 @@ export const QUEST_DEFS = {
             30: 'Return to Emberwood and decide how you answer the Court’s judgement.',
             31: 'The road forward is unwritten… (to be continued)',
 
-            // Chapter V — The Ember Throne (v1.2.85 story expansion)
+            // Chapter V — The Ember Throne (v1.2.85 story expansion with branching paths)
             32: 'Seek Elder Rowan in the Town Hall. The realm stirs with news of an ancient throne.',
+            32.5: 'Decision: Choose your approach - Diplomatic inquiry or Aggressive investigation.',
             33: 'Journey to the Ashen Peaks, a new region beyond Frostpeak. Survive the volcanic trials.',
+            33.5: 'Choose your path through the peaks: Ancient Trail (stealth) or Molten Bridge (combat).',
             34: 'In the Ashen Peaks: hunt Emberkin Guardians and collect 3 Molten Keystones to unlock the throne chamber.',
             35: 'Descend into the Crystal Caverns beneath the peaks. Find the Prism Heart and face the Crystal Sentinel.',
+            35.5: 'Crystal Sentinel offers a choice: Accept its pact for power, or Refuse and fight for freedom.',
             36: 'Return to the Ruined Spire. Speak with the Echo Archivist's successor about the throne's origins.',
+            36.5: 'Archival revelation: Choose to share knowledge with the village, or keep secrets for personal gain.',
             37: 'In Emberwood Forest at dawn: perform the Ritual of Awakening at the Ancient Grove.',
+            37.5: 'Ritual crossroads: Invoke light (order), darkness (chaos), or balance (harmony).',
             38: 'Gather allies: Visit the Tavern, Town Hall, and Bank. Each faction offers aid for the final confrontation.',
+            38.5: 'Alliance decision: Accept conditions from one faction, reject all for independence, or unite all factions.',
             39: 'Enter the Throne Chamber in the Ashen Peaks. Face the Ember Tyrant and claim or destroy the throne.',
             40: 'Return to Emberwood. Shape the future of the realm with your choice: unite, liberate, or transcend.',
-            41: 'A new age dawns over Emberwood… (Chapter V complete)'
+            41: 'Your choices echo through the realm. The age you forged begins… (Chapter V complete)'
+        },
+
+        // Branching choices metadata for Chapter V (v1.2.85 enhancement)
+        // Tracks player decisions and their consequences throughout the chapter
+        branches: {
+            32.5: {
+                choices: [
+                    { id: 'diplomatic', label: 'Diplomatic Inquiry', consequence: 'peacefulPath' },
+                    { id: 'aggressive', label: 'Aggressive Investigation', consequence: 'forcefulPath' }
+                ],
+                affects: ['reputation', 'allyAvailability']
+            },
+            33.5: {
+                choices: [
+                    { id: 'ancientTrail', label: 'Ancient Trail (Stealth)', consequence: 'avoidCombat' },
+                    { id: 'moltenBridge', label: 'Molten Bridge (Combat)', consequence: 'fightThrough' }
+                ],
+                affects: ['enemyEncounters', 'lootQuality']
+            },
+            35.5: {
+                choices: [
+                    { id: 'acceptPact', label: 'Accept Crystal Pact', consequence: 'crystalBlessing' },
+                    { id: 'refuseFight', label: 'Refuse and Fight', consequence: 'earnedVictory' }
+                ],
+                affects: ['abilities', 'sentinelRelationship']
+            },
+            36.5: {
+                choices: [
+                    { id: 'shareKnowledge', label: 'Share with Village', consequence: 'publicWisdom' },
+                    { id: 'keepSecrets', label: 'Keep for Yourself', consequence: 'personalPower' }
+                ],
+                affects: ['villageTrust', 'playerStats']
+            },
+            37.5: {
+                choices: [
+                    { id: 'invokeLight', label: 'Invoke Light (Order)', consequence: 'orderAlignment' },
+                    { id: 'invokeDarkness', label: 'Invoke Darkness (Chaos)', consequence: 'chaosAlignment' },
+                    { id: 'invokeBalance', label: 'Invoke Balance (Harmony)', consequence: 'balanceAlignment' }
+                ],
+                affects: ['alignment', 'ritualPower', 'finalEnding']
+            },
+            38.5: {
+                choices: [
+                    { id: 'acceptConditions', label: 'Accept One Faction', consequence: 'singleAlly' },
+                    { id: 'rejectAll', label: 'Reject All (Independence)', consequence: 'soloPath' },
+                    { id: 'uniteAll', label: 'Unite All Factions', consequence: 'grandAlliance' }
+                ],
+                affects: ['finalBattle', 'realmFuture', 'resources']
+            }
         },
 
         // Optional objective metadata used by the quest system to track
