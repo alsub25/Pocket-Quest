@@ -40,33 +40,7 @@ export function createMerchantServicePlugin() {
       };
       engine.on('time:dayChanged', dayTickHandler);
 
-      // Register command handlers for merchant operations
-      engine.commands?.register('merchant:buy', (payload) => {
-        if (!merchantService) return { success: false, error: 'Merchant service not available' };
-        return merchantService.buyItem(payload.itemKey, payload.price, payload.context);
-      });
-
-      engine.commands?.register('merchant:sell', (payload) => {
-        if (!merchantService) return { success: false, error: 'Merchant service not available' };
-        return merchantService.sellItem(payload.itemIndex, payload.context);
-      });
-
-      engine.commands?.register('merchant:getStock', () => {
-        if (!merchantService) return [];
-        return merchantService.getStock();
-      });
-
-      engine.commands?.register('merchant:getPrice', (payload) => {
-        if (!merchantService) return 0;
-        return merchantService.getPrice(payload.item, payload.context);
-      });
-
-      engine.commands?.register('merchant:getSummary', () => {
-        if (!merchantService) return null;
-        return merchantService.getSummary();
-      });
-
-      engine.log?.info?.('merchant', 'Merchant service started and commands registered');
+      engine.log?.info?.('merchant', 'Merchant service started and listening for events');
     },
 
     stop(engine) {
@@ -75,16 +49,6 @@ export function createMerchantServicePlugin() {
         engine.off('time:dayChanged', dayTickHandler);
         dayTickHandler = null;
       }
-
-      // Unregister commands
-      const commands = ['buy', 'sell', 'getStock', 'getPrice', 'getSummary'];
-      commands.forEach(cmd => {
-        try {
-          engine.commands?.unregister(`merchant:${cmd}`);
-        } catch (e) {
-          // Ignore errors during cleanup
-        }
-      });
 
       engine.log?.info?.('merchant', 'Merchant service stopped');
     },
