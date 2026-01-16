@@ -71,6 +71,9 @@ export const ITEM_DEFS = {
         name: 'Elixir of Experience',
         type: 'potion',
         price: 80,
+        effectType: 'xpBoost',
+        effectValue: 0.5,
+        effectDuration: 5,
         desc: 'Grants a temporary 50% bonus to experience gained from combat for the next 5 battles.'
     },
     tonicGoldFind: {
@@ -78,6 +81,9 @@ export const ITEM_DEFS = {
         name: 'Fortune Seeker\'s Tonic',
         type: 'potion',
         price: 60,
+        effectType: 'goldBoost',
+        effectValue: 0.3,
+        effectDuration: 3,
         desc: 'Increases gold found from enemies by 30% for the next 3 battles.'
     },
     swordIron: {
