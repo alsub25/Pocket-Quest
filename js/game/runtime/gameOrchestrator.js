@@ -103,6 +103,7 @@ import { scheduleAfter } from '../utils/timing.js'
 
 import { createSpellbookModal } from '../ui/spells/spellbookModal.js'
 import { openGambleModalImpl } from '../locations/village/tavernGames.js'
+import { openWorldMapModal } from '../ui/worldMapModal.js'
 import {
     DAY_PARTS,
     initTimeState,
@@ -4055,6 +4056,12 @@ function renderExploreActions(actionsEl) {
         )
 
         actionsEl.appendChild(
+            makeActionButton('World Map', () => {
+                if (!dispatchGameCommand('GAME_OPEN_WORLD_MAP', {})) openWorldMap()
+            })
+        )
+
+        actionsEl.appendChild(
             makeActionButton('Back', () => {
                 ui.villageActionsOpen = false
                 renderActions()
@@ -5851,6 +5858,62 @@ function openTownHallModal() {
     } catch (_) {}
 
     return _open()
+}
+
+function openWorldMap() {
+    recordInput('open.worldMap')
+
+    // Guard: prevent opening map while in combat
+    if (state && state.inCombat) {
+        try { ensureCombatPointers() } catch (_) {}
+        addLog('You cannot view the map while in combat.', 'danger')
+        return
+    }
+
+    // Initialize worldMap state if needed
+    if (!state.worldMap) {
+        state.worldMap = {
+            unlockedRegions: ['village', 'misty_woods', 'riverside_path'],
+            discoveredRegions: ['village'],
+            currentRegion: 'village'
+        }
+    }
+
+    // Sync current area with world map
+    if (state.area) {
+        state.worldMap.currentRegion = state.area
+    }
+
+    const handleTravel = (regionId) => {
+        if (!regionId) return
+
+        // Update game state
+        state.area = regionId
+        state.worldMap.currentRegion = regionId
+
+        // Add to discovered regions
+        if (!state.worldMap.discoveredRegions.includes(regionId)) {
+            state.worldMap.discoveredRegions.push(regionId)
+        }
+
+        // Close modal and update UI
+        closeModal()
+        addLog(`Traveled to ${regionId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}.`, 'system')
+        
+        // Update UI
+        updateHUD()
+        renderActions()
+        
+        // Save game
+        requestSave('travel:worldMap')
+        
+        // Emit event for other systems
+        if (engine && engine.emit) {
+            engine.emit('world:travel', { region: regionId })
+        }
+    }
+
+    openWorldMapModal(state, openModal, handleTravel)
 }
 
 function openBankModal() {

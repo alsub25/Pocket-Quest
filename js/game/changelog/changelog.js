@@ -4,6 +4,117 @@
 export const CHANGELOG = [
   {
     "version": "1.2.85",
+    "title": "Overworld Map & World Exploration",
+    "sections": [
+      {
+        "heading": "New Features",
+        "items": [
+          {
+            "title": "World Map System",
+            "bullets": [
+              "Added interactive overworld map accessible from the Village menu",
+              "Features 9 unique regions to discover: Emberwood Village, Misty Woods, Riverside Path, The Oathgrove, Ancient Ruins, Mountain Pass, Shadowfen Marshes, Haunted Crypt, and Starfall Ridge",
+              "ASCII/text-based map visualization showing your current location and discovered areas",
+              "Travel system to move between unlocked regions",
+              "Region unlock system based on player level and quest completion",
+              "Each region has unique danger levels (Low, Medium, High, Extreme) indicating challenge",
+              "Regions feature descriptive lore and atmospheric details",
+              "Map legend showing current location, village (safe zone), and undiscovered areas"
+            ]
+          },
+          {
+            "title": "World Map UI",
+            "bullets": [
+              "Clean, scrollable modal interface with region cards",
+              "Visual indicators for current location, unlocked areas, and locked regions",
+              "Danger level badges color-coded for quick reference",
+              "Expandable 'View All Regions' section showing complete world overview",
+              "Travel buttons for accessible locations",
+              "Requirements displayed for locked regions (level/quest gates)",
+              "Responsive grid layout adapting to different screen sizes"
+            ]
+          },
+          {
+            "title": "Region System",
+            "bullets": [
+              "Dynamic region unlocking based on player progression",
+              "Connected regions system - travel between linked locations",
+              "Region state tracking (discovered, unlocked, current)",
+              "Integration with existing area system",
+              "Automatic save on travel to preserve progress"
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "World Regions",
+        "items": [
+          {
+            "title": "Starting Regions (Unlocked)",
+            "bullets": [
+              "🏘️ Emberwood Village - Safe haven with merchants, tavern, and allies",
+              "🌲 Misty Woods - Dense forests with goblins and wolves (Low Danger)",
+              "〰️ Riverside Path - Serene trail with bandit ambushes (Low Danger)"
+            ]
+          },
+          {
+            "title": "Mid-Level Regions",
+            "bullets": [
+              "🌳 The Oathgrove - Ancient sacred grove (Medium, Quest-Locked)",
+              "🏛️ Ancient Ruins - Forgotten civilization with undead (Medium, Level 5+)",
+              "⛰️ Mountain Pass - Treacherous paths with giants (High, Level 8+)"
+            ]
+          },
+          {
+            "title": "High-Level Regions",
+            "bullets": [
+              "🌊 Shadowfen Marshes - Dark swamps with cursed spirits (High, Level 10+)",
+              "⚰️ Haunted Crypt - Resting place of ancient warriors (High, Level 12+)",
+              "✨ Starfall Ridge - Highest peak with dragon patrols (Extreme, Level 15+)"
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "Technical Implementation",
+        "items": [
+          {
+            "title": "New Modules",
+            "bullets": [
+              "js/game/data/worldMap.js - World map data structure and utility functions",
+              "js/game/ui/worldMapModal.js - Modal UI component with custom styling",
+              "Integration with existing game orchestrator and state management",
+              "Event emission for world:travel events"
+            ]
+          },
+          {
+            "title": "State Management",
+            "bullets": [
+              "New worldMap state bucket tracking unlocked/discovered regions",
+              "Current region synchronization with existing area system",
+              "Backwards compatible - automatically initializes for existing saves",
+              "Save/load integration with autosave on travel"
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "Previous Features (Engine Integration Expansion)",
+        "items": [
+          {
+            "title": "Engine-Integrated Services",
+            "bullets": [
+              "Kingdom Government Service with immutable state updates",
+              "Loot Generator Service with event emissions",
+              "Quest System Service with comprehensive event system"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "version": "1.2.85",
     "title": "Engine Integration Expansion - Kingdom, Loot & Quest Systems",
     "sections": [
       {
