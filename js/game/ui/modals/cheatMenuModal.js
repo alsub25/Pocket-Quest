@@ -159,11 +159,10 @@ function openCheatMenu() {
 
             addStat('Level ' + p.level)
             addStat(p.gold + 'g')
-            addStat(
-                (state && state.time && typeof state.time.dayIndex === 'number'
-                    ? Math.floor(Number(state.time.dayIndex))
-                    : 0) + 'd'
-            )
+            const dayIndex = (state && state.time && typeof state.time.dayIndex === 'number')
+                ? Math.floor(Number(state.time.dayIndex))
+                : 0
+            addStat(dayIndex + 'd')
             const part =
                 state && state.time && state.time.part
                     ? String(state.time.part)
