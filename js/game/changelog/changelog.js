@@ -4,7 +4,7 @@
 export const CHANGELOG = [
   {
     "version": "1.2.85",
-    "title": "Engine Integration Expansion - Kingdom, Loot & Quest Systems",
+    "title": "Engine Integration Expansion & Chapter V: The Ember Throne",
     "sections": [
       {
         "heading": "New Engine-Integrated Services",

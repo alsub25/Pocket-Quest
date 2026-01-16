@@ -82,7 +82,7 @@
 - **Forward Compatible**: Migration system ensures old saves work with new versions
 - **Developer-Friendly**: Modular architecture with clear separation of concerns
 
-> **Current Patch:** v1.2.85 — *Engine Integration Expansion - Kingdom, Loot & Quest Systems*  
+> **Current Patch:** v1.2.85 — *Engine Integration Expansion & Chapter V: The Ember Throne*  
 > **In-Game Changelog:** Open the **Changelog** button from the main menu for detailed patch notes
 
 ---
