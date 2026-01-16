@@ -496,6 +496,23 @@ function advanceWorldDays(stateArg, days, hooks = {}) {
 const GAME_PATCH = CURRENT_PATCH // current patch/version
 const GAME_PATCH_NAME = CURRENT_PATCH_NAME
 const SAVE_SCHEMA = 7 // bump when the save structure changes (migrations run on load)
+const GITHUB_REPO_URL = 'https://github.com/alsub25/Emberwood-The-Blackbark-Oath' // repository URL for issue creation
+const GITHUB_ISSUE_TITLE_MAX_LENGTH = 60 // max characters for issue title preview (GitHub supports longer)
+const GITHUB_URL_MAX_LENGTH = 2000 // conservative browser URL length limit
+
+/**
+ * Detect if the game is running on GitHub Pages
+ * @returns {boolean} true if running on GitHub Pages
+ */
+function isRunningOnGitHubPages() {
+    try {
+        const hostname = window.location.hostname.toLowerCase()
+        // GitHub Pages domains: username.github.io or custom domains
+        return hostname.endsWith('.github.io')
+    } catch (error) {
+        return false
+    }
+}
 
 /* =============================================================================
  * SAFETY HELPERS
@@ -14672,10 +14689,23 @@ function setTheme(themeName) {
 // --- FEEDBACK / BUG REPORT -----------------------------------------------------
 
 function openFeedbackModal() {
+    const isGitHubPages = isRunningOnGitHubPages()
+    
+    // Build GitHub issue button HTML only if on GitHub Pages
+    const githubButtonHtml = isGitHubPages ? `
+    <button class="btn primary small" id="btnCreateGitHubIssue">
+      📝 Create GitHub Issue
+    </button>
+    ` : ''
+    
+    // Adjust subtitle based on where the game is running
+    const subtitle = isGitHubPages 
+        ? 'Help improve Emberwood: The Blackbark Oath by sending structured feedback. You can submit directly to GitHub or copy the text manually.'
+        : 'Help improve Emberwood: The Blackbark Oath by sending structured feedback. Copy this text and paste it wherever you\'re tracking issues.'
+    
     const bodyHtml = `
     <div class="modal-subtitle">
-      Help improve Emberwood: The Blackbark Oath by sending structured feedback. 
-      Copy this text and paste it wherever you’re tracking issues.
+      ${subtitle}
     </div>
 
     <div class="field">
@@ -14696,7 +14726,9 @@ function openFeedbackModal() {
       ></textarea>
     </div>
 
-    <button class="btn primary small" id="btnFeedbackCopy">
+    ${githubButtonHtml}
+
+    <button class="btn ${isGitHubPages ? 'small outline' : 'primary small'}" id="btnFeedbackCopy" style="${isGitHubPages ? 'margin-top:8px;' : ''}">
       Copy Feedback To Clipboard
     </button>
 
@@ -14712,6 +14744,11 @@ function openFeedbackModal() {
 
     openModal('Feedback / Bug Report', (bodyEl) => {
         bodyEl.innerHTML = bodyHtml
+
+        const btnCreateIssue = document.getElementById('btnCreateGitHubIssue')
+        if (btnCreateIssue) {
+            btnCreateIssue.addEventListener('click', handleCreateGitHubIssue)
+        }
 
         const btnCopy = document.getElementById('btnFeedbackCopy')
         if (btnCopy) {
@@ -14757,6 +14794,53 @@ function handleFeedbackCopy() {
     copyFeedbackToClipboard(payload)
         .then(() => (status.textContent = '✅ Copied! Paste this into your tracker.'))
         .catch(() => (status.textContent = '❌ Could not access clipboard.'))
+}
+
+function handleCreateGitHubIssue() {
+    const typeEl = document.getElementById('feedbackType')
+    const textEl = document.getElementById('feedbackText')
+    const status = document.getElementById('feedbackStatus')
+    if (!typeEl || !textEl || !status) return
+
+    const type = typeEl.value
+    const text = (textEl.value || '').trim()
+
+    if (!text) {
+        status.textContent = '⚠️ Please provide some details about your feedback.'
+        return
+    }
+
+    // Build issue title based on type
+    const typeLabels = {
+        'ui': '🎨 UI Issue',
+        'bug': '🐛 Bug Report',
+        'balance': '⚖️ Balance Issue',
+        'suggestion': '💡 Suggestion',
+        'other': '📝 Feedback'
+    }
+    const issueTitle = `${typeLabels[type] || 'Feedback'}: ${text.substring(0, GITHUB_ISSUE_TITLE_MAX_LENGTH)}${text.length > GITHUB_ISSUE_TITLE_MAX_LENGTH ? '...' : ''}`
+
+    // Build issue body with all context
+    const payload = buildFeedbackPayload(type, text)
+    
+    // Encode for URL
+    const githubUrl = `${GITHUB_REPO_URL}/issues/new?` +
+        `title=${encodeURIComponent(issueTitle)}&` +
+        `body=${encodeURIComponent(payload)}`
+
+    // Validate URL length (conservative browser limit)
+    if (githubUrl.length > GITHUB_URL_MAX_LENGTH) {
+        status.textContent = '⚠️ Feedback too long for URL. Please use "Copy to Clipboard" instead.'
+        return
+    }
+
+    // Open in new tab
+    try {
+        window.open(githubUrl, '_blank')
+        status.textContent = '✅ Opening GitHub issue page...'
+    } catch (error) {
+        status.textContent = '❌ Could not open GitHub. Please copy feedback manually.'
+    }
 }
 
 function buildFeedbackPayload(type, text) {
