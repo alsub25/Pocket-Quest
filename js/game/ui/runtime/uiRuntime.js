@@ -906,74 +906,75 @@ export function closeModalDom() {
         // can't leak into future modals or leave hidden interactive elements around.
         try {
             modalEl.querySelectorAll('.tavern-footer-actions').forEach((el) => el.remove())
-    } catch (_) {
-        // ignore
-    }
-
-    // Ensure close button is restored for non-skill modals
-    const closeBtn = document.getElementById('modalClose')
-    if (closeBtn) closeBtn.style.display = ''
-
-    // Run any one-shot modal close hook (used by level-up auto skill distribution)
-    if (typeof _modalOnClose === 'function') {
-        const fn = _modalOnClose
-        _modalOnClose = null // make it one-shot
-        try {
-            fn()
-        } catch (err) {
-            console.error(err)
-        }
-    } else {
-        _modalOnClose = null
-    }
-
-    // Restore focus to whatever opened the modal (if it still exists in DOM)
-    try {
-        if (
-            _modalLastFocusEl &&
-            typeof _modalLastFocusEl.focus === 'function' &&
-            document.contains(_modalLastFocusEl)
-        ) {
-            _modalLastFocusEl.focus()
-        }
-    } catch (_) {}
-    _modalLastFocusEl = null
-
-    const audioState = _getAudioState()
-
-    // If we were inside the bank/tavern, defer flipping interiorOpen off by one tick.
-    // This prevents Tavern.wav from cutting out/restarting when transitioning between
-    // interior modals (e.g., Tavern → Gambling) that close & reopen the same modal UI.
-    if (audioState && audioState.interiorOpen) {
-        if (pendingInteriorCloseHandle && typeof pendingInteriorCloseHandle.cancel === 'function') {
-            try { pendingInteriorCloseHandle.cancel() } catch (_) {}
-            pendingInteriorCloseHandle = null
-        }
-        _cancelOwner(INTERIOR_CLOSE_OWNER)
-
-        const run = () => {
-            pendingInteriorCloseHandle = null
-
-            // If the modal got reopened immediately, we're still "inside"—do not stop interior music.
-            const stillHidden = modalEl.classList.contains('hidden')
-            if (!stillHidden) return
-
-            audioState.interiorOpen = false
-            _updateAreaMusic()
-        }
-
-        // Prefer the Engine scheduler so this debounce follows the unified clock.
-        try {
-            const engine = _getEngine()
-            pendingInteriorCloseHandle = scheduleAfter(engine, 75, run, { owner: INTERIOR_CLOSE_OWNER })
         } catch (_) {
-            pendingInteriorCloseHandle = { cancel() {} }
-            nextTick(run)
+            // ignore
         }
-        return
-    }
 
-    _updateAreaMusic()
+        // Ensure close button is restored for non-skill modals
+        const closeBtn = document.getElementById('modalClose')
+        if (closeBtn) closeBtn.style.display = ''
+
+        // Run any one-shot modal close hook (used by level-up auto skill distribution)
+        if (typeof _modalOnClose === 'function') {
+            const fn = _modalOnClose
+            _modalOnClose = null // make it one-shot
+            try {
+                fn()
+            } catch (err) {
+                console.error(err)
+            }
+        } else {
+            _modalOnClose = null
+        }
+
+        // Restore focus to whatever opened the modal (if it still exists in DOM)
+        try {
+            if (
+                _modalLastFocusEl &&
+                typeof _modalLastFocusEl.focus === 'function' &&
+                document.contains(_modalLastFocusEl)
+            ) {
+                _modalLastFocusEl.focus()
+            }
+        } catch (_) {}
+        _modalLastFocusEl = null
+
+        const audioState = _getAudioState()
+
+        // If we were inside the bank/tavern, defer flipping interiorOpen off by one tick.
+        // This prevents Tavern.wav from cutting out/restarting when transitioning between
+        // interior modals (e.g., Tavern → Gambling) that close & reopen the same modal UI.
+        if (audioState && audioState.interiorOpen) {
+            if (pendingInteriorCloseHandle && typeof pendingInteriorCloseHandle.cancel === 'function') {
+                try { pendingInteriorCloseHandle.cancel() } catch (_) {}
+                pendingInteriorCloseHandle = null
+            }
+            _cancelOwner(INTERIOR_CLOSE_OWNER)
+
+            const run = () => {
+                pendingInteriorCloseHandle = null
+
+                // If the modal got reopened immediately, we're still "inside"—do not stop interior music.
+                const stillHidden = modalEl.classList.contains('hidden')
+                if (!stillHidden) return
+
+                audioState.interiorOpen = false
+                _updateAreaMusic()
+            }
+
+            // Prefer the Engine scheduler so this debounce follows the unified clock.
+            try {
+                const engine = _getEngine()
+                pendingInteriorCloseHandle = scheduleAfter(engine, 75, run, { owner: INTERIOR_CLOSE_OWNER })
+            } catch (_) {
+                pendingInteriorCloseHandle = { cancel() {} }
+                nextTick(run)
+            }
+            return
+        }
+
+        _updateAreaMusic()
+    }, 200)
 
 }
 
@@ -1147,7 +1148,8 @@ export function closeEnemyModal() {
             }
         } catch (_) {}
 
-    _enemyModalOwner = ''
+        _enemyModalOwner = ''
+    }, 200)
 }
 
 export function isEnemyModalOpen() {

@@ -140,6 +140,19 @@ export const CHANGELOG = [
         "heading": "Story & Quests",
         "items": [
           {
+            "title": "Enhanced Story Depth Across All Chapters (v1.2.85)",
+            "bullets": [
+              "Added 30+ new intermediate quest steps across Chapters I-IV for richer storytelling",
+              "Chapter I: Added 6 new steps including village investigation, herbalist consultation, warding salve testing, and Spire preparation",
+              "Chapter II: Added 6 new steps exploring forest changes, hidden library research, trial visions, and oath ceremony preparation",
+              "Chapter III: Added 9 new steps featuring crown witness interviews, echo memories, Starfall Sentinel encounter, and artifact testing",
+              "Chapter IV: Added 8 new steps including forest representative meetings, evidence preparation, writ analysis, and case presentation",
+              "New steps provide narrative bridges between major events, improving story flow and character development",
+              "Each new step adds context, world-building, and player agency to the existing story arcs",
+              "Players now experience more gradual progression with better understanding of the world's lore and conflicts"
+            ]
+          },
+          {
             "title": "Chapter V — The Ember Throne (Major Story Expansion)",
             "bullets": [
               "Added 10 new main quest steps (32-41) continuing the story beyond Chapter IV's tribunal ending",
@@ -255,6 +268,22 @@ export const CHANGELOG = [
               "All modals use transform-based animations for GPU acceleration and 60fps performance",
               "Animation implementation respects reduced-motion preferences (inherit from existing --t-fast/--t-med timing)",
               "Both closeModalDom() and closeEnemyModal() functions updated with animation support"
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "Bug Fixes",
+        "items": [
+          {
+            "title": "Critical JavaScript Syntax Error Fix",
+            "bullets": [
+              "Fixed syntax error in uiRuntime.js that prevented game from loading on Safari/iOS browsers",
+              "Error was 'Unexpected keyword let. Expected ) to end an argument list' in modal closing functions",
+              "Corrected mismatched braces in setTimeout callbacks within closeModalDom() and closeEnemyModal()",
+              "All modal animation code blocks now properly closed with correct indentation and brace matching",
+              "Game now loads successfully across all browsers including Safari, Chrome, Firefox, and mobile browsers",
+              "Resolved issue where modal closing animation code was improperly scoped outside setTimeout callback"
             ]
           }
         ]
