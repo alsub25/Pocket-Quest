@@ -500,6 +500,20 @@ const GITHUB_REPO_URL = 'https://github.com/alsub25/Emberwood-The-Blackbark-Oath
 const GITHUB_ISSUE_TITLE_MAX_LENGTH = 60 // max characters for issue title preview (GitHub supports longer)
 const GITHUB_URL_MAX_LENGTH = 2000 // conservative browser URL length limit
 
+/**
+ * Detect if the game is running on GitHub Pages
+ * @returns {boolean} true if running on GitHub Pages
+ */
+function isRunningOnGitHubPages() {
+    try {
+        const hostname = window.location.hostname.toLowerCase()
+        // GitHub Pages domains: username.github.io or custom domains
+        return hostname.endsWith('.github.io')
+    } catch (error) {
+        return false
+    }
+}
+
 /* =============================================================================
  * SAFETY HELPERS
  * Small numeric + state guards to keep calculations finite and UI-safe.
@@ -14675,10 +14689,23 @@ function setTheme(themeName) {
 // --- FEEDBACK / BUG REPORT -----------------------------------------------------
 
 function openFeedbackModal() {
+    const isGitHubPages = isRunningOnGitHubPages()
+    
+    // Build GitHub issue button HTML only if on GitHub Pages
+    const githubButtonHtml = isGitHubPages ? `
+    <button class="btn primary small" id="btnCreateGitHubIssue">
+      📝 Create GitHub Issue
+    </button>
+    ` : ''
+    
+    // Adjust subtitle based on where the game is running
+    const subtitle = isGitHubPages 
+        ? 'Help improve Emberwood: The Blackbark Oath by sending structured feedback. You can submit directly to GitHub or copy the text manually.'
+        : 'Help improve Emberwood: The Blackbark Oath by sending structured feedback. Copy this text and paste it wherever you\'re tracking issues.'
+    
     const bodyHtml = `
     <div class="modal-subtitle">
-      Help improve Emberwood: The Blackbark Oath by sending structured feedback. 
-      You can submit directly to GitHub or copy the text manually.
+      ${subtitle}
     </div>
 
     <div class="field">
@@ -14699,11 +14726,9 @@ function openFeedbackModal() {
       ></textarea>
     </div>
 
-    <button class="btn primary small" id="btnCreateGitHubIssue">
-      📝 Create GitHub Issue
-    </button>
+    ${githubButtonHtml}
 
-    <button class="btn small outline" id="btnFeedbackCopy" style="margin-top:8px;">
+    <button class="btn ${isGitHubPages ? 'small outline' : 'primary small'}" id="btnFeedbackCopy" style="${isGitHubPages ? 'margin-top:8px;' : ''}">
       Copy Feedback To Clipboard
     </button>
 
