@@ -264,8 +264,6 @@ function openCheatMenu() {
             renderCheatStatus()
         })
 
-        
-
         const btnMax = document.createElement('button')
         btnMax.className = 'btn small'
         btnMax.textContent = 'Max Level'
@@ -786,32 +784,32 @@ function openCheatMenu() {
             const maxLootLevel = 99
             const fakeBoss = { isBoss: true }
 
-	        // For slot-specific armor (head/hands/feet/etc.), generate the exact slot directly.
-	        // Relying on `generateLootDrop()` is fine for normal play, but it is too RNG-heavy
-	        // for cheat tooling that must guarantee a full equipped set.
-	        if (type === 'armor' && armorSlot) {
-	            for (let i = 0; i < 90; i++) {
-	                const it = generateArmorForSlot({
-	                    area: cheatLootArea(),
-	                    level: maxLootLevel,
-	                    rarity: 'mythic',
-	                    isBoss: true,
-	                    slot: armorSlot
-	                })
-	                if (!it) continue
-	                const key = rarityRank(it.rarity) * 100000 + getItemPowerScore(it)
-	                if (key > bestKey) {
-	                    bestKey = key
-	                    best = it
-	                }
-	                if (it.rarity === 'mythic' && getItemPowerScore(it) > 150) {
-	                    return it
-	                }
-	            }
-	            return best
-	        }
+            // For slot-specific armor (head/hands/feet/etc.), generate the exact slot directly.
+            // Relying on `generateLootDrop()` is fine for normal play, but it is too RNG-heavy
+            // for cheat tooling that must guarantee a full equipped set.
+            if (type === 'armor' && armorSlot) {
+                for (let i = 0; i < 90; i++) {
+                    const it = generateArmorForSlot({
+                        area: cheatLootArea(),
+                        level: maxLootLevel,
+                        rarity: 'mythic',
+                        isBoss: true,
+                        slot: armorSlot
+                    })
+                    if (!it) continue
+                    const key = rarityRank(it.rarity) * 100000 + getItemPowerScore(it)
+                    if (key > bestKey) {
+                        bestKey = key
+                        best = it
+                    }
+                    if (it.rarity === 'mythic' && getItemPowerScore(it) > 150) {
+                        return it
+                    }
+                }
+                return best
+            }
 
-	            for (let i = 0; i < 90; i++) {
+            for (let i = 0; i < 90; i++) {
                 const drops = generateLootDrop({
                     area: cheatLootArea(),
                     playerLevel: maxLootLevel,
@@ -905,7 +903,7 @@ function openCheatMenu() {
             requestSave('legacy')
         }
 
-const lootRow = document.createElement('div')
+        const lootRow = document.createElement('div')
         lootRow.className = 'item-actions'
 
         const btnSpawnMax = document.createElement('button')
