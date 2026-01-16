@@ -874,7 +874,15 @@ export function closeModalDom() {
     // Tear down focus trap *before* hiding so focus doesn't get stuck.
     _removeModalFocusTrap()
 
-    modalEl.classList.add('hidden')
+    // Add closing animation class and wait for animation to complete
+    modalEl.classList.add('modal-closing')
+    
+    // Wait for animation to complete (220ms) before actually hiding the modal
+    setTimeout(() => {
+        if (!modalEl) return
+        modalEl.classList.remove('modal-closing')
+        modalEl.classList.add('hidden')
+    }, 220)
 
     try {
         modalEl.setAttribute('aria-hidden', 'true')
@@ -1091,7 +1099,15 @@ export function closeEnemyModal() {
 
     _removeEnemyModalFocusTrap()
 
-    enemyModalEl.classList.add('hidden')
+    // Add closing animation class and wait for animation to complete
+    enemyModalEl.classList.add('modal-closing')
+    
+    // Wait for animation to complete (220ms) before actually hiding the modal
+    setTimeout(() => {
+        if (!enemyModalEl) return
+        enemyModalEl.classList.remove('modal-closing')
+        enemyModalEl.classList.add('hidden')
+    }, 220)
 
     try {
         enemyModalEl.setAttribute('aria-hidden', 'true')

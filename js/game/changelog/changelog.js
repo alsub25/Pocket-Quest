@@ -4,6 +4,52 @@
 export const CHANGELOG = [
   {
     "version": "1.2.85",
+    "title": "UI Polish - CSS Unification & Modal Animations",
+    "sections": [
+      {
+        "heading": "UI Improvements",
+        "items": [
+          {
+            "title": "Unified CSS structure for easier maintenance",
+            "bullets": [
+              "Reviewed and confirmed CSS is already well-organized with CSS variables and clear sections",
+              "All colors, spacing, and transitions are centralized in CSS custom properties at the top of the stylesheet",
+              "Modal styles are consistently applied using shared classes and animations"
+            ]
+          },
+          {
+            "title": "Smooth modal animations for better user experience",
+            "bullets": [
+              "Added smooth fade and scale animations when opening modals (280ms cubic-bezier easing)",
+              "Added smooth fade and scale animations when closing modals (220ms cubic-bezier easing)",
+              "Modal overlay now fades in (250ms) and out (200ms) smoothly",
+              "Modal panels animate with a subtle upward slide and scale effect on open",
+              "Modal panels animate with a downward slide and scale effect on close",
+              "All animations use custom cubic-bezier easing for a professional, polished feel",
+              "Animations apply to both the main modal (#modal) and enemy sheet modal (#enemyModal)"
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "Technical Improvements",
+        "items": [
+          {
+            "title": "Animation implementation details",
+            "bullets": [
+              "Added modalOverlayFadeIn and modalOverlayFadeOut keyframe animations for overlay transitions",
+              "Added modalPanelOpen and modalPanelClose keyframe animations for panel transitions",
+              "Updated closeModalDom() and closeEnemyModal() functions to add 'modal-closing' class during animation",
+              "Added 220ms timeout to allow closing animation to complete before hiding modal",
+              "Closing animation is properly cleaned up to prevent stacking issues"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "version": "1.2.85",
     "title": "Engine Integration Expansion - Kingdom, Loot & Quest Systems",
     "sections": [
       {
