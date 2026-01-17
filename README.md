@@ -377,10 +377,16 @@ Emberwood-The-Blackbark-Oath/
         ├── runtime/            # Game orchestration
         │   └── gameOrchestrator.js  # Main game coordinator
         │
-        ├── plugins/            # Engine plugins
-        │   ├── worldEventsPlugin.js # World events
-        │   ├── i18nPlugin.js        # Internationalization
-        │   └── settingsPlugin.js    # Settings management
+        ├── plugins/            # Engine plugins (30+ plugins)
+        │   ├── kingdomGovernmentPlugin.js # Kingdom government
+        │   ├── lootGeneratorPlugin.js     # Loot generation
+        │   ├── questSystemPlugin.js       # Quest system
+        │   ├── villageServicesPlugin.js   # Village services
+        │   ├── timeServicePlugin.js       # Time service
+        │   ├── settingsPlugin.js          # Settings management
+        │   ├── worldEventsPlugin.js       # World events
+        │   ├── i18nPlugin.js              # Internationalization
+        │   └── ... # Plus autosave, telemetry, UI, etc.
         │
         ├── persistence/        # Save system
         │   └── saveManager.js      # Save/load & migrations
