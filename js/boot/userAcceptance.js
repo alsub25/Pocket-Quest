@@ -366,10 +366,24 @@ export function installBootDiagnostics() {
         diag.errors = []
         try { localStorage.removeItem('pq-last-boot-errors') } catch (_) {}
         overlay.remove()
+        // Show the boot loader again since boot failed
+        try {
+          import('./bootLoader.js').then(({ BootLoader }) => {
+            BootLoader.show('Boot failed. See diagnostics for details.')
+          }).catch(() => {})
+        } catch (_) {}
       })
 
       const btnClose = mkBtn('✖️ Close')
-      btnClose.addEventListener('click', () => overlay.remove())
+      btnClose.addEventListener('click', () => {
+        overlay.remove()
+        // Show the boot loader again since boot failed
+        try {
+          import('./bootLoader.js').then(({ BootLoader }) => {
+            BootLoader.show('Boot failed. See diagnostics for details.')
+          }).catch(() => {})
+        } catch (_) {}
+      })
 
       const btnRefresh = mkBtn('🔄 Refresh Page')
       btnRefresh.addEventListener('click', () => location.reload())
