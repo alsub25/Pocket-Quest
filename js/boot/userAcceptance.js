@@ -112,74 +112,129 @@ export function installBootDiagnostics() {
       overlay.style.position = 'fixed'
       overlay.style.inset = '0'
       overlay.style.zIndex = '999999'
-      overlay.style.background = 'rgba(0,0,0,0.95)'
+      overlay.style.background = '#1a1a1a'
       overlay.style.color = '#fff'
-      overlay.style.fontFamily = 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif'
-      overlay.style.padding = '20px'
+      overlay.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif'
+      overlay.style.padding = '0'
       overlay.style.overflow = 'auto'
-      overlay.style.lineHeight = '1.5'
+      overlay.style.lineHeight = '1.6'
+      overlay.style.WebkitFontSmoothing = 'antialiased'
 
-      const title = document.createElement('div')
-      title.style.fontSize = '24px'
-      title.style.fontWeight = '700'
-      title.style.marginBottom = '8px'
-      title.style.color = '#ff6b6b'
-      title.textContent = `⚠️ Boot Failed (Patch ${GAME_PATCH})`
-      overlay.appendChild(title)
+      // Header section with title and subtitle
+      const header = document.createElement('div')
+      header.style.background = 'linear-gradient(180deg, #2d1517 0%, #1a1a1a 100%)'
+      header.style.padding = '16px'
+      header.style.borderBottom = '2px solid #ff4444'
+      header.style.position = 'sticky'
+      header.style.top = '0'
+      header.style.zIndex = '1'
 
-      const sub = document.createElement('div')
-      sub.style.fontSize = '14px'
-      sub.style.opacity = '0.9'
-      sub.style.marginBottom = '16px'
-      sub.style.color = '#ffd93d'
-      sub.textContent = 'The game could not start due to errors. Screenshot this for bug reports, or use "Copy Report" for detailed diagnostics.'
-      overlay.appendChild(sub)
+      const titleRow = document.createElement('div')
+      titleRow.style.display = 'flex'
+      titleRow.style.alignItems = 'center'
+      titleRow.style.gap = '8px'
+      titleRow.style.marginBottom = '8px'
+      
+      const icon = document.createElement('div')
+      icon.style.fontSize = '28px'
+      icon.textContent = '⚠️'
+      
+      const titleText = document.createElement('div')
+      titleText.style.fontSize = '20px'
+      titleText.style.fontWeight = '700'
+      titleText.style.color = '#ff6b6b'
+      titleText.style.letterSpacing = '-0.5px'
+      titleText.textContent = `Boot Failed`
+      
+      const versionBadge = document.createElement('div')
+      versionBadge.style.fontSize = '11px'
+      versionBadge.style.padding = '2px 8px'
+      versionBadge.style.background = 'rgba(255,255,255,0.1)'
+      versionBadge.style.borderRadius = '12px'
+      versionBadge.style.marginLeft = 'auto'
+      versionBadge.textContent = `v${GAME_PATCH}`
+      
+      titleRow.appendChild(icon)
+      titleRow.appendChild(titleText)
+      titleRow.appendChild(versionBadge)
+      header.appendChild(titleRow)
 
+      const subtitle = document.createElement('div')
+      subtitle.style.fontSize = '13px'
+      subtitle.style.color = '#ffd93d'
+      subtitle.style.lineHeight = '1.4'
+      subtitle.textContent = 'The game could not start. Review error details below.'
+      header.appendChild(subtitle)
+
+      overlay.appendChild(header)
+
+      // Action buttons - compact and mobile-friendly
       const actions = document.createElement('div')
+      actions.style.padding = '12px 16px'
+      actions.style.background = 'rgba(255,255,255,0.03)'
       actions.style.display = 'flex'
-      actions.style.gap = '10px'
-      actions.style.marginBottom = '20px'
+      actions.style.gap = '8px'
+      actions.style.borderBottom = '1px solid rgba(255,255,255,0.1)'
 
-      const mkBtn = (label, isPrimary = false) => {
+      const mkBtn = (label, icon, isPrimary = false) => {
         const b = document.createElement('button')
-        b.textContent = label
-        b.style.padding = '10px 16px'
+        b.style.flex = isPrimary ? '1' : '0'
+        b.style.padding = '10px 12px'
         b.style.cursor = 'pointer'
         b.style.border = 'none'
-        b.style.borderRadius = '6px'
-        b.style.fontSize = '14px'
+        b.style.borderRadius = '8px'
+        b.style.fontSize = '13px'
         b.style.fontWeight = '600'
+        b.style.display = 'flex'
+        b.style.alignItems = 'center'
+        b.style.justifyContent = 'center'
+        b.style.gap = '6px'
+        b.style.whiteSpace = 'nowrap'
+        
         if (isPrimary) {
           b.style.background = '#4dabf7'
           b.style.color = '#000'
         } else {
-          b.style.background = 'rgba(255,255,255,0.15)'
-          b.style.color = '#fff'
+          b.style.background = 'rgba(255,255,255,0.08)'
+          b.style.color = '#ccc'
         }
+        
+        const iconSpan = document.createElement('span')
+        iconSpan.textContent = icon
+        iconSpan.style.fontSize = '16px'
+        
+        const textSpan = document.createElement('span')
+        textSpan.textContent = label
+        
+        b.appendChild(iconSpan)
+        if (label) b.appendChild(textSpan)
+        
         return b
       }
 
-      const btnCopy = mkBtn('📋 Copy Report', true)
+      const btnCopy = mkBtn('Copy', '📋', true)
       btnCopy.addEventListener('click', async () => {
         try {
           const payload = JSON.stringify(diag.buildReport(), null, 2)
           await navigator.clipboard.writeText(payload)
-          btnCopy.textContent = '✓ Copied!'
-          setTimeout(() => (btnCopy.textContent = '📋 Copy Report'), 1200)
+          btnCopy.querySelector('span:last-child').textContent = 'Copied!'
+          setTimeout(() => btnCopy.querySelector('span:last-child').textContent = 'Copy', 1500)
         } catch (_) {
-          btnCopy.textContent = '✗ Copy failed'
-          setTimeout(() => (btnCopy.textContent = '📋 Copy Report'), 1500)
+          btnCopy.querySelector('span:last-child').textContent = 'Failed'
+          setTimeout(() => btnCopy.querySelector('span:last-child').textContent = 'Copy', 2000)
         }
       })
 
-      const btnClear = mkBtn('🗑️ Clear & Close')
+      const btnClear = mkBtn('', '🗑️')
+      btnClear.title = 'Clear & Close'
       btnClear.addEventListener('click', () => {
         diag.errors = []
         try { localStorage.removeItem('pq-last-boot-errors') } catch (_) {}
         overlay.remove()
       })
 
-      const btnClose = mkBtn('✕ Close')
+      const btnClose = mkBtn('', '✕')
+      btnClose.title = 'Close'
       btnClose.addEventListener('click', () => overlay.remove())
 
       actions.appendChild(btnCopy)
@@ -187,198 +242,506 @@ export function installBootDiagnostics() {
       actions.appendChild(btnClose)
       overlay.appendChild(actions)
 
+      // Content area
+      const content = document.createElement('div')
+      content.style.padding = '16px'
+
       // Render human-readable errors
       const report = diag.buildReport()
       if (report.errors && report.errors.length > 0) {
         const errorsHeader = document.createElement('div')
-        errorsHeader.style.fontSize = '18px'
+        errorsHeader.style.fontSize = '15px'
         errorsHeader.style.fontWeight = '700'
-        errorsHeader.style.marginBottom = '12px'
-        errorsHeader.style.borderBottom = '2px solid rgba(255,255,255,0.2)'
-        errorsHeader.style.paddingBottom = '8px'
-        errorsHeader.textContent = `${report.errors.length} Error${report.errors.length > 1 ? 's' : ''} Detected`
-        overlay.appendChild(errorsHeader)
+        errorsHeader.style.marginBottom = '16px'
+        errorsHeader.style.color = '#ff6b6b'
+        errorsHeader.style.display = 'flex'
+        errorsHeader.style.alignItems = 'center'
+        errorsHeader.style.gap = '8px'
+        
+        const errorCount = document.createElement('span')
+        errorCount.style.background = '#ff4444'
+        errorCount.style.color = '#fff'
+        errorCount.style.padding = '2px 8px'
+        errorCount.style.borderRadius = '12px'
+        errorCount.style.fontSize = '13px'
+        errorCount.style.fontWeight = '700'
+        errorCount.textContent = report.errors.length
+        
+        const errorLabel = document.createElement('span')
+        errorLabel.textContent = `Error${report.errors.length > 1 ? 's' : ''} Detected`
+        
+        errorsHeader.appendChild(errorCount)
+        errorsHeader.appendChild(errorLabel)
+        content.appendChild(errorsHeader)
 
         report.errors.forEach((err, idx) => {
           const errorCard = document.createElement('div')
-          errorCard.style.background = 'rgba(255,107,107,0.1)'
-          errorCard.style.border = '1px solid rgba(255,107,107,0.3)'
-          errorCard.style.borderRadius = '8px'
-          errorCard.style.padding = '14px'
-          errorCard.style.marginBottom = '12px'
+          errorCard.style.background = '#2a1616'
+          errorCard.style.border = '1px solid #ff4444'
+          errorCard.style.borderRadius = '12px'
+          errorCard.style.marginBottom = '16px'
+          errorCard.style.overflow = 'hidden'
 
+          // Error header
           const errorHeader = document.createElement('div')
+          errorHeader.style.background = 'linear-gradient(90deg, #ff4444 0%, #cc0000 100%)'
+          errorHeader.style.padding = '12px 14px'
           errorHeader.style.display = 'flex'
           errorHeader.style.justifyContent = 'space-between'
           errorHeader.style.alignItems = 'center'
-          errorHeader.style.marginBottom = '10px'
 
+          const errorTitleBox = document.createElement('div')
+          
+          const errorNum = document.createElement('div')
+          errorNum.style.fontSize = '11px'
+          errorNum.style.opacity = '0.8'
+          errorNum.style.marginBottom = '2px'
+          errorNum.textContent = `Error #${idx + 1}`
+          
           const errorTitle = document.createElement('div')
           errorTitle.style.fontSize = '16px'
           errorTitle.style.fontWeight = '700'
-          errorTitle.style.color = '#ff6b6b'
+          errorTitle.style.color = '#fff'
           
-          // Format error type
+          // Format error type with more detail
           let errorType = err.kind || 'error'
-          if (errorType === 'scriptLoadError') errorType = 'Script Load Error'
-          else if (errorType === 'unhandledrejection') errorType = 'Unhandled Promise Rejection'
-          else if (errorType === 'error') errorType = 'JavaScript Error'
-          errorTitle.textContent = `${idx + 1}. ${errorType}`
+          let errorIcon = '🔴'
+          if (errorType === 'scriptLoadError') {
+            errorType = 'Script Load Error'
+            errorIcon = '📜'
+          } else if (errorType === 'unhandledrejection') {
+            errorType = 'Promise Rejection'
+            errorIcon = '⚡'
+          } else if (errorType === 'error') {
+            errorType = 'JavaScript Error'
+            errorIcon = '⚠️'
+          }
+          errorTitle.textContent = `${errorIcon} ${errorType}`
+          
+          errorTitleBox.appendChild(errorNum)
+          errorTitleBox.appendChild(errorTitle)
           
           const errorTime = document.createElement('div')
-          errorTime.style.fontSize = '12px'
+          errorTime.style.fontSize = '10px'
           errorTime.style.opacity = '0.7'
-          errorTime.textContent = err.t || ''
+          errorTime.style.textAlign = 'right'
+          errorTime.style.fontFamily = 'monospace'
+          if (err.t) {
+            const time = new Date(err.t)
+            errorTime.textContent = time.toLocaleTimeString()
+          }
 
-          errorHeader.appendChild(errorTitle)
+          errorHeader.appendChild(errorTitleBox)
           errorHeader.appendChild(errorTime)
           errorCard.appendChild(errorHeader)
 
-          // Error message
+          // Error body with detailed info
+          const errorBody = document.createElement('div')
+          errorBody.style.padding = '14px'
+
+          // Error message section - DETAILED
           if (err.message) {
-            const msgContainer = document.createElement('div')
-            msgContainer.style.marginBottom = '10px'
+            const msgSection = document.createElement('div')
+            msgSection.style.marginBottom = '14px'
             
             const msgLabel = document.createElement('div')
-            msgLabel.style.fontSize = '12px'
-            msgLabel.style.opacity = '0.7'
-            msgLabel.style.marginBottom = '4px'
-            msgLabel.textContent = 'Error Message:'
-            msgContainer.appendChild(msgLabel)
+            msgLabel.style.fontSize = '11px'
+            msgLabel.style.fontWeight = '700'
+            msgLabel.style.color = '#ff6b6b'
+            msgLabel.style.textTransform = 'uppercase'
+            msgLabel.style.letterSpacing = '0.5px'
+            msgLabel.style.marginBottom = '6px'
+            msgLabel.textContent = '⚠️ Error Message'
+            msgSection.appendChild(msgLabel)
             
             const msgText = document.createElement('div')
             msgText.style.fontSize = '14px'
-            msgText.style.background = 'rgba(0,0,0,0.3)'
-            msgText.style.padding = '8px'
-            msgText.style.borderRadius = '4px'
+            msgText.style.background = '#000'
+            msgText.style.padding = '12px'
+            msgText.style.borderRadius = '6px'
             msgText.style.fontFamily = 'monospace'
+            msgText.style.lineHeight = '1.5'
+            msgText.style.color = '#ffcccc'
+            msgText.style.border = '1px solid rgba(255,68,68,0.3)'
             msgText.style.wordBreak = 'break-word'
-            msgText.style.maxHeight = '120px'
+            msgText.style.maxHeight = '150px'
             msgText.style.overflow = 'auto'
             msgText.textContent = err.message
-            msgContainer.appendChild(msgText)
-            errorCard.appendChild(msgContainer)
+            msgSection.appendChild(msgText)
+            
+            // Add explanation if it's a script load error
+            if (err.kind === 'scriptLoadError') {
+              const explanation = document.createElement('div')
+              explanation.style.fontSize = '12px'
+              explanation.style.marginTop = '8px'
+              explanation.style.padding = '8px'
+              explanation.style.background = 'rgba(77,171,247,0.1)'
+              explanation.style.borderRadius = '4px'
+              explanation.style.color = '#9ed8ff'
+              explanation.style.lineHeight = '1.5'
+              explanation.innerHTML = '<strong>What this means:</strong> The browser tried to load a JavaScript file but encountered a syntax error. This usually happens when the file is corrupted or from an incompatible version.'
+              msgSection.appendChild(explanation)
+            }
+            
+            errorBody.appendChild(msgSection)
           }
 
-          // File/location info
+          // File location section - ENHANCED WITH MORE INFO
           if (err.src || err.filename) {
-            const locContainer = document.createElement('div')
-            locContainer.style.marginBottom = '10px'
+            const locSection = document.createElement('div')
+            locSection.style.marginBottom = '14px'
             
             const locLabel = document.createElement('div')
-            locLabel.style.fontSize = '12px'
-            locLabel.style.opacity = '0.7'
-            locLabel.style.marginBottom = '4px'
-            locLabel.textContent = 'Location:'
-            locContainer.appendChild(locLabel)
-            
-            const locText = document.createElement('div')
-            locText.style.fontSize = '13px'
-            locText.style.background = 'rgba(0,0,0,0.3)'
-            locText.style.padding = '8px'
-            locText.style.borderRadius = '4px'
-            locText.style.fontFamily = 'monospace'
-            locText.style.wordBreak = 'break-word'
-            locText.style.overflowWrap = 'anywhere'
+            locLabel.style.fontSize = '11px'
+            locLabel.style.fontWeight = '700'
+            locLabel.style.color = '#4dabf7'
+            locLabel.style.textTransform = 'uppercase'
+            locLabel.style.letterSpacing = '0.5px'
+            locLabel.style.marginBottom = '6px'
+            locLabel.textContent = '📍 File Location'
+            locSection.appendChild(locLabel)
             
             const file = err.src || err.filename || 'unknown'
-            const line = err.lineno ? `:${err.lineno}` : ''
-            const col = err.colno ? `:${err.colno}` : ''
-            locText.textContent = `${file}${line}${col}`
-            locContainer.appendChild(locText)
-            errorCard.appendChild(locContainer)
+            const line = err.lineno
+            const col = err.colno
+            
+            // File path
+            const fileBox = document.createElement('div')
+            fileBox.style.fontSize = '12px'
+            fileBox.style.background = '#000'
+            fileBox.style.padding = '10px'
+            fileBox.style.borderRadius = '6px'
+            fileBox.style.fontFamily = 'monospace'
+            fileBox.style.color = '#9ed8ff'
+            fileBox.style.border = '1px solid rgba(77,171,247,0.3)'
+            fileBox.style.wordBreak = 'break-word'
+            fileBox.style.overflowWrap = 'anywhere'
+            fileBox.style.lineHeight = '1.5'
+            fileBox.textContent = file
+            locSection.appendChild(fileBox)
+            
+            // Line and column info if available
+            if (line || col) {
+              const posInfo = document.createElement('div')
+              posInfo.style.marginTop = '8px'
+              posInfo.style.fontSize = '12px'
+              posInfo.style.color = '#aaa'
+              posInfo.style.display = 'flex'
+              posInfo.style.gap = '12px'
+              
+              if (line) {
+                const lineInfo = document.createElement('div')
+                lineInfo.innerHTML = `<strong style="color: #4dabf7;">Line:</strong> ${line}`
+                posInfo.appendChild(lineInfo)
+              }
+              
+              if (col) {
+                const colInfo = document.createElement('div')
+                colInfo.innerHTML = `<strong style="color: #4dabf7;">Column:</strong> ${col}`
+                posInfo.appendChild(colInfo)
+              }
+              
+              locSection.appendChild(posInfo)
+            }
+            
+            errorBody.appendChild(locSection)
           }
 
-          // Version info for script errors
+          // Module version info
           if (err.version) {
-            const versionContainer = document.createElement('div')
-            versionContainer.style.marginBottom = '10px'
+            const versionSection = document.createElement('div')
+            versionSection.style.marginBottom = '14px'
             
             const versionLabel = document.createElement('div')
-            versionLabel.style.fontSize = '12px'
-            versionLabel.style.opacity = '0.7'
-            versionLabel.textContent = `Module Version: ${err.version}`
-            versionContainer.appendChild(versionLabel)
-            errorCard.appendChild(versionContainer)
+            versionLabel.style.fontSize = '11px'
+            versionLabel.style.fontWeight = '700'
+            versionLabel.style.color = '#ffd93d'
+            versionLabel.style.textTransform = 'uppercase'
+            versionLabel.style.letterSpacing = '0.5px'
+            versionLabel.style.marginBottom = '6px'
+            versionLabel.textContent = '📦 Module Version'
+            versionSection.appendChild(versionLabel)
+            
+            const versionBox = document.createElement('div')
+            versionBox.style.fontSize = '14px'
+            versionBox.style.background = 'rgba(255,217,61,0.1)'
+            versionBox.style.padding = '8px 10px'
+            versionBox.style.borderRadius = '6px'
+            versionBox.style.color = '#ffd93d'
+            versionBox.style.fontFamily = 'monospace'
+            versionBox.textContent = err.version
+            versionSection.appendChild(versionBox)
+            
+            errorBody.appendChild(versionSection)
           }
 
-          // Help text based on error type
-          const helpText = document.createElement('div')
-          helpText.style.marginTop = '12px'
-          helpText.style.padding = '10px'
-          helpText.style.background = 'rgba(77,171,247,0.15)'
-          helpText.style.borderRadius = '4px'
-          helpText.style.fontSize = '13px'
-          helpText.style.color = '#a3daff'
+          // Browser and system info
+          const sysSection = document.createElement('div')
+          sysSection.style.marginBottom = '14px'
+          sysSection.style.fontSize = '11px'
+          sysSection.style.padding = '10px'
+          sysSection.style.background = 'rgba(255,255,255,0.03)'
+          sysSection.style.borderRadius = '6px'
+          sysSection.style.color = '#888'
+          sysSection.style.lineHeight = '1.6'
           
-          const helpTitle = document.createElement('strong')
-          let causes = []
+          const ua = report.ua || navigator.userAgent || 'Unknown'
+          const browser = ua.includes('Safari') && !ua.includes('Chrome') ? '🧭 Safari' :
+                         ua.includes('Chrome') ? '🌐 Chrome' :
+                         ua.includes('Firefox') ? '🦊 Firefox' : '🌐 Browser'
+          
+          const isMobile = /iPhone|iPad|iPod|Android/i.test(ua)
+          const device = isMobile ? '📱 Mobile' : '💻 Desktop'
+          
+          sysSection.innerHTML = `
+            <div style="margin-bottom: 4px;"><strong style="color: #aaa;">Environment:</strong> ${browser} • ${device}</div>
+            <div style="margin-bottom: 4px;"><strong style="color: #aaa;">URL:</strong> <span style="font-family: monospace; font-size: 10px;">${report.url || location.href}</span></div>
+            <div><strong style="color: #aaa;">Time:</strong> ${err.t || 'N/A'}</div>
+          `
+          errorBody.appendChild(sysSection)
+
+          // DETAILED troubleshooting help
+          const helpSection = document.createElement('div')
+          helpSection.style.marginTop = '14px'
+          helpSection.style.padding = '12px'
+          helpSection.style.background = 'linear-gradient(135deg, rgba(77,171,247,0.15) 0%, rgba(77,171,247,0.05) 100%)'
+          helpSection.style.borderRadius = '8px'
+          helpSection.style.border = '1px solid rgba(77,171,247,0.3)'
+          
+          const helpTitle = document.createElement('div')
+          helpTitle.style.fontSize = '13px'
+          helpTitle.style.fontWeight = '700'
+          helpTitle.style.color = '#4dabf7'
+          helpTitle.style.marginBottom = '10px'
+          helpTitle.style.display = 'flex'
+          helpTitle.style.alignItems = 'center'
+          helpTitle.style.gap = '6px'
+          
+          const helpIcon = document.createElement('span')
+          helpIcon.textContent = '💡'
+          helpIcon.style.fontSize = '16px'
+          
+          const helpTitleText = document.createElement('span')
+          helpTitleText.textContent = 'How to Fix This Error'
+          
+          helpTitle.appendChild(helpIcon)
+          helpTitle.appendChild(helpTitleText)
+          helpSection.appendChild(helpTitle)
+          
+          let steps = []
+          let explanation = ''
           
           if (err.kind === 'scriptLoadError') {
-            helpTitle.textContent = '💡 Common causes:'
-            causes = [
-              'Browser cached an old version (try hard refresh: Ctrl+Shift+R or Cmd+Shift+R)',
-              'Corrupted download (clear cache and reload)',
-              'Network issue during page load',
-              'Browser extension blocking scripts'
+            explanation = 'This error occurs when the browser cannot properly load or parse a JavaScript file.'
+            steps = [
+              {
+                title: 'Hard Refresh (Most Common Fix)',
+                desc: 'Press Ctrl+Shift+R (Cmd+Shift+R on Mac) to force reload without cache',
+                priority: 'high'
+              },
+              {
+                title: 'Clear Browser Cache',
+                desc: 'Go to browser settings → Clear browsing data → Cached files',
+                priority: 'high'
+              },
+              {
+                title: 'Check Network Connection',
+                desc: 'Ensure stable internet connection and try reloading',
+                priority: 'medium'
+              },
+              {
+                title: 'Disable Browser Extensions',
+                desc: 'Some extensions can interfere with script loading',
+                priority: 'medium'
+              },
+              {
+                title: 'Try Different Browser',
+                desc: 'Test if issue persists in Chrome, Safari, or Firefox',
+                priority: 'low'
+              }
             ]
           } else if (err.kind === 'unhandledrejection') {
-            helpTitle.textContent = '💡 Common causes:'
-            causes = [
-              'Missing or broken async resource',
-              'Network request failed',
-              'Module dependency issue'
+            explanation = 'This error indicates a failed asynchronous operation (Promise).'
+            steps = [
+              {
+                title: 'Refresh the Page',
+                desc: 'The issue may be temporary due to network or timing',
+                priority: 'high'
+              },
+              {
+                title: 'Check Network',
+                desc: 'Ensure no network requests are being blocked',
+                priority: 'high'
+              },
+              {
+                title: 'Clear Cache',
+                desc: 'Old cached data might be causing conflicts',
+                priority: 'medium'
+              }
             ]
           } else {
-            helpTitle.textContent = '💡 Try:'
-            causes = [
-              'Hard refresh the page (Ctrl+Shift+R or Cmd+Shift+R)',
-              'Clear browser cache',
-              'Check browser console (F12) for more details'
+            explanation = 'This is a general JavaScript error that prevented the game from starting.'
+            steps = [
+              {
+                title: 'Hard Refresh',
+                desc: 'Press Ctrl+Shift+R (Cmd+Shift+R on Mac)',
+                priority: 'high'
+              },
+              {
+                title: 'Clear Cache',
+                desc: 'Remove cached game files through browser settings',
+                priority: 'high'
+              },
+              {
+                title: 'Check Console',
+                desc: 'Press F12 to view browser console for more details',
+                priority: 'medium'
+              }
             ]
           }
           
-          helpText.appendChild(helpTitle)
-          helpText.appendChild(document.createElement('br'))
+          if (explanation) {
+            const explainBox = document.createElement('div')
+            explainBox.style.fontSize = '12px'
+            explainBox.style.color = '#9ed8ff'
+            explainBox.style.marginBottom = '12px'
+            explainBox.style.lineHeight = '1.5'
+            explainBox.textContent = explanation
+            helpSection.appendChild(explainBox)
+          }
           
-          causes.forEach(cause => {
-            helpText.appendChild(document.createTextNode('• ' + cause))
-            helpText.appendChild(document.createElement('br'))
+          steps.forEach((step, stepIdx) => {
+            const stepBox = document.createElement('div')
+            stepBox.style.marginBottom = '10px'
+            stepBox.style.padding = '10px'
+            stepBox.style.background = step.priority === 'high' ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)'
+            stepBox.style.borderRadius = '6px'
+            stepBox.style.borderLeft = step.priority === 'high' ? '3px solid #4dabf7' : '3px solid rgba(77,171,247,0.3)'
+            
+            const stepHeader = document.createElement('div')
+            stepHeader.style.fontSize = '13px'
+            stepHeader.style.fontWeight = '600'
+            stepHeader.style.color = '#fff'
+            stepHeader.style.marginBottom = '4px'
+            stepHeader.style.display = 'flex'
+            stepHeader.style.alignItems = 'center'
+            stepHeader.style.gap = '6px'
+            
+            const stepNum = document.createElement('span')
+            stepNum.style.background = step.priority === 'high' ? '#4dabf7' : 'rgba(77,171,247,0.3)'
+            stepNum.style.color = step.priority === 'high' ? '#000' : '#fff'
+            stepNum.style.width = '20px'
+            stepNum.style.height = '20px'
+            stepNum.style.borderRadius = '50%'
+            stepNum.style.display = 'inline-flex'
+            stepNum.style.alignItems = 'center'
+            stepNum.style.justifyContent = 'center'
+            stepNum.style.fontSize = '11px'
+            stepNum.style.fontWeight = '700'
+            stepNum.textContent = stepIdx + 1
+            
+            const stepTitle = document.createElement('span')
+            stepTitle.textContent = step.title
+            
+            stepHeader.appendChild(stepNum)
+            stepHeader.appendChild(stepTitle)
+            
+            const stepDesc = document.createElement('div')
+            stepDesc.style.fontSize = '12px'
+            stepDesc.style.color = '#aaa'
+            stepDesc.style.lineHeight = '1.4'
+            stepDesc.style.marginLeft = '26px'
+            stepDesc.textContent = step.desc
+            
+            stepBox.appendChild(stepHeader)
+            stepBox.appendChild(stepDesc)
+            helpSection.appendChild(stepBox)
           })
           
-          errorCard.appendChild(helpText)
-
-          overlay.appendChild(errorCard)
+          errorBody.appendChild(helpSection)
+          errorCard.appendChild(errorBody)
+          content.appendChild(errorCard)
         })
       }
 
-      // System info section
-      const sysInfo = document.createElement('details')
-      sysInfo.style.marginTop = '20px'
-      sysInfo.style.padding = '12px'
-      sysInfo.style.background = 'rgba(255,255,255,0.05)'
-      sysInfo.style.borderRadius = '8px'
-      sysInfo.style.cursor = 'pointer'
+      overlay.appendChild(content)
+
+      // Technical details section - collapsed by default
+      const techSection = document.createElement('details')
+      techSection.style.marginTop = '16px'
+      techSection.style.padding = '0'
+      techSection.style.border = '1px solid rgba(255,255,255,0.1)'
+      techSection.style.borderRadius = '8px'
+      techSection.style.overflow = 'hidden'
       
-      const sysSummary = document.createElement('summary')
-      sysSummary.style.fontSize = '14px'
-      sysSummary.style.fontWeight = '600'
-      sysSummary.style.marginBottom = '10px'
-      sysSummary.textContent = '🔍 Technical Details (for bug reports)'
-      sysInfo.appendChild(sysSummary)
+      const techSummary = document.createElement('summary')
+      techSummary.style.padding = '12px 14px'
+      techSummary.style.cursor = 'pointer'
+      techSummary.style.fontSize = '13px'
+      techSummary.style.fontWeight = '600'
+      techSummary.style.background = 'rgba(255,255,255,0.03)'
+      techSummary.style.display = 'flex'
+      techSummary.style.alignItems = 'center'
+      techSummary.style.gap = '8px'
+      techSummary.style.userSelect = 'none'
       
-      const sysContent = document.createElement('pre')
-      sysContent.style.whiteSpace = 'pre-wrap'
-      sysContent.style.fontSize = '11px'
-      sysContent.style.fontFamily = 'monospace'
-      sysContent.style.background = 'rgba(0,0,0,0.3)'
-      sysContent.style.padding = '10px'
-      sysContent.style.borderRadius = '4px'
-      sysContent.style.overflow = 'auto'
-      sysContent.style.maxHeight = '200px'
-      sysContent.textContent = JSON.stringify(report, null, 2)
-      sysInfo.appendChild(sysContent)
-      overlay.appendChild(sysInfo)
+      const techIcon = document.createElement('span')
+      techIcon.textContent = '🔍'
+      
+      const techTitle = document.createElement('span')
+      techTitle.textContent = 'Technical Details (for developers)'
+      
+      techSummary.appendChild(techIcon)
+      techSummary.appendChild(techTitle)
+      techSection.appendChild(techSummary)
+      
+      const techContent = document.createElement('div')
+      techContent.style.padding = '14px'
+      techContent.style.background = '#0a0a0a'
+      
+      const techPre = document.createElement('pre')
+      techPre.style.whiteSpace = 'pre-wrap'
+      techPre.style.fontSize = '11px'
+      techPre.style.fontFamily = '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace'
+      techPre.style.color = '#00ff00'
+      techPre.style.background = '#000'
+      techPre.style.padding = '12px'
+      techPre.style.borderRadius = '4px'
+      techPre.style.overflow = 'auto'
+      techPre.style.maxHeight = '300px'
+      techPre.style.lineHeight = '1.4'
+      techPre.style.border = '1px solid #333'
+      techPre.textContent = JSON.stringify(report, null, 2)
+      
+      techContent.appendChild(techPre)
+      
+      const copyTechBtn = document.createElement('button')
+      copyTechBtn.textContent = '📋 Copy Technical Data'
+      copyTechBtn.style.marginTop = '10px'
+      copyTechBtn.style.width = '100%'
+      copyTechBtn.style.padding = '10px'
+      copyTechBtn.style.background = 'rgba(77,171,247,0.2)'
+      copyTechBtn.style.color = '#4dabf7'
+      copyTechBtn.style.border = '1px solid rgba(77,171,247,0.3)'
+      copyTechBtn.style.borderRadius = '6px'
+      copyTechBtn.style.cursor = 'pointer'
+      copyTechBtn.style.fontSize = '13px'
+      copyTechBtn.style.fontWeight = '600'
+      
+      copyTechBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(JSON.stringify(report, null, 2))
+          copyTechBtn.textContent = '✓ Copied!'
+          setTimeout(() => copyTechBtn.textContent = '📋 Copy Technical Data', 1500)
+        } catch (_) {
+          copyTechBtn.textContent = '✗ Copy Failed'
+          setTimeout(() => copyTechBtn.textContent = '📋 Copy Technical Data', 2000)
+        }
+      })
+      
+      techContent.appendChild(copyTechBtn)
+      techSection.appendChild(techContent)
+      content.appendChild(techSection)
 
       document.body.appendChild(overlay)
     } catch (_) {}
