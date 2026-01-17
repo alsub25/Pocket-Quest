@@ -361,6 +361,15 @@ export function installBootDiagnostics() {
         }
       })
 
+      // Helper function to restore boot loader after closing diagnostics
+      const restoreBootLoader = () => {
+        try {
+          import('./bootLoader.js').then(({ BootLoader }) => {
+            BootLoader.show('Boot failed. See diagnostics for details.')
+          }).catch(() => {})
+        } catch (_) {}
+      }
+
       const btnClear = mkBtn('🗑️ Clear & Close', 'danger')
       btnClear.addEventListener('click', () => {
         diag.errors = []
@@ -379,15 +388,6 @@ export function installBootDiagnostics() {
 
       const btnRefresh = mkBtn('🔄 Refresh Page')
       btnRefresh.addEventListener('click', () => location.reload())
-
-      // Helper function to restore boot loader after closing diagnostics
-      const restoreBootLoader = () => {
-        try {
-          import('./bootLoader.js').then(({ BootLoader }) => {
-            BootLoader.show('Boot failed. See diagnostics for details.')
-          }).catch(() => {})
-        } catch (_) {}
-      }
 
       actions.appendChild(btnCopy)
       actions.appendChild(btnRefresh)
