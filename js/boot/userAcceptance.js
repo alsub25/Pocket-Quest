@@ -379,7 +379,12 @@ export function installBootDiagnostics() {
               explanation.style.borderRadius = '4px'
               explanation.style.color = '#9ed8ff'
               explanation.style.lineHeight = '1.5'
-              explanation.innerHTML = '<strong>What this means:</strong> The browser tried to load a JavaScript file but encountered a syntax error. This usually happens when the file is corrupted or from an incompatible version.'
+              
+              const explainStrong = document.createElement('strong')
+              explainStrong.textContent = 'What this means:'
+              explanation.appendChild(explainStrong)
+              explanation.appendChild(document.createTextNode(' The browser tried to load a JavaScript file but encountered a syntax error. This usually happens when the file is corrupted or from an incompatible version.'))
+              
               msgSection.appendChild(explanation)
             }
             
@@ -431,13 +436,21 @@ export function installBootDiagnostics() {
               
               if (line) {
                 const lineInfo = document.createElement('div')
-                lineInfo.innerHTML = `<strong style="color: #4dabf7;">Line:</strong> ${line}`
+                const lineStrong = document.createElement('strong')
+                lineStrong.style.color = '#4dabf7'
+                lineStrong.textContent = 'Line:'
+                lineInfo.appendChild(lineStrong)
+                lineInfo.appendChild(document.createTextNode(' ' + line))
                 posInfo.appendChild(lineInfo)
               }
               
               if (col) {
                 const colInfo = document.createElement('div')
-                colInfo.innerHTML = `<strong style="color: #4dabf7;">Column:</strong> ${col}`
+                const colStrong = document.createElement('strong')
+                colStrong.style.color = '#4dabf7'
+                colStrong.textContent = 'Column:'
+                colInfo.appendChild(colStrong)
+                colInfo.appendChild(document.createTextNode(' ' + col))
                 posInfo.appendChild(colInfo)
               }
               
@@ -493,11 +506,40 @@ export function installBootDiagnostics() {
           const isMobile = /iPhone|iPad|iPod|Android/i.test(ua)
           const device = isMobile ? '📱 Mobile' : '💻 Desktop'
           
-          sysSection.innerHTML = `
-            <div style="margin-bottom: 4px;"><strong style="color: #aaa;">Environment:</strong> ${browser} • ${device}</div>
-            <div style="margin-bottom: 4px;"><strong style="color: #aaa;">URL:</strong> <span style="font-family: monospace; font-size: 10px;">${report.url || location.href}</span></div>
-            <div><strong style="color: #aaa;">Time:</strong> ${err.t || 'N/A'}</div>
-          `
+          // Environment row
+          const envRow = document.createElement('div')
+          envRow.style.marginBottom = '4px'
+          const envStrong = document.createElement('strong')
+          envStrong.style.color = '#aaa'
+          envStrong.textContent = 'Environment:'
+          envRow.appendChild(envStrong)
+          envRow.appendChild(document.createTextNode(' ' + browser + ' • ' + device))
+          sysSection.appendChild(envRow)
+          
+          // URL row
+          const urlRow = document.createElement('div')
+          urlRow.style.marginBottom = '4px'
+          const urlStrong = document.createElement('strong')
+          urlStrong.style.color = '#aaa'
+          urlStrong.textContent = 'URL:'
+          urlRow.appendChild(urlStrong)
+          urlRow.appendChild(document.createTextNode(' '))
+          const urlSpan = document.createElement('span')
+          urlSpan.style.fontFamily = 'monospace'
+          urlSpan.style.fontSize = '10px'
+          urlSpan.textContent = report.url || location.href
+          urlRow.appendChild(urlSpan)
+          sysSection.appendChild(urlRow)
+          
+          // Time row
+          const timeRow = document.createElement('div')
+          const timeStrong = document.createElement('strong')
+          timeStrong.style.color = '#aaa'
+          timeStrong.textContent = 'Time:'
+          timeRow.appendChild(timeStrong)
+          timeRow.appendChild(document.createTextNode(' ' + (err.t || 'N/A')))
+          sysSection.appendChild(timeRow)
+          
           errorBody.appendChild(sysSection)
 
           // DETAILED troubleshooting help
