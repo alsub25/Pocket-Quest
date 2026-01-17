@@ -13,14 +13,8 @@
  */
 
 // Firebase configuration
-// IMPORTANT: Replace these values with your own Firebase project configuration
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
 // Your web app's Firebase configuration
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "AIzaSyCDW_uDqS3bo9MgJDbUoRUJlTSn_OzSeUo",
   authDomain: "emberwood-game.firebaseapp.com",
   projectId: "emberwood-game",
@@ -29,8 +23,6 @@ const firebaseConfig = {
   appId: "1:956338840984:web:6bfa60b02edff461aef7ed"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
 // Feature flag to enable/disable backend features
 // Set to false to disable backend and use localStorage only
 export const BACKEND_ENABLED = firebaseConfig.apiKey !== "YOUR_API_KEY";
