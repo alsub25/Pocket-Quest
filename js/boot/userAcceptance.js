@@ -200,7 +200,7 @@ export function installBootDiagnostics() {
         severity: 'warning',
         problem: 'Running from file:// protocol can cause module loading issues',
         solutions: [
-          'Use a local web server (python -m http.server 8000)',
+          'Use a local web server (run "python -m http.server 8000" from the game directory)',
           'Use npx serve or similar HTTP server',
           'Deploy to a web host'
         ]
@@ -236,9 +236,9 @@ export function installBootDiagnostics() {
       })
     }
 
-    // Missing files (from preflight)
-    const missingFiles = diag.errors.filter(e => e.kind === 'preflight' && (e.missing?.length > 0 || e.bad?.length > 0))
-    if (missingFiles.length > 0) {
+    // Missing or problematic files (from preflight)
+    const problematicFiles = diag.errors.filter(e => e.kind === 'preflight' && (e.missing?.length > 0 || e.bad?.length > 0))
+    if (problematicFiles.length > 0) {
       suggestions.push({
         category: 'Missing Files',
         severity: 'critical',
@@ -453,7 +453,8 @@ export function installBootDiagnostics() {
       addSysInfoItem('Protocol', systemInfo.protocol || 'Unknown', systemInfo.protocol === 'file:' ? 'error' : 'ok')
       addSysInfoItem('Online', systemInfo.onLine ? 'Yes' : 'No', systemInfo.onLine ? 'ok' : 'error')
       addSysInfoItem('Viewport', systemInfo.viewportSize || 'Unknown', 'info')
-      addSysInfoItem('LocalStorage', systemInfo.features.localStorage.includes('Available') ? 'Available' : 'Unavailable', systemInfo.features.localStorage.includes('Available') ? 'ok' : 'error')
+      const localStorageAvailable = systemInfo.features.localStorage.includes('Available')
+      addSysInfoItem('LocalStorage', localStorageAvailable ? 'Available' : 'Unavailable', localStorageAvailable ? 'ok' : 'error')
       addSysInfoItem('ES Modules', systemInfo.features.esModules, systemInfo.features.esModules === 'Supported' ? 'ok' : 'error')
       addSysInfoItem('Fetch API', systemInfo.features.fetch, systemInfo.features.fetch === 'Available' ? 'ok' : 'error')
 
@@ -475,7 +476,7 @@ export function installBootDiagnostics() {
           if (errors.length === 0) return
 
           const categoryDiv = document.createElement('details')
-          categoryDiv.open = errors.length > 0
+          categoryDiv.open = true
           categoryDiv.style.cssText = `margin-bottom: 12px; background: rgba(${color},0.15); border-left: 4px solid rgb(${color}); padding: 12px; border-radius: 6px;`
 
           const summary = document.createElement('summary')
