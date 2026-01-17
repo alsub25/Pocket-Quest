@@ -253,6 +253,8 @@ export function installBootDiagnostics() {
             msgText.style.borderRadius = '4px'
             msgText.style.fontFamily = 'monospace'
             msgText.style.wordBreak = 'break-word'
+            msgText.style.maxHeight = '120px'
+            msgText.style.overflow = 'auto'
             msgText.textContent = err.message
             msgContainer.appendChild(msgText)
             errorCard.appendChild(msgContainer)
@@ -308,13 +310,41 @@ export function installBootDiagnostics() {
           helpText.style.fontSize = '13px'
           helpText.style.color = '#a3daff'
           
+          const helpTitle = document.createElement('strong')
+          let causes = []
+          
           if (err.kind === 'scriptLoadError') {
-            helpText.innerHTML = '<strong>💡 Common causes:</strong><br>• Browser cached an old version (try hard refresh: Ctrl+Shift+R or Cmd+Shift+R)<br>• Corrupted download (clear cache and reload)<br>• Network issue during page load<br>• Browser extension blocking scripts'
+            helpTitle.textContent = '💡 Common causes:'
+            causes = [
+              'Browser cached an old version (try hard refresh: Ctrl+Shift+R or Cmd+Shift+R)',
+              'Corrupted download (clear cache and reload)',
+              'Network issue during page load',
+              'Browser extension blocking scripts'
+            ]
           } else if (err.kind === 'unhandledrejection') {
-            helpText.innerHTML = '<strong>💡 Common causes:</strong><br>• Missing or broken async resource<br>• Network request failed<br>• Module dependency issue'
+            helpTitle.textContent = '💡 Common causes:'
+            causes = [
+              'Missing or broken async resource',
+              'Network request failed',
+              'Module dependency issue'
+            ]
           } else {
-            helpText.innerHTML = '<strong>💡 Try:</strong><br>• Hard refresh the page (Ctrl+Shift+R or Cmd+Shift+R)<br>• Clear browser cache<br>• Check browser console (F12) for more details'
+            helpTitle.textContent = '💡 Try:'
+            causes = [
+              'Hard refresh the page (Ctrl+Shift+R or Cmd+Shift+R)',
+              'Clear browser cache',
+              'Check browser console (F12) for more details'
+            ]
           }
+          
+          helpText.appendChild(helpTitle)
+          helpText.appendChild(document.createElement('br'))
+          
+          causes.forEach(cause => {
+            helpText.appendChild(document.createTextNode('• ' + cause))
+            helpText.appendChild(document.createElement('br'))
+          })
+          
           errorCard.appendChild(helpText)
 
           overlay.appendChild(errorCard)
