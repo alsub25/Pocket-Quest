@@ -133,7 +133,7 @@ If you fix a bug in the combat system:
 5. Add to top of `/js/game/changelog/changelog.js` (right after `export const CHANGELOG = [`):
    ```javascript
    export const CHANGELOG = [
-     // Add your new entry here at the top:
+     /* Add your new entry here at the top: */
      {
        "version": "1.2.86",
        "title": "Combat Bug Fixes",
@@ -152,10 +152,11 @@ If you fix a bug in the combat system:
          }
        ]
      },
-     // Existing entries follow below...
+     /* Existing entries follow below... */
      {
        "version": "1.2.85",
-       // ... rest of existing entries
+       "title": "Previous Release Title",
+       "sections": [ /* ... */ ]
      }
    ];
    ```
