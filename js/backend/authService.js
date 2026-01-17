@@ -23,12 +23,21 @@ export async function initAuth() {
 
   try {
     // Dynamically import Firebase SDK from CDN
-    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
+    const firebaseAppModule = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
+    const { initializeApp, getApps } = firebaseAppModule;
     const authModule = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
     const { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail } = authModule;
 
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
+    // Initialize Firebase if not already initialized
+    let app;
+    if (getApps().length === 0) {
+      app = initializeApp(firebaseConfig);
+      console.log('[Auth] Firebase app initialized');
+    } else {
+      app = getApps()[0];
+      console.log('[Auth] Using existing Firebase app');
+    }
+    
     auth = getAuth(app);
 
     // Store auth methods at module level

@@ -35,6 +35,9 @@ export async function initBackendUI() {
     return { success: false };
   }
 
+  // Backend initialized successfully - show UI elements
+  showBackendElements();
+
   // Setup UI event listeners
   setupLoginUI();
   setupCloudSaveUI();
@@ -62,6 +65,18 @@ function hideBackendElements() {
   if (cloudSavesBtn) cloudSavesBtn.style.display = 'none';
   if (accountBtn) accountBtn.style.display = 'none';
   if (cloudHint) cloudHint.style.display = 'none';
+}
+
+/**
+ * Show backend-related UI elements
+ */
+function showBackendElements() {
+  const cloudSavesBtn = document.getElementById('btnCloudSaves');
+  const accountBtn = document.getElementById('btnAccountManagement');
+
+  // Show the buttons when backend is available
+  if (cloudSavesBtn) cloudSavesBtn.style.display = '';
+  if (accountBtn) accountBtn.style.display = '';
 }
 
 /**
