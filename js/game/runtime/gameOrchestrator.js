@@ -160,7 +160,7 @@ import {
 
 import { validateState, formatIssues } from '../systems/assertState.js'
 
-// NOTE: These functions are now accessed via engine services instead of direct imports
+// NOTE: Core business logic functions are now accessed via engine services instead of direct imports
 // Economy: _engine.getService('village.economy')
 // Population: _engine.getService('village.population')
 // Government: _engine.getService('kingdom.government')
@@ -169,6 +169,12 @@ import { validateState, formatIssues } from '../systems/assertState.js'
 // Tavern: _engine.getService('tavern')
 // Town Hall: _engine.getService('townHall')
 // Loot: _engine.getService('loot')
+//
+// UI-specific modal functions are still imported from location modules:
+import { openBankModalImpl, bankDeposit, bankWithdraw, bankInvest, bankCashOut, bankBorrow, bankRepay } from '../locations/village/bank.js'
+import { openTavernModalImpl } from '../locations/village/tavern.js'
+import { openMerchantModalImpl, handleMerchantDayTick, ensureMerchantStock, executeMerchantBuy } from '../locations/village/merchant.js'
+import { openTownHallModalImpl, handleTownHallDayTick, cleanupTownHallEffects } from '../locations/village/townHall.js'
 import { QUEST_DEFS } from '../quests/questDefs.js'
 import { createDefaultQuestState, createDefaultQuestFlags } from '../quests/questDefaults.js'
 import { createQuestBindings } from '../quests/questBindings.js'
@@ -2837,74 +2843,6 @@ const getGovernmentSummary = (state) => {
 const getVillageGovernmentEffect = (state, context) => {
     const service = _engine?.getService('kingdom.government')
     return service?.getVillageEffect(context)
-}
-
-// Bank Service
-const openBankModalImpl = (deps) => {
-    const service = _engine?.getService('bank')
-    return service?.openBankModal(deps)
-}
-const bankDeposit = (deps) => {
-    const service = _engine?.getService('bank')
-    return service?.deposit(deps)
-}
-const bankWithdraw = (deps) => {
-    const service = _engine?.getService('bank')
-    return service?.withdraw(deps)
-}
-const bankInvest = (deps) => {
-    const service = _engine?.getService('bank')
-    return service?.invest(deps)
-}
-const bankCashOut = (deps) => {
-    const service = _engine?.getService('bank')
-    return service?.cashOut(deps)
-}
-const bankBorrow = (deps) => {
-    const service = _engine?.getService('bank')
-    return service?.borrow(deps)
-}
-const bankRepay = (deps) => {
-    const service = _engine?.getService('bank')
-    return service?.repay(deps)
-}
-
-// Merchant Service
-const openMerchantModalImpl = (deps) => {
-    const service = _engine?.getService('merchant')
-    return service?.openMerchantModal(deps)
-}
-const handleMerchantDayTick = (state, day, cloneItemDef) => {
-    const service = _engine?.getService('merchant')
-    return service?.handleDayTick(day, cloneItemDef)
-}
-const ensureMerchantStock = (state) => {
-    const service = _engine?.getService('merchant')
-    return service?.ensureStock()
-}
-const executeMerchantBuy = (deps) => {
-    const service = _engine?.getService('merchant')
-    return service?.executeBuy(deps)
-}
-
-// Tavern Service
-const openTavernModalImpl = (deps) => {
-    const service = _engine?.getService('tavern')
-    return service?.openTavernModal(deps)
-}
-
-// Town Hall Service
-const openTownHallModalImpl = (deps) => {
-    const service = _engine?.getService('townHall')
-    return service?.openTownHallModal(deps)
-}
-const handleTownHallDayTick = (state, day, hooks) => {
-    const service = _engine?.getService('townHall')
-    return service?.handleDayTick(day)
-}
-const cleanupTownHallEffects = (state, today) => {
-    const service = _engine?.getService('townHall')
-    return service?.cleanupEffects(today)
 }
 
 // Loot Generator Service
