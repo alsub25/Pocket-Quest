@@ -63,8 +63,10 @@ When you update the version, you **MUST** update it in all of the following loca
    - Example: `[![Version](https://img.shields.io/badge/version-1.2.86-blue.svg)](https://github.com/alsub25/Emberwood-The-Blackbark-Oath)`
 
 3. **`/js/game/changelog/changelog.js`**
-   - Add new entry at the **top** of the CHANGELOG array (after the opening `[`)
-   - Ensure proper JSON structure with commas
+   - Add new entry at the **top** of the CHANGELOG array (immediately after line 4: `export const CHANGELOG = [`)
+   - Your new entry should be a complete object starting with `{` and ending with `},` (note the comma)
+   - Ensure proper JSON-compatible JavaScript object structure with commas between entries
+   - **Note:** If you notice the file has syntax errors (like a missing opening brace), follow the correct structure shown in the example below
 
 #### Files That Auto-Update:
 The following files reference `version.js` and will automatically reflect the new version:
@@ -169,7 +171,7 @@ If you fix a bug in the combat system:
 - **Never skip the changelog update** - it's critical for tracking changes
 - **Always be consistent** with version numbers across all files
 - **Use clear, descriptive language** in changelog entries
-- **Think about the user** - what do they need to know about these changes?
+- **Think about users** - what do they need to know about these changes?
 - **When in doubt about patch bumps**, create a new version - it's better to have more detailed history
 
 Remember: You are the guardian of version consistency and change documentation for this project. Your diligence ensures that users and developers can track the evolution of the codebase accurately.
