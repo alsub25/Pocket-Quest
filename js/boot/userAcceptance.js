@@ -213,15 +213,16 @@ export function installBootDiagnostics() {
       }
 
       const btnCopy = mkBtn('Copy', '📋', true)
+      const copyTextSpan = btnCopy.querySelector('span:last-child')
       btnCopy.addEventListener('click', async () => {
         try {
           const payload = JSON.stringify(diag.buildReport(), null, 2)
           await navigator.clipboard.writeText(payload)
-          btnCopy.querySelector('span:last-child').textContent = 'Copied!'
-          setTimeout(() => btnCopy.querySelector('span:last-child').textContent = 'Copy', 1500)
+          copyTextSpan.textContent = 'Copied!'
+          setTimeout(() => copyTextSpan.textContent = 'Copy', 1500)
         } catch (_) {
-          btnCopy.querySelector('span:last-child').textContent = 'Failed'
-          setTimeout(() => btnCopy.querySelector('span:last-child').textContent = 'Copy', 2000)
+          copyTextSpan.textContent = 'Failed'
+          setTimeout(() => copyTextSpan.textContent = 'Copy', 2000)
         }
       })
 
@@ -499,9 +500,10 @@ export function installBootDiagnostics() {
           sysSection.style.lineHeight = '1.6'
           
           const ua = report.ua || navigator.userAgent || 'Unknown'
-          const browser = ua.includes('Safari') && !ua.includes('Chrome') ? '🧭 Safari' :
-                         ua.includes('Chrome') ? '🌐 Chrome' :
-                         ua.includes('Firefox') ? '🦊 Firefox' : '🌐 Browser'
+          // Browser detection - order matters as Chrome includes 'Safari' in UA
+          const browser = ua.includes('Chrome') ? '🌐 Chrome' :
+                         ua.includes('Firefox') ? '🦊 Firefox' :
+                         ua.includes('Safari') ? '🧭 Safari' : '🌐 Browser'
           
           const isMobile = /iPhone|iPad|iPod|Android/i.test(ua)
           const device = isMobile ? '📱 Mobile' : '💻 Desktop'
