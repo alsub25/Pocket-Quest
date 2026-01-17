@@ -112,60 +112,74 @@ export function installBootDiagnostics() {
       overlay.style.position = 'fixed'
       overlay.style.inset = '0'
       overlay.style.zIndex = '999999'
-      overlay.style.background = 'rgba(0,0,0,0.86)'
+      overlay.style.background = 'rgba(0,0,0,0.95)'
       overlay.style.color = '#fff'
       overlay.style.fontFamily = 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif'
-      overlay.style.padding = '16px'
+      overlay.style.padding = '20px'
       overlay.style.overflow = 'auto'
+      overlay.style.lineHeight = '1.5'
 
       const title = document.createElement('div')
-      title.style.fontSize = '18px'
+      title.style.fontSize = '24px'
       title.style.fontWeight = '700'
-      title.style.marginBottom = '10px'
-      title.textContent = `Boot Diagnostics (Patch ${GAME_PATCH})`
+      title.style.marginBottom = '8px'
+      title.style.color = '#ff6b6b'
+      title.textContent = `⚠️ Boot Failed (Patch ${GAME_PATCH})`
       overlay.appendChild(title)
 
       const sub = document.createElement('div')
-      sub.style.fontSize = '12px'
-      sub.style.opacity = '0.85'
-      sub.style.marginBottom = '12px'
-      sub.textContent = 'If the game fails to load, screenshot this overlay. Use Copy Report for a text bug report.'
+      sub.style.fontSize = '14px'
+      sub.style.opacity = '0.9'
+      sub.style.marginBottom = '16px'
+      sub.style.color = '#ffd93d'
+      sub.textContent = 'The game could not start due to errors. Screenshot this for bug reports, or use "Copy Report" for detailed diagnostics.'
       overlay.appendChild(sub)
 
       const actions = document.createElement('div')
       actions.style.display = 'flex'
-      actions.style.gap = '8px'
-      actions.style.marginBottom = '12px'
+      actions.style.gap = '10px'
+      actions.style.marginBottom = '20px'
 
-      const mkBtn = (label) => {
+      const mkBtn = (label, isPrimary = false) => {
         const b = document.createElement('button')
         b.textContent = label
-        b.style.padding = '8px 10px'
+        b.style.padding = '10px 16px'
         b.style.cursor = 'pointer'
+        b.style.border = 'none'
+        b.style.borderRadius = '6px'
+        b.style.fontSize = '14px'
+        b.style.fontWeight = '600'
+        if (isPrimary) {
+          b.style.background = '#4dabf7'
+          b.style.color = '#000'
+        } else {
+          b.style.background = 'rgba(255,255,255,0.15)'
+          b.style.color = '#fff'
+        }
         return b
       }
 
-      const btnCopy = mkBtn('Copy Report')
+      const btnCopy = mkBtn('📋 Copy Report', true)
       btnCopy.addEventListener('click', async () => {
         try {
           const payload = JSON.stringify(diag.buildReport(), null, 2)
           await navigator.clipboard.writeText(payload)
-          btnCopy.textContent = 'Copied!'
-          setTimeout(() => (btnCopy.textContent = 'Copy Report'), 900)
+          btnCopy.textContent = '✓ Copied!'
+          setTimeout(() => (btnCopy.textContent = '📋 Copy Report'), 1200)
         } catch (_) {
-          btnCopy.textContent = 'Copy failed'
-          setTimeout(() => (btnCopy.textContent = 'Copy Report'), 1200)
+          btnCopy.textContent = '✗ Copy failed'
+          setTimeout(() => (btnCopy.textContent = '📋 Copy Report'), 1500)
         }
       })
 
-      const btnClear = mkBtn('Clear')
+      const btnClear = mkBtn('🗑️ Clear & Close')
       btnClear.addEventListener('click', () => {
         diag.errors = []
         try { localStorage.removeItem('pq-last-boot-errors') } catch (_) {}
         overlay.remove()
       })
 
-      const btnClose = mkBtn('Close')
+      const btnClose = mkBtn('✕ Close')
       btnClose.addEventListener('click', () => overlay.remove())
 
       actions.appendChild(btnCopy)
@@ -173,11 +187,167 @@ export function installBootDiagnostics() {
       actions.appendChild(btnClose)
       overlay.appendChild(actions)
 
-      const pre = document.createElement('pre')
-      pre.style.whiteSpace = 'pre-wrap'
-      pre.style.fontSize = '12px'
-      pre.textContent = JSON.stringify(diag.buildReport(), null, 2)
-      overlay.appendChild(pre)
+      // Render human-readable errors
+      const report = diag.buildReport()
+      if (report.errors && report.errors.length > 0) {
+        const errorsHeader = document.createElement('div')
+        errorsHeader.style.fontSize = '18px'
+        errorsHeader.style.fontWeight = '700'
+        errorsHeader.style.marginBottom = '12px'
+        errorsHeader.style.borderBottom = '2px solid rgba(255,255,255,0.2)'
+        errorsHeader.style.paddingBottom = '8px'
+        errorsHeader.textContent = `${report.errors.length} Error${report.errors.length > 1 ? 's' : ''} Detected`
+        overlay.appendChild(errorsHeader)
+
+        report.errors.forEach((err, idx) => {
+          const errorCard = document.createElement('div')
+          errorCard.style.background = 'rgba(255,107,107,0.1)'
+          errorCard.style.border = '1px solid rgba(255,107,107,0.3)'
+          errorCard.style.borderRadius = '8px'
+          errorCard.style.padding = '14px'
+          errorCard.style.marginBottom = '12px'
+
+          const errorHeader = document.createElement('div')
+          errorHeader.style.display = 'flex'
+          errorHeader.style.justifyContent = 'space-between'
+          errorHeader.style.alignItems = 'center'
+          errorHeader.style.marginBottom = '10px'
+
+          const errorTitle = document.createElement('div')
+          errorTitle.style.fontSize = '16px'
+          errorTitle.style.fontWeight = '700'
+          errorTitle.style.color = '#ff6b6b'
+          
+          // Format error type
+          let errorType = err.kind || 'error'
+          if (errorType === 'scriptLoadError') errorType = 'Script Load Error'
+          else if (errorType === 'unhandledrejection') errorType = 'Unhandled Promise Rejection'
+          else if (errorType === 'error') errorType = 'JavaScript Error'
+          errorTitle.textContent = `${idx + 1}. ${errorType}`
+          
+          const errorTime = document.createElement('div')
+          errorTime.style.fontSize = '12px'
+          errorTime.style.opacity = '0.7'
+          errorTime.textContent = err.t || ''
+
+          errorHeader.appendChild(errorTitle)
+          errorHeader.appendChild(errorTime)
+          errorCard.appendChild(errorHeader)
+
+          // Error message
+          if (err.message) {
+            const msgContainer = document.createElement('div')
+            msgContainer.style.marginBottom = '10px'
+            
+            const msgLabel = document.createElement('div')
+            msgLabel.style.fontSize = '12px'
+            msgLabel.style.opacity = '0.7'
+            msgLabel.style.marginBottom = '4px'
+            msgLabel.textContent = 'Error Message:'
+            msgContainer.appendChild(msgLabel)
+            
+            const msgText = document.createElement('div')
+            msgText.style.fontSize = '14px'
+            msgText.style.background = 'rgba(0,0,0,0.3)'
+            msgText.style.padding = '8px'
+            msgText.style.borderRadius = '4px'
+            msgText.style.fontFamily = 'monospace'
+            msgText.style.wordBreak = 'break-word'
+            msgText.textContent = err.message
+            msgContainer.appendChild(msgText)
+            errorCard.appendChild(msgContainer)
+          }
+
+          // File/location info
+          if (err.src || err.filename) {
+            const locContainer = document.createElement('div')
+            locContainer.style.marginBottom = '10px'
+            
+            const locLabel = document.createElement('div')
+            locLabel.style.fontSize = '12px'
+            locLabel.style.opacity = '0.7'
+            locLabel.style.marginBottom = '4px'
+            locLabel.textContent = 'Location:'
+            locContainer.appendChild(locLabel)
+            
+            const locText = document.createElement('div')
+            locText.style.fontSize = '13px'
+            locText.style.background = 'rgba(0,0,0,0.3)'
+            locText.style.padding = '8px'
+            locText.style.borderRadius = '4px'
+            locText.style.fontFamily = 'monospace'
+            locText.style.wordBreak = 'break-all'
+            
+            const file = err.src || err.filename || 'unknown'
+            const line = err.lineno ? `:${err.lineno}` : ''
+            const col = err.colno ? `:${err.colno}` : ''
+            locText.textContent = `${file}${line}${col}`
+            locContainer.appendChild(locText)
+            errorCard.appendChild(locContainer)
+          }
+
+          // Version info for script errors
+          if (err.version) {
+            const versionContainer = document.createElement('div')
+            versionContainer.style.marginBottom = '10px'
+            
+            const versionLabel = document.createElement('div')
+            versionLabel.style.fontSize = '12px'
+            versionLabel.style.opacity = '0.7'
+            versionLabel.textContent = `Module Version: ${err.version}`
+            versionContainer.appendChild(versionLabel)
+            errorCard.appendChild(versionContainer)
+          }
+
+          // Help text based on error type
+          const helpText = document.createElement('div')
+          helpText.style.marginTop = '12px'
+          helpText.style.padding = '10px'
+          helpText.style.background = 'rgba(77,171,247,0.15)'
+          helpText.style.borderRadius = '4px'
+          helpText.style.fontSize = '13px'
+          helpText.style.color = '#a3daff'
+          
+          if (err.kind === 'scriptLoadError') {
+            helpText.innerHTML = '<strong>💡 Common causes:</strong><br>• Browser cached an old version (try hard refresh: Ctrl+Shift+R or Cmd+Shift+R)<br>• Corrupted download (clear cache and reload)<br>• Network issue during page load<br>• Browser extension blocking scripts'
+          } else if (err.kind === 'unhandledrejection') {
+            helpText.innerHTML = '<strong>💡 Common causes:</strong><br>• Missing or broken async resource<br>• Network request failed<br>• Module dependency issue'
+          } else {
+            helpText.innerHTML = '<strong>💡 Try:</strong><br>• Hard refresh the page (Ctrl+Shift+R or Cmd+Shift+R)<br>• Clear browser cache<br>• Check browser console (F12) for more details'
+          }
+          errorCard.appendChild(helpText)
+
+          overlay.appendChild(errorCard)
+        })
+      }
+
+      // System info section
+      const sysInfo = document.createElement('details')
+      sysInfo.style.marginTop = '20px'
+      sysInfo.style.padding = '12px'
+      sysInfo.style.background = 'rgba(255,255,255,0.05)'
+      sysInfo.style.borderRadius = '8px'
+      sysInfo.style.cursor = 'pointer'
+      
+      const sysSummary = document.createElement('summary')
+      sysSummary.style.fontSize = '14px'
+      sysSummary.style.fontWeight = '600'
+      sysSummary.style.marginBottom = '10px'
+      sysSummary.textContent = '🔍 Technical Details (for bug reports)'
+      sysInfo.appendChild(sysSummary)
+      
+      const sysContent = document.createElement('pre')
+      sysContent.style.whiteSpace = 'pre-wrap'
+      sysContent.style.fontSize = '11px'
+      sysContent.style.fontFamily = 'monospace'
+      sysContent.style.background = 'rgba(0,0,0,0.3)'
+      sysContent.style.padding = '10px'
+      sysContent.style.borderRadius = '4px'
+      sysContent.style.overflow = 'auto'
+      sysContent.style.maxHeight = '200px'
+      sysContent.textContent = JSON.stringify(report, null, 2)
+      sysInfo.appendChild(sysContent)
+      overlay.appendChild(sysInfo)
 
       document.body.appendChild(overlay)
     } catch (_) {}
