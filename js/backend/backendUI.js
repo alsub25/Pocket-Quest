@@ -309,16 +309,16 @@ export function showLoginScreen() {
 
 /**
  * Show cloud saves modal
+ * TODO: Integrate with the existing modal system for better UX
  */
 async function showCloudSavesModal() {
-  // This would integrate with the existing modal system
-  // For now, just show an alert
   const result = await listCloudSaves();
   
   if (result.success) {
     console.log('Cloud saves:', result.saves);
-    // TODO: Integrate with existing modal system to show saves
-    alert(`You have ${result.saves.length} cloud save(s). Cloud save management UI coming soon!`);
+    // TODO: Replace alert with proper modal using existing modal system
+    // For now, using alert as a temporary solution
+    alert(`You have ${result.saves.length} cloud save(s).\n\nCloud save management UI with proper modal integration coming in a future update!`);
   } else {
     alert('Failed to load cloud saves: ' + result.error);
   }
@@ -326,11 +326,14 @@ async function showCloudSavesModal() {
 
 /**
  * Show account management modal
+ * TODO: Integrate with the existing modal system for better UX
  */
 function showAccountModal() {
   const user = getCurrentUser();
   if (user) {
-    alert(`Account: ${user.email}\n\nFull account management UI coming soon!`);
+    // TODO: Replace alert with proper modal using existing modal system
+    // For now, using alert as a temporary solution
+    alert(`Account: ${user.email}\n\nFull account management UI with proper modal integration coming in a future update!`);
   }
 }
 

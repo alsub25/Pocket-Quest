@@ -9,6 +9,7 @@ import { firebaseConfig, BACKEND_ENABLED } from './firebaseConfig.js';
 import { getCurrentUser } from './authService.js';
 
 let db = null;
+let firestoreMethods = null;
 
 /**
  * Initialize Firestore Database
@@ -22,8 +23,8 @@ export async function initCloudSaves() {
   try {
     // Dynamically import Firestore SDK from CDN
     const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
-    const { getFirestore, collection, doc, getDoc, getDocs, setDoc, deleteDoc, serverTimestamp, query, orderBy, limit } = 
-      await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+    const firestoreModule = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+    const { getFirestore, collection, doc, getDoc, getDocs, setDoc, deleteDoc, serverTimestamp, query, orderBy, limit } = firestoreModule;
 
     // Initialize Firebase if not already done
     let app;
@@ -35,8 +36,8 @@ export async function initCloudSaves() {
     
     db = getFirestore(app);
 
-    // Store Firestore methods for later use
-    window._firestoreMethods = {
+    // Store Firestore methods at module level
+    firestoreMethods = {
       collection,
       doc,
       getDoc,
@@ -61,7 +62,7 @@ export async function initCloudSaves() {
  * Save game data to cloud
  */
 export async function saveToCloud(saveData, slotId = 'autosave') {
-  if (!BACKEND_ENABLED || !db) {
+  if (!BACKEND_ENABLED || !db || !firestoreMethods) {
     return { success: false, error: 'Cloud saves not available' };
   }
 
@@ -71,7 +72,7 @@ export async function saveToCloud(saveData, slotId = 'autosave') {
   }
 
   try {
-    const { collection, doc, setDoc, serverTimestamp } = window._firestoreMethods;
+    const { collection, doc, setDoc, serverTimestamp } = firestoreMethods;
     
     const saveRef = doc(collection(db, 'users', user.uid, 'saves'), slotId);
     
@@ -96,7 +97,7 @@ export async function saveToCloud(saveData, slotId = 'autosave') {
  * Load game data from cloud
  */
 export async function loadFromCloud(slotId = 'autosave') {
-  if (!BACKEND_ENABLED || !db) {
+  if (!BACKEND_ENABLED || !db || !firestoreMethods) {
     return { success: false, error: 'Cloud saves not available' };
   }
 
@@ -106,7 +107,7 @@ export async function loadFromCloud(slotId = 'autosave') {
   }
 
   try {
-    const { collection, doc, getDoc } = window._firestoreMethods;
+    const { collection, doc, getDoc } = firestoreMethods;
     
     const saveRef = doc(collection(db, 'users', user.uid, 'saves'), slotId);
     const saveSnap = await getDoc(saveRef);
@@ -128,7 +129,7 @@ export async function loadFromCloud(slotId = 'autosave') {
  * List all cloud saves for current user
  */
 export async function listCloudSaves() {
-  if (!BACKEND_ENABLED || !db) {
+  if (!BACKEND_ENABLED || !db || !firestoreMethods) {
     return { success: false, error: 'Cloud saves not available' };
   }
 
@@ -138,7 +139,7 @@ export async function listCloudSaves() {
   }
 
   try {
-    const { collection, getDocs, query, orderBy } = window._firestoreMethods;
+    const { collection, getDocs, query, orderBy } = firestoreMethods;
     
     const savesRef = collection(db, 'users', user.uid, 'saves');
     const q = query(savesRef, orderBy('updatedAt', 'desc'));
@@ -164,7 +165,7 @@ export async function listCloudSaves() {
  * Delete a cloud save
  */
 export async function deleteCloudSave(slotId) {
-  if (!BACKEND_ENABLED || !db) {
+  if (!BACKEND_ENABLED || !db || !firestoreMethods) {
     return { success: false, error: 'Cloud saves not available' };
   }
 
@@ -174,7 +175,7 @@ export async function deleteCloudSave(slotId) {
   }
 
   try {
-    const { collection, doc, deleteDoc } = window._firestoreMethods;
+    const { collection, doc, deleteDoc } = firestoreMethods;
     
     const saveRef = doc(collection(db, 'users', user.uid, 'saves'), slotId);
     await deleteDoc(saveRef);
@@ -189,9 +190,12 @@ export async function deleteCloudSave(slotId) {
 
 /**
  * Sync local save to cloud
- * This is a helper that can be called after regular saves
+ * This is a helper that accepts save data directly
+ * 
+ * @param {Object} saveData - The save data to upload
+ * @param {string} slotId - The save slot identifier
  */
-export async function syncToCloud(saveManager, slotId = 'autosave') {
+export async function syncToCloud(saveData, slotId = 'autosave') {
   if (!BACKEND_ENABLED) {
     return { success: false, offline: true };
   }
@@ -202,15 +206,11 @@ export async function syncToCloud(saveManager, slotId = 'autosave') {
     return { success: false, error: 'Not authenticated' };
   }
 
-  try {
-    // Get the current save data from localStorage or memory
-    // This assumes saveManager has a method to get current save data
-    const saveData = saveManager.getCurrentSaveData?.();
-    
-    if (!saveData) {
-      return { success: false, error: 'No save data available' };
-    }
+  if (!saveData) {
+    return { success: false, error: 'No save data provided' };
+  }
 
+  try {
     return await saveToCloud(saveData, slotId);
   } catch (error) {
     console.error('[CloudSave] Sync failed:', error);

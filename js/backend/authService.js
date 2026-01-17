@@ -10,6 +10,7 @@ import { firebaseConfig, BACKEND_ENABLED } from './firebaseConfig.js';
 let auth = null;
 let currentUser = null;
 let authStateListeners = [];
+let firebaseAuthMethods = null;
 
 /**
  * Initialize Firebase Authentication
@@ -23,15 +24,15 @@ export async function initAuth() {
   try {
     // Dynamically import Firebase SDK from CDN
     const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
-    const { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail } = 
-      await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+    const authModule = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+    const { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail } = authModule;
 
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     auth = getAuth(app);
 
-    // Store auth methods for later use
-    window._firebaseAuthMethods = {
+    // Store auth methods at module level
+    firebaseAuthMethods = {
       signInWithEmailAndPassword,
       createUserWithEmailAndPassword,
       signOut,
@@ -72,12 +73,12 @@ export function onAuthStateChange(callback) {
  * Sign in with email and password
  */
 export async function signIn(email, password) {
-  if (!BACKEND_ENABLED || !auth) {
+  if (!BACKEND_ENABLED || !auth || !firebaseAuthMethods) {
     return { success: false, error: 'Backend not enabled' };
   }
 
   try {
-    const { signInWithEmailAndPassword } = window._firebaseAuthMethods;
+    const { signInWithEmailAndPassword } = firebaseAuthMethods;
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     currentUser = userCredential.user;
     return { success: true, user: userCredential.user };
@@ -91,12 +92,12 @@ export async function signIn(email, password) {
  * Create a new user account
  */
 export async function signUp(email, password) {
-  if (!BACKEND_ENABLED || !auth) {
+  if (!BACKEND_ENABLED || !auth || !firebaseAuthMethods) {
     return { success: false, error: 'Backend not enabled' };
   }
 
   try {
-    const { createUserWithEmailAndPassword } = window._firebaseAuthMethods;
+    const { createUserWithEmailAndPassword } = firebaseAuthMethods;
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     currentUser = userCredential.user;
     return { success: true, user: userCredential.user };
@@ -110,12 +111,12 @@ export async function signUp(email, password) {
  * Sign out the current user
  */
 export async function signOutUser() {
-  if (!BACKEND_ENABLED || !auth) {
+  if (!BACKEND_ENABLED || !auth || !firebaseAuthMethods) {
     return { success: false, error: 'Backend not enabled' };
   }
 
   try {
-    const { signOut } = window._firebaseAuthMethods;
+    const { signOut } = firebaseAuthMethods;
     await signOut(auth);
     currentUser = null;
     return { success: true };
@@ -129,12 +130,12 @@ export async function signOutUser() {
  * Send password reset email
  */
 export async function resetPassword(email) {
-  if (!BACKEND_ENABLED || !auth) {
+  if (!BACKEND_ENABLED || !auth || !firebaseAuthMethods) {
     return { success: false, error: 'Backend not enabled' };
   }
 
   try {
-    const { sendPasswordResetEmail } = window._firebaseAuthMethods;
+    const { sendPasswordResetEmail } = firebaseAuthMethods;
     await sendPasswordResetEmail(auth, email);
     return { success: true };
   } catch (error) {
