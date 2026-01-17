@@ -58,7 +58,8 @@ When you update the version, you **MUST** update it in all of the following loca
    - Update the version badge near the top of the file (in the header section after the title)
    - Look for the line containing `[![Version](https://img.shields.io/badge/version-`
    - Change the version number in the badge URL to match your new version
-   - Example: `[![Version](https://img.shields.io/badge/version-1.2.86-blue.svg)]`
+   - Keep the link destination unchanged
+   - Example: `[![Version](https://img.shields.io/badge/version-1.2.86-blue.svg)](https://github.com/alsub25/Emberwood-The-Blackbark-Oath)`
 
 3. **`/js/game/changelog/changelog.js`**
    - Add new entry at the **top** of the CHANGELOG array (after the opening `[`)
@@ -127,7 +128,7 @@ If you fix a bug in the combat system:
    ```
 4. Update the version badge in `/README.md`:
    ```markdown
-   [![Version](https://img.shields.io/badge/version-1.2.86-blue.svg)]
+   [![Version](https://img.shields.io/badge/version-1.2.86-blue.svg)](https://github.com/alsub25/Emberwood-The-Blackbark-Oath)
    ```
 5. Add to top of `/js/game/changelog/changelog.js` (right after `export const CHANGELOG = [`):
    ```javascript
