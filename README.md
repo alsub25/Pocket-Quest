@@ -78,6 +78,8 @@
 - **Zero Build Complexity**: Native ES modules mean no bundler, no build step, no configuration hell
 - **Static-Host Friendly**: Deploy anywhere that serves HTML (GitHub Pages, Netlify, S3, etc.)
 - **Offline-First**: Runs entirely in browser with `localStorage` persistence
+- **Optional Cloud Saves**: Connect to Firebase for cloud backup and cross-device sync (100% optional)
+- **User Authentication**: Create accounts and sign in for cloud features (completely optional)
 - **Deterministic Testing**: Seeded RNG and comprehensive QA tools enable reproducible bug reports
 - **Forward Compatible**: Migration system ensures old saves work with new versions
 - **Developer-Friendly**: Modular architecture with clear separation of concerns
@@ -271,6 +273,29 @@ If you prefer separating source files from deployment:
 2. Move `index.html`, `style.css`, `assets/`, and `js/` into `/docs`
 3. In GitHub: **Settings → Pages → Source**: `main` branch + `/docs` folder
 4. Click **Save**
+
+### Optional: Backend Setup for Cloud Saves
+
+**Important**: Backend features are completely optional! The game works perfectly without them.
+
+If you want to enable user authentication and cloud saves:
+
+1. See **[BACKEND_SETUP.md](BACKEND_SETUP.md)** for detailed Firebase setup instructions
+2. Configure Firebase Authentication and Firestore Database
+3. Update `js/backend/firebaseConfig.js` with your Firebase credentials
+4. Deploy and test
+
+**Benefits of backend setup:**
+- ☁️ Cloud backup of game saves
+- 🔄 Sync saves across multiple devices
+- 👤 User accounts and authentication
+- 🔒 Secure save data storage
+
+**Without backend:**
+- 💾 All saves stored locally in browser
+- ⚡ Zero setup required
+- 🚀 Works immediately
+- 🔓 No account needed
 
 ### Path Configuration
 

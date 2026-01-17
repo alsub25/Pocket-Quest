@@ -39,17 +39,55 @@
         </div>
 
         <div id="app">
+            <!-- LOGIN SCREEN -->
+            <div id="loginScreen" class="screen hidden">
+                <div class="card center">
+                    <h1>EMBERWOOD: THE BLACKBARK OATH</h1>
+                    <div class="hint">Fantasy RPG • Cloud Saves</div>
+
+                    <div id="loginForm">
+                        <div class="field">
+                            <label for="loginEmail">Email</label>
+                            <input id="loginEmail" type="email" placeholder="your@email.com" />
+                        </div>
+                        <div class="field">
+                            <label for="loginPassword">Password</label>
+                            <input id="loginPassword" type="password" placeholder="••••••••" />
+                        </div>
+                        <div id="loginError" class="hint danger hidden"></div>
+                        <button class="btn outline" id="btnLogin">Sign In</button>
+                        <button class="btn outline" id="btnSignUp">Create Account</button>
+                        <button class="btn outline" id="btnForgotPassword">Forgot Password?</button>
+                        <button class="btn outline" id="btnPlayOffline">Play Offline (Local Saves)</button>
+                    </div>
+
+                    <div id="accountInfo" class="hidden">
+                        <p class="hint">Signed in as: <span id="userEmail"></span></p>
+                        <button class="btn outline" id="btnSignOut">Sign Out</button>
+                        <button class="btn outline" id="btnContinueToMenu">Continue to Menu</button>
+                    </div>
+                </div>
+            </div>
+
             <!-- MAIN MENU -->
             <div id="mainMenu" class="screen">
                 <div class="card center">
                     <h1>EMBERWOOD: THE BLACKBARK OATH</h1>
                     <div class="hint">Fantasy RPG • <span id="versionLabel">V?</span></div>
 
+                    <!-- Account status display -->
+                    <div id="accountStatus" class="hint hidden" style="margin-bottom: 1rem;">
+                        <span id="accountStatusText"></span>
+                    </div>
+
                     <button class="btn outline" id="btnNewGame">
                         New Game
                     </button>
                     <button class="btn outline" id="btnLoadGame">
                         Load Game
+                    </button>
+                    <button class="btn outline" id="btnCloudSaves" class="hidden">
+                        Cloud Saves
                     </button>
                     <button class="btn outline" id="btnSettingsMain">
                         Settings
@@ -64,9 +102,14 @@
                         Feedback / Bug Report
                     </button>
 
+                    <button class="btn outline" id="btnAccountManagement" class="hidden">
+                        Account
+                    </button>
+
                     <p class="hint">
                         Progress is stored locally on this device using browser
                         storage.
+                        <span id="cloudSaveHint" class="hidden"> Cloud backup available when signed in.</span>
                     </p>
                 </div>
             </div>

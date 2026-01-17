@@ -3191,3 +3191,110 @@ body.no-motion .spell-card.meter-buffed::after{
   line-height:1.25;
 }
 
+/* =============================================================================
+   LOGIN SCREEN & BACKEND UI STYLES
+   ============================================================================= */
+
+/* Login screen specific styles */
+#loginScreen .field {
+  margin-bottom: 1rem;
+}
+
+#loginScreen .field label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+#loginScreen .field input {
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-tight);
+  color: var(--text);
+  font-size: 1rem;
+  font-family: var(--font);
+  transition: border-color var(--t-fast), background var(--t-fast);
+}
+
+#loginScreen .field input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--surface-2);
+}
+
+#loginScreen .field input::placeholder {
+  color: var(--muted);
+  opacity: 0.5;
+}
+
+#loginError {
+  margin: 0.75rem 0;
+  padding: 0.5rem;
+  border-radius: var(--radius-tight);
+  font-size: 0.9rem;
+}
+
+#loginError.danger {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+#loginError:not(.danger) {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* Account status in main menu */
+#accountStatus {
+  padding: 0.5rem 1rem;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-tight);
+  font-size: 0.9rem;
+}
+
+#accountStatusText {
+  color: var(--accent);
+}
+
+/* Cloud save hint */
+#cloudSaveHint {
+  display: inline;
+  color: var(--accent);
+}
+
+/* Account info section in login screen */
+#accountInfo {
+  text-align: center;
+}
+
+#accountInfo .hint {
+  margin-bottom: 1rem;
+}
+
+#userEmail {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* Button spacing in login screen */
+#loginScreen .btn {
+  margin-top: 0.5rem;
+}
+
+/* Responsive adjustments for login */
+@media (max-width: 600px) {
+  #loginScreen .card {
+    padding: 1.5rem;
+  }
+  
+  #loginScreen .field input {
+    padding: 0.6rem;
+    font-size: 0.95rem;
+  }
+}
+
+
