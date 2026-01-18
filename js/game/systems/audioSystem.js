@@ -584,14 +584,5 @@ export function getAudioState() {
 // Export tryResumeAudioContext for external use
 export { tryResumeAudioContext }
 
-export function applyChannelMuteGains() {
-    // Web Audio path
-    if (audioState.musicBusGain)
-        audioState.musicBusGain.gain.value = audioState.musicEnabled ? 1 : 0
-    if (audioState.sfxBusGain)
-        audioState.sfxBusGain.gain.value = audioState.sfxEnabled ? 1 : 0
-
-    // Fallback path
-    Object.values(audioState.tracks).forEach(applyMasterVolumeTo)
-    Object.values(audioState.sfx).forEach(applyMasterVolumeTo)
-}
+// Export applyChannelMuteGains for external use
+export { applyChannelMuteGains }
