@@ -1,6 +1,6 @@
 ---
 name: Game Content Developer
-description: Expert agent for creating and balancing game content in Emberwood - The Blackbark Oath, including abilities, enemies, items, quests, and game systems
+description: Expert agent for creating and balancing game content in Emberwood: The Blackbark Oath, including abilities, enemies, items, quests, and game systems
 ---
 
 # Game Content Developer Agent
@@ -36,10 +36,13 @@ js/game/combat/        # Combat mechanics
 └── abilityEffects.js # Ability implementations
 
 js/game/systems/       # Core systems
-├── loot/             # Loot generation
-├── enemy/            # Enemy creation
-├── rng/              # Random number generation
-└── time/             # Time management
+├── lootGenerator.js  # Loot generation
+├── rng.js            # Random number generation
+├── timeSystem.js     # Time management
+└── enemy/            # Enemy creation system
+    ├── builder.js    # Enemy builder
+    ├── affixes.js    # Enemy affixes
+    └── rarity.js     # Enemy rarity
 
 js/game/quests/        # Quest system
 ├── questDefs.js      # Quest definitions
@@ -55,29 +58,31 @@ When creating new abilities, you **MUST**:
 
 1. **Define the ability** in `/js/game/data/abilities.js` (for player abilities) or `/js/game/data/enemyAbilities.js` (for enemy abilities)
 
-**Ability Structure:**
+**Ability Structure (from `/js/game/data/abilities.js`):**
 ```javascript
 {
-  id: "ability_name",              // Unique identifier (snake_case)
-  name: "Display Name",            // User-facing name
-  description: "Clear description", // What the ability does
-  cost: 30,                        // Resource cost (mana/rage/energy)
-  cooldown: 0,                     // Turns until usable again
-  targetType: "enemy",             // self, enemy, group, all
-  classification: "physical",      // physical or elemental
-  element: null,                   // fire, ice, lightning, nature, shadow, holy (or null)
-  effects: [
-    {
-      type: "damage",              // damage, heal, status, buff, debuff, resource
-      power: 100,                  // Base power
-      scaling: "strength",         // Stat that scales the effect
-      chance: 1.0                  // Probability (0.0-1.0), optional
-    }
-  ],
-  requirements: {                  // Optional unlock conditions
-    level: 5,
-    class: "warrior"
-  }
+  id: 'abilityName',           // Unique identifier (camelCase)
+  name: 'Display Name',        // User-facing name
+  classId: 'mage',             // Class this ability belongs to
+  cost: { mana: 20 },          // Resource cost (mana, fury, hp, blood, essence, etc.)
+  note: 'Clear description'    // What the ability does
+}
+```
+
+**Important Notes:**
+- Abilities in this game use a simple structure
+- The actual combat effects are implemented in `/js/game/combat/abilityEffects.js`
+- Resource costs use an object with the resource type as key: `{ mana: 20 }`, `{ fury: 25 }`, `{ hp: 10 }`, etc.
+- Each class has its own resource type (mage: mana, warrior: fury, blood knight: blood/hp, etc.)
+
+**Example - Fire Mage Ability:**
+```javascript
+fireball: {
+    id: 'fireball',
+    name: 'Fireball',
+    classId: 'mage',
+    cost: { mana: 20 },
+    note: 'A scorching projectile that deals heavy fire damage.'
 }
 ```
 
@@ -99,50 +104,21 @@ When creating new abilities, you **MUST**:
 
 ### 2. Creating Enemies
 
-When creating new enemies, you **MUST**:
+When creating new enemies:
 
-1. **Define enemy templates** in the enemy system (typically in encounter definitions or enemy pools)
+1. **Understand the Enemy System**
+   - Enemies are built dynamically using the enemy builder system in `/js/game/systems/enemy/`
+   - Enemy templates are combined with rarity multipliers and affixes
+   - Look at existing enemy implementations for reference
 
-**Enemy Structure:**
-```javascript
-{
-  id: "enemy_id",
-  name: "Enemy Name",
-  description: "Enemy lore",
-  level: 5,                    // Determines difficulty scaling
-  baseHp: 100,                 // Base health points
-  baseDamage: 15,              // Base damage output
-  baseArmor: 10,               // Physical damage reduction
-  
-  // Abilities the enemy can use
-  abilities: ["strike", "special_move"],
-  
-  // Elemental affinities (1.0 = normal, >1.0 = weakness, <1.0 = resistance)
-  affinities: {
-    fire: 1.5,                 // 50% more fire damage taken
-    ice: 0.5                   // 50% less ice damage taken
-  },
-  
-  // Status effect immunities
-  immunities: ["stun", "fear"],
-  
-  // Special properties
-  tags: ["undead", "boss"],    // For quest conditions and mechanics
-  
-  // Loot configuration
-  loot: {
-    goldMin: 50,
-    goldMax: 100,
-    itemChance: 0.3,          // 30% chance to drop item
-    itemLevel: 5              // Appropriate item level
-  },
-  
-  // XP reward
-  xp: 150
-}
-```
+2. **Enemy Components**:
+   - **Base Stats**: HP, damage, armor values
+   - **Abilities**: What actions the enemy can perform
+   - **Affinities**: Elemental strengths and weaknesses
+   - **Loot**: Gold and item drops
+   - **Rarity**: Normal, Elite, or Boss variants with stat multipliers
 
-2. **Balance guidelines**:
+3. **Balance guidelines**:
    - **HP Scaling**: Enemy HP should scale with player level
    - **Damage Output**: Should be threatening but not one-shot territory
    - **Abilities**: Mix of basic attacks and special moves
@@ -164,44 +140,83 @@ When creating new items, you **MUST**:
 
 1. **Define items** in `/js/game/data/items.js`
 
-**Item Structure:**
+**Item Structure (from `/js/game/data/items.js`):**
 ```javascript
 {
-  id: "item_id",
-  name: "Item Name",
-  type: "weapon",              // weapon, armor, consumable, accessory, material, quest
-  slot: "mainHand",            // mainHand, offHand, head, chest, legs, feet, ring, amulet
-  rarity: "rare",              // common, uncommon, rare, epic, legendary
-  level: 10,                   // Required/recommended level
+  id: 'itemId',               // Unique identifier (camelCase)
+  name: 'Item Name',          // Display name
+  type: 'weapon',             // weapon, armor, potion, accessory, material, quest
   
-  // Item stats
-  stats: {
-    damage: 35,               // For weapons
-    armor: 20,                // For armor
-    strength: 5,              // Stat bonuses
-    agility: 3,
-    critChance: 0.05,         // +5% crit chance
-    fireBonus: 0.15           // +15% fire damage
+  // For weapons
+  attackBonus: 6,             // Physical attack bonus
+  magicBonus: 5,              // Magic attack bonus
+  
+  // For armor
+  slot: 'armor',              // armor, ring, amulet
+  armorBonus: 4,              // Armor value
+  
+  // For potions
+  hpRestore: 40,              // HP restoration amount
+  resourceKey: 'mana',        // Resource to restore (mana, fury, blood, essence)
+  resourceRestore: 35,        // Amount of resource to restore
+  
+  // Special properties
+  bleedChance: 0.18,          // Chance to inflict bleed (0.0-1.0)
+  bleedTurns: 2,              // Bleed duration in turns
+  bleedDmgPct: 0.12,          // Bleed damage as % of damage dealt
+  
+  // Elemental bonuses
+  elementalBonuses: {         // Damage bonuses by element
+    fire: 6,                  // +6 fire damage
+    arcane: 8                 // +8 arcane damage
   },
   
-  // Special traits
-  traits: [
-    "on_hit_burn",            // Apply burn on hit
-    "on_kill_heal"            // Heal on kill
-  ],
+  elementalResists: {         // Damage resistance by element
+    nature: 10                // +10 nature resistance
+  },
   
-  // Sell value
-  value: 500,
+  // Special effects
+  onKillGain: {               // Trigger on kill
+    key: 'resource',          // What to gain
+    amount: 6                 // Amount gained
+  },
   
-  // Description
-  description: "A powerful blade wreathed in flame",
+  onShieldCastNextDmgPct: 10, // Bonus damage % after casting shield
   
-  // Consumable-specific
-  consumable: {
-    effect: "heal",
-    power: 100,
-    instant: true
-  }
+  // Common properties
+  price: 45,                  // Gold cost/sell value
+  desc: '+6 Attack. Favored by warriors.' // Description
+}
+```
+
+**Example - Warrior Weapon:**
+```javascript
+swordIron: {
+    id: 'swordIron',
+    name: 'Iron Longsword',
+    type: 'weapon',
+    attackBonus: 6,
+    price: 45,
+    desc: '+6 Attack. Favored by warriors.',
+    bleedChance: 0.18,
+    bleedTurns: 2,
+    bleedDmgPct: 0.12,
+    elementalBonuses: { fire: 6 }
+}
+```
+
+**Example - Mage Armor:**
+```javascript
+robeApprentice: {
+    id: 'robeApprentice',
+    name: 'Apprentice Robe',
+    type: 'armor',
+    slot: 'armor',
+    armorBonus: 3,
+    magicBonus: 4,
+    price: 38,
+    desc: '+3 Armor, +4 Magic. Standard mage attire.',
+    elementalResists: { arcane: 8 }
 }
 ```
 
@@ -222,48 +237,65 @@ When creating new quests, you **MUST**:
 
 1. **Define quest** in `/js/game/quests/questDefs.js`
 
-**Quest Structure:**
+**Quest Structure (from `/js/game/quests/questDefs.js`):**
+
+Quests in this game use a unique structure with numeric step keys and optional objectives:
+
 ```javascript
 {
-  id: "quest_id",
-  name: "Quest Title",
-  description: "Quest description and objectives",
-  
-  // Quest chain
-  steps: [
-    {
-      id: "step_1",
-      text: "Find the ancient artifact",
-      trigger: "location:ancient_ruins",  // What advances this step
-      condition: (state) => {              // Optional custom condition
-        return state.player.level >= 5;
-      },
-      next: "step_2"                      // Next step id or "complete"
-    },
-    {
-      id: "step_2",
-      text: "Defeat the guardian",
-      trigger: "combat:victory",
-      condition: (state) => {
-        return state.combat?.defeatedEnemyId === "ancient_guardian";
-      },
-      next: "complete"
-    }
-  ],
-  
-  // Rewards
-  rewards: {
-    gold: 500,
-    xp: 1000,
-    items: ["ancient_key", "health_potion"],
-    reputation: { faction: "village", amount: 10 }
+  id: 'questId',
+  name: 'Quest Title',
+  steps: {
+    0: 'Initial quest step description.',
+    1: 'Second step description.',
+    2: 'Third step description.',
+    // Steps can use decimals for sub-steps
+    1.5: 'Optional intermediate step.',
+    10: 'Final step description.'
   },
   
-  // Requirements to start
-  requirements: {
-    level: 5,
-    completedQuests: ["previous_quest_id"]
+  // Optional: Objectives for tracking progress
+  objectives: {
+    1: [  // Objectives for step 1
+      {
+        type: 'kill',           // Type: 'kill' or 'collect'
+        label: 'Defeat goblins',
+        required: 8,            // Number required
+        enemyIds: ['goblin', 'goblinScout']  // For kill objectives
+      },
+      {
+        type: 'collect',
+        label: 'Recover trail marks',
+        required: 4,
+        itemId: 'goblinTrailMark',
+        dropsFrom: ['goblin', 'goblinScout'],  // Which enemies drop it
+        dropChance: 0.65       // Drop probability
+      }
+    ]
   }
+}
+```
+
+**Example - Simple Quest:**
+```javascript
+tutorialQuest: {
+    id: 'tutorialQuest',
+    name: 'First Steps',
+    steps: {
+        0: 'Speak with Elder Rowan in the village.',
+        1: 'Travel to Emberwood Forest and defeat 3 goblins.',
+        2: 'Return to Elder Rowan with proof of your victory.'
+    },
+    objectives: {
+        1: [
+            {
+                type: 'kill',
+                label: 'Defeat goblins',
+                required: 3,
+                enemyIds: ['goblin']
+            }
+        ]
+    }
 }
 ```
 
@@ -332,9 +364,9 @@ When balancing game content:
 
 2. **Naming Conventions**:
    - Files: `camelCase.js`
-   - Constants: `SCREAMING_SNAKE_CASE`
+   - Constants: `SCREAMING_SNAKE_CASE` or `camelCase` for objects
    - Functions: `camelCase`
-   - IDs in data: `snake_case`
+   - IDs in data: `camelCase` (e.g., `fireball`, `swordIron`, `goblinScout`)
 
 3. **Data Validation**:
    - Always validate numeric values (no NaN, Infinity)
@@ -446,9 +478,10 @@ After creating new content:
 
 ### With Loot System
 
-- New items automatically enter the loot pool
-- Loot generation respects item levels and rarity
-- Drop rates configured in `systems/loot/`
+- New items are defined in `/js/game/data/items.js`
+- Loot generation is handled by `/js/game/systems/lootGenerator.js`
+- Items with `type: 'weapon'` or `type: 'armor'` can appear as drops
+- Drop rates and item selection are managed by the loot system
 
 ### With Quest System
 
@@ -460,17 +493,15 @@ After creating new content:
 
 Before completing your work, verify:
 
-- [ ] All IDs are unique and follow `snake_case` convention
+- [ ] All IDs are unique and follow `camelCase` convention
 - [ ] Numeric values are finite (no NaN/Infinity)
 - [ ] Descriptions are clear and free of typos
 - [ ] Balance is comparable to similar existing content
 - [ ] No duplicate entries in data files
 - [ ] Code follows ES module format
-- [ ] Proper stat scaling is applied
-- [ ] Abilities have appropriate costs and cooldowns
-- [ ] Items have appropriate level requirements
-- [ ] Enemies have complete stat blocks
-- [ ] Quests have all required steps and rewards
+- [ ] Abilities use correct `classId` and `cost` structure
+- [ ] Items use appropriate property names (`attackBonus`, `magicBonus`, `armorBonus`, `price`, `desc`)
+- [ ] Quest steps use numeric keys, not array format
 - [ ] No console errors when testing
 
 ## Example: Adding a New Fire Mage Ability
@@ -481,64 +512,40 @@ Before completing your work, verify:
 - Name: "Meteor Strike"
 - Level 15 unlock
 - High mana cost (60)
-- Moderate cooldown (3 turns)
-- Hits all enemies
-- Fire damage with burn chance
+- Hits all enemies with fire damage
+- Chance to apply burn
 
-**Step 2 - Implementation** (`js/game/data/abilities.js`):
+**Step 2 - Define Ability** (`js/game/data/abilities.js`):
 ```javascript
-{
-  id: "meteor_strike",
-  name: "Meteor Strike",
-  description: "Call down a meteor to devastate all enemies with fire damage and burning flames",
-  cost: 60,
-  cooldown: 3,
-  targetType: "group",
-  classification: "elemental",
-  element: "fire",
-  effects: [
-    {
-      type: "damage",
-      power: 180,
-      scaling: "intelligence"
-    },
-    {
-      type: "status",
-      status: "burn",
-      duration: 4,
-      power: 15,
-      chance: 0.7
-    }
-  ],
-  requirements: {
-    level: 15,
-    class: "mage"
-  }
+meteorStrike: {
+    id: 'meteorStrike',
+    name: 'Meteor Strike',
+    classId: 'mage',
+    cost: { mana: 60 },
+    note: 'Call down a meteor to devastate all enemies with fire damage and burning flames'
 }
 ```
 
-**Step 3 - Balance Check**:
-- Compare to level 15 single-target ability: ~250 power
-- AoE penalty: 180 × 3 enemies = 540 total (reasonable)
-- High cost (60) limits spam
-- Cooldown (3) prevents consecutive casts
-- Burn adds ~60 damage over 4 turns per enemy
-- Total effective: ~240 power per enemy (balanced)
+**Step 3 - Implement Effects** (`js/game/combat/abilityEffects.js`):
+The combat system will handle the actual damage calculations and effects. You may need to add custom logic here if the ability has unique mechanics beyond standard damage.
 
 **Step 4 - Add to class unlocks** (`js/game/data/playerClasses.js`):
 ```javascript
-abilityUnlocks: {
-  15: ["meteor_strike"]
+mage: {
+    // ... other properties
+    abilityUnlocks: {
+        15: ['meteorStrike']
+    }
 }
 ```
 
 **Step 5 - Test**:
-- Enable dev cheats
-- Level character to 15
-- Verify ability appears
+- Enable dev cheats during character creation
+- Level character to 15 as a mage
+- Verify ability appears in spellbook
 - Test in combat against multiple enemies
-- Check damage numbers
-- Verify burn applies correctly
+- Check damage numbers and effects
+- Verify mana cost is deducted correctly
 
 ## Remember
 
