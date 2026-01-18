@@ -73,6 +73,10 @@ import {
 import { createCheatsMenu } from '../ui/modals/cheatsMenu.js'
 import { createInventoryModal } from '../ui/modals/inventoryModal.js'
 import { createSpellsModal } from '../ui/modals/spellsModal.js'
+import { createSkillLevelUpModal } from '../ui/modals/skillLevelUpModal.js'
+import { createExploreModal } from '../ui/modals/exploreModal.js'
+import { createGovernmentModal } from '../ui/modals/governmentModal.js'
+import { createGameSettingsModal } from '../ui/modals/gameSettingsModal.js'
 import {
     initAudio,
     setMasterVolumePercent,
@@ -4291,7 +4295,85 @@ function _getSpellbookModal() {
     return _getSpellsModalWrapper().getSpellbookModal()
 }
 
+// --- SKILL LEVEL UP MODAL -------------------------------------------------------
+let _skillLevelUpModal = null
+function _getSkillLevelUpModal() {
+    if (_skillLevelUpModal) return _skillLevelUpModal
+    _skillLevelUpModal = createSkillLevelUpModal({
+        state,
+        openModal,
+        closeModal,
+        setModalOnClose,
+        addLog,
+        updateHUD,
+        autoDistributeSkillPoints,
+        _recalcPlayerStats
+    })
+    return _skillLevelUpModal
+}
 
+// --- EXPLORE MODAL --------------------------------------------------------------
+let _exploreModalFn = null
+function _getExploreModal() {
+    if (_exploreModalFn) return _exploreModalFn
+    _exploreModalFn = createExploreModal({
+        state,
+        openModal,
+        closeModal,
+        addLog,
+        ensureUiState,
+        recordInput,
+        renderActions,
+        isAreaUnlocked,
+        getAreaDisplayName,
+        setArea,
+        exploreArea,
+        requestSave,
+        ensureCombatPointers
+    })
+    return _exploreModalFn
+}
+
+// --- GOVERNMENT MODAL -----------------------------------------------------------
+let _governmentModalFn = null
+function _getGovernmentModal() {
+    if (_governmentModalFn) return _governmentModalFn
+    _governmentModalFn = createGovernmentModal({
+        state,
+        openModal,
+        getTimeInfo,
+        initGovernmentState,
+        getGovernmentSummary,
+        getVillageGovernmentEffect,
+        getVillageEconomySummary
+    })
+    return _governmentModalFn
+}
+
+// --- IN-GAME SETTINGS MODAL -----------------------------------------------------
+let _gameSettingsModalFn = null
+function _getGameSettingsModal() {
+    if (_gameSettingsModalFn) return _gameSettingsModalFn
+    _gameSettingsModalFn = createGameSettingsModal({
+        state,
+        _engine,
+        openModal,
+        closeModal,
+        updateHUD,
+        requestSave,
+        safeStorageSet,
+        setMasterVolumePercent,
+        setMusicEnabled,
+        setSfxEnabled,
+        setTheme,
+        setReduceMotionEnabled,
+        exportCurrentSaveToFile,
+        importSaveFromFile,
+        exportAllSavesBundleToFile,
+        DIFFICULTY_CONFIG
+    })
+    return _gameSettingsModalFn
+}
 
 function canPayCost(cost) {
     const p = state.player
@@ -5532,125 +5614,9 @@ function autoDistributeSkillPoints(p) {
     )
 }
 
+// Wrapper to keep call sites unchanged
 function openSkillLevelUpModal() {
-    const p = state.player
-    if (!p) return
-
-    // If the player clicks outside and closes the modal, auto-spend any remaining points.
-    setModalOnClose(() => {
-        const pl = state.player
-        if (!pl) return
-        autoDistributeSkillPoints(pl) // no-ops if skillPoints <= 0
-    })
-
-    // Give exactly 1 point if somehow missing
-    if (p.skillPoints == null) p.skillPoints = 0
-    if (p.skillPoints <= 0) p.skillPoints = 1
-
-    const closeBtn = document.getElementById('modalClose')
-    if (closeBtn) closeBtn.style.display = 'none' // force choice
-
-    openModal('Level Up!', (body) => {
-        const info = document.createElement('p')
-        info.className = 'modal-subtitle'
-        info.textContent =
-            'You feel your power surge. Choose a skill to improve (1 point).'
-        body.appendChild(info)
-
-        const pointsEl = document.createElement('p')
-        pointsEl.className = 'modal-subtitle'
-        pointsEl.textContent = 'Unspent skill points: ' + p.skillPoints
-        body.appendChild(pointsEl)
-
-        const skills = [
-            {
-                key: 'strength',
-                name: 'Strength',
-                desc: 'Increase physical power. +Attack.'
-            },
-            {
-                key: 'endurance',
-                name: 'Endurance',
-                desc: 'Bolster toughness. +Max HP and a bit of Armor.'
-            },
-            {
-                key: 'willpower',
-                name: 'Willpower',
-                desc: 'Sharpen arcane focus. +Magic and max resource.'
-            }
-        ]
-
-        skills.forEach((s) => {
-            const row = document.createElement('div')
-            row.className = 'item-row'
-
-            const header = document.createElement('div')
-            header.className = 'item-row-header'
-
-            const left = document.createElement('div')
-            left.innerHTML =
-                '<span class="item-name">' +
-                s.name +
-                '</span>' +
-                ' (Rank ' +
-                p.skills[s.key] +
-                ')'
-
-            const right = document.createElement('div')
-            right.className = 'item-meta'
-            right.textContent = s.desc
-
-            header.appendChild(left)
-            header.appendChild(right)
-
-            const actions = document.createElement('div')
-            actions.className = 'item-actions'
-
-            const btn = document.createElement('button')
-            btn.className = 'btn small'
-            btn.textContent = 'Increase'
-            btn.addEventListener('click', () => {
-                if (p.skillPoints <= 0) return
-
-                p.skills[s.key] += 1
-                p.skillPoints -= 1
-
-                _recalcPlayerStats()
-                p.hp = p.maxHp // full heal on level-up
-                p.resource = p.maxResource
-
-                updateHUD()
-                pointsEl.textContent = 'Unspent skill points: ' + p.skillPoints
-
-                addLog(
-                    'You increase ' +
-                        s.name +
-                        ' to rank ' +
-                        p.skills[s.key] +
-                        '.',
-                    'good'
-                )
-
-                if (p.skillPoints <= 0) {
-                    closeModal()
-                } else {
-                    // update shown rank
-                    left.innerHTML =
-                        '<span class="item-name">' +
-                        s.name +
-                        '</span>' +
-                        ' (Rank ' +
-                        p.skills[s.key] +
-                        ')'
-                }
-            })
-
-            actions.appendChild(btn)
-            row.appendChild(header)
-            row.appendChild(actions)
-            body.appendChild(row)
-        })
-    })
+    return _getSkillLevelUpModal()()
 }
 
 // --- COMBAT CORE --------------------------------------------------------------
@@ -8367,142 +8333,9 @@ function handleExploreClick() {
 }
 
 // Area selection modal
+// Wrapper to keep call sites unchanged
 function openExploreModal() {
-    ensureUiState()
-    recordInput('open.exploreModal')
-    if (!state.player) return
-
-    openModal('Choose Where to Explore', (body) => {
-        const intro = document.createElement('p')
-        intro.className = 'modal-subtitle'
-        intro.textContent =
-            'Pick a region to travel to. After choosing, the Explore button will keep using that region until you change it.'
-        body.appendChild(intro)
-
-        const areas = [
-            {
-                id: 'village',
-                desc: 'Talk to Elder Rowan, visit the merchant, or rest between journeys.'
-            },
-            {
-                id: 'forest',
-                desc: 'Beasts, bandits, and goblin warbands beneath Emberwood’s twisted canopy.'
-            },
-            {
-                id: 'ruins',
-                desc: 'Climb the shattered spire and face void-touched horrors.'
-            },
-            {
-                id: 'marsh',
-                desc: 'A choking mire of ash and rot where a witch’s coven whispers.'
-            },
-            {
-                id: 'frostpeak',
-                desc: 'A frozen mountain pass haunted by yeti packs and a rampaging giant.'
-            },
-            {
-                id: 'catacombs',
-                desc: 'Sunken crypts where necromancy lingers and the dead refuse to rest.'
-            },
-            {
-                id: 'keep',
-                desc: 'A black fortress of obsidian and shadow — the source of the realm’s corruption.'
-            },
-            {
-                id: 'oathgrove',
-                desc: 'A hidden grove where the Blackbark Oath was first written — and where sap still listens.'
-            },
-            {
-                id: 'blackbarkDepths',
-                desc: 'Lightless roots and oath‑carved veins beneath the village. Something stalks the dark.'
-            },
-            {
-                id: 'starfallRidge',
-                desc: 'A windswept ridge where fallen star‑iron hums in the stone.'
-            }
-        ]
-
-        areas.forEach((info) => {
-            const unlocked = isAreaUnlocked(info.id)
-            const name = getAreaDisplayName(info.id)
-
-            const row = document.createElement('div')
-            row.className = 'item-row'
-
-            const header = document.createElement('div')
-            header.className = 'item-row-header'
-
-            const left = document.createElement('div')
-            left.innerHTML = '<span class="item-name">' + name + '</span>'
-
-            const right = document.createElement('div')
-            right.className = 'item-meta'
-            if (info.id === state.area) {
-                right.textContent = 'Current area'
-            } else {
-                right.textContent = unlocked ? 'Available' : 'Locked'
-            }
-
-            header.appendChild(left)
-            header.appendChild(right)
-
-            const desc = document.createElement('div')
-            desc.style.fontSize = '0.75rem'
-            desc.style.color = 'var(--muted)'
-            desc.textContent = info.desc
-
-            row.appendChild(header)
-            row.appendChild(desc)
-
-            const actions = document.createElement('div')
-            actions.className = 'item-actions'
-
-            const btn = document.createElement('button')
-            btn.className = 'btn small' + (unlocked ? '' : ' outline')
-            btn.textContent = unlocked ? 'Travel & Explore' : 'Locked'
-            btn.disabled = !unlocked
-
-            if (unlocked) {
-                btn.addEventListener('click', () => {
-                    // Guard: do not allow travel/explore selection while in combat.
-                    // This prevents mid-combat modal navigation from desyncing combat state.
-                    if (state && state.inCombat) {
-                        try { ensureCombatPointers() } catch (_) {}
-                        addLog('You cannot travel while in combat.', 'danger')
-                        return
-                    }
-
-                    // Lock in this choice for repeated exploring
-                    recordInput('travel', { to: info.id })
-                    setArea(info.id, { source: 'travel' })
-                    state.ui.exploreChoiceMade = true
-
-                    // If we leave the village, make sure village submenu state is closed
-                    state.ui.villageActionsOpen = false
-
-                    addLog('You travel to ' + name + '.', 'system')
-
-                    closeModal()
-
-                    // ✅ Rebuild the action bar immediately so Village / Realm buttons disappear
-                    renderActions()
-
-                    exploreArea()
-                    requestSave('legacy')
-                })
-            }
-
-            actions.appendChild(btn)
-            row.appendChild(actions)
-            body.appendChild(row)
-        })
-
-        const hint = document.createElement('p')
-        hint.className = 'modal-subtitle'
-        hint.textContent =
-            'Tip: Use “Change Area” on the main screen any time you want to pick a different region.'
-        body.appendChild(hint)
-    })
+    return _getExploreModal()()
 }
 
 // --- EXPLORATION & QUESTS -----------------------------------------------------
@@ -8749,917 +8582,15 @@ function levelUp() {
     openSkillLevelUpModal()
 }
 
+// Wrapper to keep call sites unchanged
 function openGovernmentModal() {
-    // Make sure government state exists (handles old saves too)
-    const timeInfo = getTimeInfo(state)
-    const absoluteDay = timeInfo ? timeInfo.absoluteDay : 0
-    initGovernmentState(state, absoluteDay)
-
-    const gov = state.government
-    const summary = getGovernmentSummary(state)
-    const villageEffect = getVillageGovernmentEffect(state, 'village')
-
-    // Government-aware village economy (already adjusted by royal influence)
-    const villageEconomy = getVillageEconomySummary(state)
-    openModal('Realm & Government', (body) => {
-        // --- CARD 1: REALM OVERVIEW ---------------------------------------------
-        const overviewCard = document.createElement('div')
-        overviewCard.className = 'item-row'
-
-        const header = document.createElement('div')
-        header.className = 'item-row-header'
-
-        const title = document.createElement('span')
-        title.className = 'item-name'
-        title.textContent = summary.realmName || 'The Realm'
-        header.appendChild(title)
-
-        const tag = document.createElement('span')
-        tag.className = 'tag'
-        tag.textContent = summary.capitalName
-            ? `Capital: ${summary.capitalName}`
-            : 'Overworld Government'
-        header.appendChild(tag)
-
-        overviewCard.appendChild(header)
-
-        const when = document.createElement('p')
-        when.className = 'modal-subtitle'
-        if (timeInfo) {
-            when.textContent = `As of ${timeInfo.weekdayName} ${timeInfo.partName}, Year ${timeInfo.year}.`
-        } else {
-            when.textContent = 'Current state of the realm.'
-        }
-        overviewCard.appendChild(when)
-
-        const metrics = summary.metrics || {
-            stability: 50,
-            prosperity: 50,
-            royalPopularity: 50,
-            corruption: 50
-        }
-
-        const metricsLine = document.createElement('p')
-        metricsLine.className = 'modal-subtitle'
-        metricsLine.textContent =
-            `Stability: ${metrics.stability} • ` +
-            `Prosperity: ${metrics.prosperity} • ` +
-            `Popularity: ${metrics.royalPopularity} • ` +
-            `Corruption: ${metrics.corruption}`
-        overviewCard.appendChild(metricsLine)
-
-        if (summary.lastDecreeTitle) {
-            const decreeLine = document.createElement('p')
-            decreeLine.className = 'modal-subtitle'
-            decreeLine.textContent = `Latest decree: ${summary.lastDecreeTitle}`
-            overviewCard.appendChild(decreeLine)
-        }
-
-        body.appendChild(overviewCard)
-
-        // --- CARD 2: ROYAL FAMILY -----------------------------------------------
-        const famCard = document.createElement('div')
-        famCard.className = 'item-row'
-
-        const famHeader = document.createElement('div')
-        famHeader.className = 'item-row-header'
-
-        const famTitle = document.createElement('span')
-        famTitle.className = 'item-name'
-        famTitle.textContent = 'Royal Family'
-        famHeader.appendChild(famTitle)
-
-        const famTag = document.createElement('span')
-        famTag.className = 'tag'
-        famTag.textContent = `${summary.monarchTitle || 'Ruler'} of the realm`
-        famHeader.appendChild(famTag)
-
-        famCard.appendChild(famHeader)
-
-        const monarchLine = document.createElement('p')
-        monarchLine.className = 'modal-subtitle'
-        monarchLine.textContent = `${summary.monarchTitle || 'Ruler'} ${
-            summary.monarchName || 'Unknown'
-        }`
-        famCard.appendChild(monarchLine)
-
-        if (summary.married && summary.spouseName) {
-            const spouseLine = document.createElement('p')
-            spouseLine.className = 'modal-subtitle'
-            spouseLine.textContent = `Spouse: ${summary.spouseName}`
-            famCard.appendChild(spouseLine)
-        }
-
-        const kidsLine = document.createElement('p')
-        kidsLine.className = 'modal-subtitle'
-        kidsLine.textContent =
-            summary.childrenCount > 0
-                ? `Children: ${summary.childrenCount} (eldest is heir to the throne).`
-                : 'No heirs of age are currently known at court.'
-        famCard.appendChild(kidsLine)
-
-        body.appendChild(famCard)
-
-        // --- CARD 3: ROYAL COUNCIL ----------------------------------------------
-        const councilCard = document.createElement('div')
-        councilCard.className = 'item-row'
-
-        const councilHeader = document.createElement('div')
-        councilHeader.className = 'item-row-header'
-
-        const councilTitle = document.createElement('span')
-        councilTitle.className = 'item-name'
-        councilTitle.textContent = 'Royal Council'
-        councilHeader.appendChild(councilTitle)
-
-        const councilTag = document.createElement('span')
-        councilTag.className = 'tag'
-        councilTag.textContent = `${summary.councilCount || 0} seats at court`
-        councilHeader.appendChild(councilTag)
-
-        councilCard.appendChild(councilHeader)
-
-        if (gov && Array.isArray(gov.council) && gov.council.length) {
-            gov.council.forEach((member) => {
-                const row = document.createElement('div')
-                row.className = 'equip-row'
-
-                const left = document.createElement('span')
-                left.textContent = `${member.role}: ${member.name}`
-                row.appendChild(left)
-
-                const right = document.createElement('span')
-                right.className = 'stat-note'
-                const loyalty = Math.round(member.loyalty)
-                right.textContent = `${member.ideology} • Loyalty ${loyalty} • ${member.mood}`
-                row.appendChild(right)
-
-                councilCard.appendChild(row)
-            })
-        } else {
-            const none = document.createElement('p')
-            none.className = 'modal-subtitle'
-            none.textContent =
-                'No council members are currently recorded in the royal rolls.'
-            councilCard.appendChild(none)
-        }
-
-        body.appendChild(councilCard)
-
-        // --- CARD 4: VILLAGE ATTITUDES ------------------------------------------
-        const villageCard = document.createElement('div')
-        villageCard.className = 'item-row'
-
-        const villageHeader = document.createElement('div')
-        villageHeader.className = 'item-row-header'
-
-        const villageTitle = document.createElement('span')
-        villageTitle.className = 'item-name'
-        villageTitle.textContent = 'Emberwood Village'
-        villageHeader.appendChild(villageTitle)
-
-        const villageTag = document.createElement('span')
-        villageTag.className = 'tag'
-        villageTag.textContent = 'Local leadership & mood'
-        villageHeader.appendChild(villageTag)
-
-        villageCard.appendChild(villageHeader)
-
-        const moodLine = document.createElement('p')
-        moodLine.className = 'modal-subtitle'
-
-        if (villageEffect.hasData) {
-            moodLine.textContent =
-                `Loyalty: ${Math.round(villageEffect.loyalty)} • ` +
-                `Fear: ${Math.round(villageEffect.fear)} • ` +
-                `Unrest: ${Math.round(villageEffect.unrest)}`
-            villageCard.appendChild(moodLine)
-
-            const desc = document.createElement('p')
-            desc.className = 'modal-subtitle'
-            desc.textContent = villageEffect.description
-            villageCard.appendChild(desc)
-
-            const mods = document.createElement('p')
-            mods.className = 'modal-subtitle'
-            mods.textContent =
-                `Prosperity modifier: ${villageEffect.prosperityModifier.toFixed(
-                    2
-                )} • ` +
-                `Safety modifier: ${villageEffect.safetyModifier.toFixed(2)}`
-            villageCard.appendChild(mods)
-        } else {
-            moodLine.textContent =
-                "The crown's influence on Emberwood is still being felt out."
-            villageCard.appendChild(moodLine)
-        }
-
-        // NEW: show what the rest of the systems actually "see"
-        const econLine = document.createElement('p')
-        econLine.className = 'modal-subtitle'
-        econLine.textContent =
-            `Village economy — Prosperity ${villageEconomy.prosperity} • ` +
-            `Trade ${villageEconomy.trade} • ` +
-            `Security ${villageEconomy.security}`
-        villageCard.appendChild(econLine)
-
-        body.appendChild(villageCard)
-
-        // --- CARD 5: RECENT DECREE LOG ------------------------------------------
-        const historyCard = document.createElement('div')
-        historyCard.className = 'item-row'
-
-        const historyHeader = document.createElement('div')
-        historyHeader.className = 'item-row-header'
-
-        const historyTitle = document.createElement('span')
-        historyTitle.className = 'item-name'
-        historyTitle.textContent = 'Recent Decrees & Events'
-        historyHeader.appendChild(historyTitle)
-
-        const historyTag = document.createElement('span')
-        historyTag.className = 'tag'
-        historyTag.textContent = 'Last few changes at court'
-        historyHeader.appendChild(historyTag)
-
-        historyCard.appendChild(historyHeader)
-
-        if (gov && Array.isArray(gov.history) && gov.history.length) {
-            const recent = gov.history
-                .slice(-6) // last 6
-                .reverse() // newest first
-
-            recent.forEach((ev) => {
-                const line = document.createElement('p')
-                line.className = 'modal-subtitle'
-                const dayLabel =
-                    typeof ev.day === 'number' ? `Day ${ev.day}` : 'Unknown day'
-                line.textContent = `${dayLabel}: ${ev.title} — ${ev.description}`
-                historyCard.appendChild(line)
-            })
-        } else {
-            const none = document.createElement('p')
-            none.className = 'modal-subtitle'
-            none.textContent =
-                'The royal scribes have not yet recorded any notable decrees.'
-            historyCard.appendChild(none)
-        }
-
-        body.appendChild(historyCard)
-    })
+    return _getGovernmentModal()()
+}
+// Wrapper to keep call sites unchanged
+function openInGameSettingsModal() {
+    return _getGameSettingsModal()()
 }
 // --- PAUSE / GAME MENU --------------------------------------------------------
-function openInGameSettingsModal() {
-    openModal('Settings', (body) => {
-        // Safety: if state doesn't exist yet, just show a simple message
-        if (typeof state === 'undefined' || !state) {
-            const msg = document.createElement('p')
-            msg.textContent = 'Settings are unavailable until a game is running.'
-            body.appendChild(msg)
-
-            const actions = document.createElement('div')
-            actions.className = 'modal-actions'
-            const btnBack = document.createElement('button')
-            btnBack.className = 'btn outline'
-            btnBack.textContent = 'Back'
-            btnBack.addEventListener('click', () => closeModal())
-            actions.appendChild(btnBack)
-            body.appendChild(actions)
-            return
-        }
-
-        const intro = document.createElement('p')
-        intro.className = 'modal-subtitle'
-        intro.textContent = 'Changes apply immediately.'
-        body.appendChild(intro)
-
-        const container = document.createElement('div')
-        // Compact settings layout so it fits better on mobile while keeping sections.
-        container.className = 'settings-modal-body settings-sections settings-compact'
-
-        let sectionIdCounter = 0
-
-        const addSection = (title, opts = null) => {
-            const options = opts || {}
-            const collapsible = !!options.collapsible
-            const startCollapsed = !!options.collapsed
-
-            const sec = document.createElement('div')
-            sec.className = 'settings-section'
-            if (collapsible) sec.classList.add('is-collapsible')
-            if (collapsible && startCollapsed) sec.classList.add('is-collapsed')
-
-            const titleEl = document.createElement(collapsible ? 'button' : 'div')
-            if (collapsible) titleEl.type = 'button'
-            titleEl.className = 'settings-section-title'
-            titleEl.textContent = title
-
-            const content = document.createElement('div')
-            content.className = 'settings-section-content'
-
-            if (collapsible) {
-                sectionIdCounter += 1
-                const contentId = 'settingsSec_' + sectionIdCounter
-                content.id = contentId
-                titleEl.setAttribute('aria-controls', contentId)
-                titleEl.setAttribute('aria-expanded', startCollapsed ? 'false' : 'true')
-
-                titleEl.addEventListener('click', () => {
-                    const collapsed = !sec.classList.contains('is-collapsed')
-                    sec.classList.toggle('is-collapsed', collapsed)
-                    titleEl.setAttribute('aria-expanded', collapsed ? 'false' : 'true')
-                })
-            }
-
-            sec.appendChild(titleEl)
-            sec.appendChild(content)
-            container.appendChild(sec)
-            return content
-        }
-
-        const makeRow = (labelText, descText) => {
-            const row = document.createElement('div')
-            row.className = 'settings-row'
-
-            const left = document.createElement('div')
-            left.className = 'settings-left'
-
-            const label = document.createElement('div')
-            label.className = 'settings-label'
-            label.textContent = labelText
-            left.appendChild(label)
-
-            if (descText) {
-                const desc = document.createElement('div')
-                desc.className = 'settings-desc'
-                desc.textContent = descText
-                left.appendChild(desc)
-            }
-
-            row.appendChild(left)
-            return row
-        }
-
-        const makeSwitch = (id, initialChecked, onChange, ariaLabel) => {
-            const wrap = document.createElement('label')
-            wrap.className = 'switch'
-            if (ariaLabel) wrap.setAttribute('aria-label', ariaLabel)
-
-            const input = document.createElement('input')
-            input.type = 'checkbox'
-            if (id) input.id = id
-            input.checked = !!initialChecked
-            input.addEventListener('change', () => onChange(!!input.checked))
-
-            const track = document.createElement('span')
-            track.className = 'switch-track'
-            track.setAttribute('aria-hidden', 'true')
-
-            wrap.appendChild(input)
-            wrap.appendChild(track)
-            return wrap
-        }
-
-        // Get engine settings service once for use across all sections
-        const engineSettings = (() => {
-            try { return _engine && _engine.getService ? _engine.getService('settings') : null } catch (_) { return null }
-        })()
-
-        // --- Audio ------------------------------------------------------------
-        const secAudio = addSection('Audio')
-
-        // Master volume
-        {
-            const row = makeRow('Master volume', 'Overall volume level.')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const slider = document.createElement('input')
-            slider.type = 'range'
-            slider.min = '0'
-            slider.max = '100'
-            slider.step = '5'
-            slider.value = typeof state.settingsVolume === 'number' ? state.settingsVolume : 100
-
-            const value = document.createElement('span')
-            value.className = 'settings-value'
-            value.textContent = slider.value + '%'
-
-            setMasterVolumePercent(slider.value)
-
-            slider.addEventListener('input', () => {
-                const v = Number(slider.value) || 0
-                state.settingsVolume = v
-                // Use engine settings service (locus_settings)
-                try {
-                    const settings = _engine && _engine.getService ? _engine.getService('settings') : null
-                    if (settings && settings.set) {
-                        settings.set('audio.masterVolume', v)
-                    }
-                } catch (e) {}
-                value.textContent = v + '%'
-                setMasterVolumePercent(v)
-            })
-
-            control.appendChild(slider)
-            row.appendChild(control)
-            row.appendChild(value)
-            secAudio.appendChild(row)
-        }
-
-        // Music toggle
-        {
-            const row = makeRow('Music', 'Background music during play.')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const sw = makeSwitch(null, state.musicEnabled !== false, (on) => {
-                setMusicEnabled(_engine, state, on)
-                requestSave('legacy')
-            }, 'Toggle music')
-            control.appendChild(sw)
-            row.appendChild(control)
-            secAudio.appendChild(row)
-        }
-
-        // SFX toggle
-        {
-            const row = makeRow('SFX', 'Combat and UI sound effects.')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const sw = makeSwitch(null, state.sfxEnabled !== false, (on) => {
-                setSfxEnabled(_engine, state, on)
-                requestSave('legacy')
-            }, 'Toggle sound effects')
-            control.appendChild(sw)
-            row.appendChild(control)
-            secAudio.appendChild(row)
-        }
-
-        // --- Display ----------------------------------------------------------
-        const secDisplay = addSection('Display')
-
-        // UI theme
-        {
-            const row = makeRow('Theme', 'Changes the overall UI palette.')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const themeSelectInline = document.createElement('select')
-            themeSelectInline.className = 'settings-select'
-
-            const themeOptions = [
-                { value: 'default', label: 'Default' },
-                { value: 'arcane', label: 'Arcane' },
-                { value: 'inferno', label: 'Inferno' },
-                { value: 'forest', label: 'Forest' },
-                { value: 'holy', label: 'Holy' },
-                { value: 'shadow', label: 'Shadow' }
-            ]
-
-            themeOptions.forEach((t) => {
-                const opt = document.createElement('option')
-                opt.value = t.value
-                opt.textContent = t.label
-                themeSelectInline.appendChild(opt)
-            })
-
-            // Hydrate from engine settings when present
-            try {
-                const settings = _engine && _engine.getService ? _engine.getService('settings') : null
-                if (settings && typeof settings.get === 'function') {
-                    themeSelectInline.value = settings.get('ui.theme', 'default')
-                }
-            } catch (_) {
-                themeSelectInline.value = 'default'
-            }
-            themeSelectInline.addEventListener('change', () => setTheme(themeSelectInline.value))
-
-            control.appendChild(themeSelectInline)
-            row.appendChild(control)
-            secDisplay.appendChild(row)
-        }
-
-        // Color scheme
-        {
-            const row = makeRow('Color scheme', 'Light or dark mode for the UI.')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const sel = document.createElement('select')
-            sel.className = 'settings-select'
-            sel.setAttribute('aria-label', 'Color scheme')
-            ;[
-                { value: 'auto', label: 'Auto' },
-                { value: 'light', label: 'Light' },
-                { value: 'dark', label: 'Dark' }
-            ].forEach((o) => {
-                const opt = document.createElement('option')
-                opt.value = o.value
-                opt.textContent = o.label
-                sel.appendChild(opt)
-            })
-
-            // Hydrate from engine settings when present
-            try {
-                if (engineSettings && engineSettings.get) {
-                    sel.value = engineSettings.get('a11y.colorScheme', 'auto')
-                }
-            } catch (_) {}
-
-            sel.addEventListener('change', () => {
-                const v = String(sel.value || 'auto')
-                try {
-                    if (engineSettings && engineSettings.set) {
-                        engineSettings.set('a11y.colorScheme', v)
-                    }
-                } catch (_) {}
-                requestSave('legacy')
-            })
-
-            control.appendChild(sel)
-            row.appendChild(control)
-            secDisplay.appendChild(row)
-        }
-
-        // UI scale
-        {
-            const row = makeRow('UI scale', 'Adjusts the size of all UI elements.')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const sel = document.createElement('select')
-            sel.className = 'settings-select'
-            sel.setAttribute('aria-label', 'UI scale')
-            ;[
-                { value: '0.9', label: 'Small' },
-                { value: '1', label: 'Default' },
-                { value: '1.1', label: 'Large' },
-                { value: '1.2', label: 'Extra Large' }
-            ].forEach((o) => {
-                const opt = document.createElement('option')
-                opt.value = o.value
-                opt.textContent = o.label
-                sel.appendChild(opt)
-            })
-
-            // Hydrate from engine settings when present
-            try {
-                if (engineSettings && engineSettings.get) {
-                    const scale = Number(engineSettings.get('ui.scale', 1))
-                    sel.value = String(scale)
-                }
-            } catch (_) {}
-
-            sel.addEventListener('change', () => {
-                const v = Number(sel.value) || 1
-                try {
-                    if (engineSettings && engineSettings.set) {
-                        engineSettings.set('ui.scale', v)
-                    }
-                } catch (_) {}
-                requestSave('legacy')
-            })
-
-            control.appendChild(sel)
-            row.appendChild(control)
-            secDisplay.appendChild(row)
-        }
-
-        // Text speed
-        {
-            const row = makeRow('Text speed', 'How quickly story text advances.')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const slider = document.createElement('input')
-            slider.type = 'range'
-            slider.min = '30'
-            slider.max = '200'
-            slider.step = '10'
-            slider.value = typeof state.settingsTextSpeed === 'number' ? state.settingsTextSpeed : 100
-
-            const value = document.createElement('span')
-            value.className = 'settings-value'
-            value.textContent = String(slider.value)
-
-            slider.addEventListener('input', () => {
-                const v = Number(slider.value) || 100
-                state.settingsTextSpeed = v
-                value.textContent = String(v)
-                // Use engine settings service (locus_settings)
-                try {
-                    const settings = _engine && _engine.getService ? _engine.getService('settings') : null
-                    if (settings && settings.set) {
-                        settings.set('ui.textSpeed', v)
-                    }
-                } catch (e) {}
-            })
-
-            control.appendChild(slider)
-            row.appendChild(control)
-            row.appendChild(value)
-            secDisplay.appendChild(row)
-        }
-
-        // --- Gameplay ---------------------------------------------------------
-        const secGameplay = addSection('Gameplay')
-
-        // Difficulty
-        {
-            const row = makeRow('Difficulty', 'Adjust challenge and enemy scaling.')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const diffSelect = document.createElement('select')
-            diffSelect.className = 'settings-select'
-            Object.values(DIFFICULTY_CONFIG).forEach((cfg) => {
-                const opt = document.createElement('option')
-                opt.value = cfg.id
-                opt.textContent = cfg.name
-                diffSelect.appendChild(opt)
-            })
-            diffSelect.value = state.difficulty || 'normal'
-            diffSelect.addEventListener('change', () => {
-                const newDiff = diffSelect.value
-                if (DIFFICULTY_CONFIG[newDiff]) {
-                    state.difficulty = newDiff
-                    updateHUD()
-                    requestSave('legacy')
-                }
-            })
-
-            control.appendChild(diffSelect)
-            row.appendChild(control)
-            secGameplay.appendChild(row)
-        }
-
-        // Show combat numbers
-        {
-            const row = makeRow('Show combat numbers', 'Display damage and healing numbers in combat.')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const sw = makeSwitch(null, state.settingsShowCombatNumbers !== false, (on) => {
-                state.settingsShowCombatNumbers = !!on
-                try {
-                    if (engineSettings && engineSettings.set) {
-                        engineSettings.set('gameplay.showCombatNumbers', !!on)
-                    } else {
-                        // Legacy fallback
-                        safeStorageSet('pq-show-combat-numbers', state.settingsShowCombatNumbers ? '1' : '0')
-                    }
-                } catch (e) {}
-                requestSave('legacy')
-            }, 'Toggle combat numbers')
-
-            control.appendChild(sw)
-            row.appendChild(control)
-            secGameplay.appendChild(row)
-        }
-
-        // Auto-save
-        {
-            const row = makeRow('Auto-save', 'Automatically save your progress periodically.')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const sw = makeSwitch(null, state.settingsAutoSave !== false, (on) => {
-                state.settingsAutoSave = !!on
-                try {
-                    if (engineSettings && engineSettings.set) {
-                        engineSettings.set('gameplay.autoSave', !!on)
-                    } else {
-                        // Legacy fallback
-                        safeStorageSet('pq-auto-save', state.settingsAutoSave ? '1' : '0')
-                    }
-                } catch (e) {}
-                requestSave('legacy')
-            }, 'Toggle auto-save')
-
-            control.appendChild(sw)
-            row.appendChild(control)
-            secGameplay.appendChild(row)
-        }
-
-        // --- Accessibility ----------------------------------------------------
-        const secAccess = addSection('Accessibility')
-        {
-            const row = makeRow('Reduce motion', 'Turns off animated HUD effects.')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const sw = makeSwitch(null, !!state.settingsReduceMotion, (on) => {
-                setReduceMotionEnabled(on)
-                requestSave('legacy')
-            }, 'Toggle reduce motion')
-
-            control.appendChild(sw)
-            row.appendChild(control)
-            secAccess.appendChild(row)
-        }
-
-        // Text size (named buckets -> numeric scale)
-        {
-            const row = makeRow('Text size', 'Scales UI text for readability.')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const sel = document.createElement('select')
-            sel.className = 'settings-select'
-            ;[
-                { value: 'small', label: 'Small' },
-                { value: 'default', label: 'Default' },
-                { value: 'large', label: 'Large' },
-                { value: 'xlarge', label: 'Extra Large' }
-            ].forEach((o) => {
-                const opt = document.createElement('option')
-                opt.value = o.value
-                opt.textContent = o.label
-                sel.appendChild(opt)
-            })
-
-            // Hydrate from engine settings when present.
-            try {
-                if (engineSettings && engineSettings.get) {
-                    const s = Number(engineSettings.get('a11y.textScale', 1))
-                    if (s <= 0.92) sel.value = 'small'
-                    else if (s < 1.05) sel.value = 'default'
-                    else if (s < 1.16) sel.value = 'large'
-                    else sel.value = 'xlarge'
-                }
-            } catch (_) {}
-
-            sel.addEventListener('change', () => {
-                const v = String(sel.value || 'default')
-                const scale = (v === 'small') ? 0.9 : (v === 'large') ? 1.1 : (v === 'xlarge') ? 1.2 : 1
-                try {
-                    if (engineSettings && engineSettings.set) engineSettings.set('a11y.textScale', scale)
-                } catch (_) {}
-                requestSave('legacy')
-            })
-
-            control.appendChild(sel)
-            row.appendChild(control)
-            secAccess.appendChild(row)
-        }
-
-        // High contrast (tri-state: auto/on/off)
-        {
-            const row = makeRow('High contrast', 'Boosts contrast to improve readability.')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const sel = document.createElement('select')
-            sel.className = 'settings-select'
-            ;[
-                { value: 'auto', label: 'Auto' },
-                { value: 'on', label: 'On' },
-                { value: 'off', label: 'Off' }
-            ].forEach((o) => {
-                const opt = document.createElement('option')
-                opt.value = o.value
-                opt.textContent = o.label
-                sel.appendChild(opt)
-            })
-
-            // Hydrate from engine settings when present.
-            try {
-                if (engineSettings && engineSettings.get) {
-                    const pref = engineSettings.get('a11y.highContrast', 'auto')
-                    if (pref === true) sel.value = 'on'
-                    else if (pref === false) sel.value = 'off'
-                    else sel.value = 'auto'
-                }
-            } catch (_) {}
-
-            sel.addEventListener('change', () => {
-                const v = String(sel.value || 'auto')
-                try {
-                    if (engineSettings && engineSettings.set) {
-                        if (v === 'on') engineSettings.set('a11y.highContrast', true)
-                        else if (v === 'off') engineSettings.set('a11y.highContrast', false)
-                        else engineSettings.set('a11y.highContrast', 'auto')
-                    }
-                } catch (_) {}
-                requestSave('legacy')
-            })
-
-            control.appendChild(sel)
-            row.appendChild(control)
-            secAccess.appendChild(row)
-        }
-
-        // Auto-equip loot (QoL)
-        {
-            const row = makeRow('Auto-equip loot', 'When you pick up a weapon/armor piece and the slot is empty, equip it automatically.')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const sw = makeSwitch(null, !!state.settingsAutoEquipLoot, (on) => {
-                state.settingsAutoEquipLoot = !!on
-                // Use engine settings service (locus_settings)
-                try {
-                    const settings = _engine && _engine.getService ? _engine.getService('settings') : null
-                    if (settings && settings.set) {
-                        settings.set('gameplay.autoEquipLoot', !!on)
-                    }
-                } catch (e) {}
-                requestSave('legacy')
-            }, 'Toggle auto-equip loot')
-
-            control.appendChild(sw)
-            row.appendChild(control)
-            secAccess.appendChild(row)
-        }
-
-        // --- Saves ------------------------------------------------------------
-        const secSaves = addSection('Saves', { collapsible: true, collapsed: true })
-
-        // Export current save as a JSON file (editable / backup)
-        {
-            const row = makeRow('Export save (JSON)', 'Downloads your current autosave as a readable .json file so you can back it up or edit it.')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const btn = document.createElement('button')
-            btn.className = 'btn outline'
-            btn.textContent = 'Export'
-            btn.addEventListener('click', () => {
-                try { exportCurrentSaveToFile() } catch (e) {
-                    console.error('Export failed', e)
-                    alert('Export failed.')
-                }
-            })
-
-            control.appendChild(btn)
-            row.appendChild(control)
-            secSaves.appendChild(row)
-        }
-
-        // Import a JSON save (overwrites autosave on this device)
-        {
-            const row = makeRow('Import save (JSON)', 'Imports a .json save file and loads it immediately (overwrites your current autosave).')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const btn = document.createElement('button')
-            btn.className = 'btn outline'
-            btn.textContent = 'Import'
-            btn.addEventListener('click', () => {
-                try { importSaveFromFile() } catch (e) {
-                    console.error('Import failed', e)
-                    alert('Import failed.')
-                }
-            })
-
-            control.appendChild(btn)
-            row.appendChild(control)
-            secSaves.appendChild(row)
-        }
-
-        // Backup all local saves as a bundle
-        {
-            const row = makeRow('Backup all saves', 'Exports autosave + manual slots as a single bundle file (useful before patching or testing).')
-            const control = document.createElement('div')
-            control.className = 'settings-control'
-
-            const btn = document.createElement('button')
-            btn.className = 'btn outline'
-            btn.textContent = 'Export All'
-            btn.addEventListener('click', () => {
-                try { exportAllSavesBundleToFile() } catch (e) {
-                    console.error('Export all failed', e)
-                    alert('Export failed.')
-                }
-            })
-
-            control.appendChild(btn)
-            row.appendChild(control)
-            secSaves.appendChild(row)
-        }
-
-
-        body.appendChild(container)
-
-        // --- Footer actions ---------------------------------------------------
-        const actions = document.createElement('div')
-        actions.className = 'modal-actions'
-
-        const btnBack = document.createElement('button')
-        btnBack.className = 'btn outline'
-        btnBack.textContent = 'Back'
-        btnBack.addEventListener('click', () => {
-            requestSave('legacy')
-            closeModal()
-        })
-
-        actions.appendChild(btnBack)
-        body.appendChild(actions)
-    })
-}
-
 function openPauseMenu() {
     openModal('Game Menu', (body) => {
         const p = document.createElement('p')
