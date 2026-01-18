@@ -282,6 +282,13 @@ import { createSaveManager } from '../persistence/saveManager.js'
 import { _STORAGE_DIAG_KEY_LAST_CRASH, _STORAGE_DIAG_KEY_LAST_SAVE_FAIL, safeStorageGet, safeStorageSet, safeStorageRemove } from '../../engine/storageRuntime.js'
 import { _perfNow, _ensurePerfDebug, perfRecord, perfWrap, perfWrapAsync } from '../../engine/perf.js'
 
+// Newly extracted modules (Phase 2 - Target: ~10,000 lines)
+import { createBattleManager } from '../combat/battleManager.js'
+import { createExplorationManager } from '../systems/explorationManager.js'
+import { createActionRenderer } from '../ui/actionRenderer.js'
+import { createTalentManager } from '../systems/talentManager.js'
+import { createProgressionManager } from '../systems/progressionManager.js'
+
 // --- Audio State Reference ---------------------------------------------------
 // Get audio state from the audio system module
 const audioState = getAudioState()
@@ -894,7 +901,47 @@ const ABILITY_UPGRADE_RULES = {
 // Lightweight talent system: earn talent points at specific levels, spend them
 // to unlock passive modifiers per class.
 
+// Lazy-initialized talent manager
+let _talentManager = null
+function _getTalentManager() {
+    if (_talentManager) return _talentManager
+    _talentManager = createTalentManager({
+        state,
+        addLog,
+        updateHUD,
+        updateEnemyPanel,
+        _recalcPlayerStats,
+        refreshCharacterSheetIfOpen
+    })
+    return _talentManager
+}
+
 function ensurePlayerTalents(p) {
+    return _getTalentManager().ensurePlayerTalents(p)
+}
+
+function playerHasTalent(p, talentId) {
+    return _getTalentManager().playerHasTalent(p, talentId)
+}
+
+function grantTalentPointIfNeeded(p, newLevel) {
+    return _getTalentManager().grantTalentPointIfNeeded(p, newLevel)
+}
+
+function getTalentsForClass(classId) {
+    return _getTalentManager().getTalentsForClass(classId)
+}
+
+function canUnlockTalent(p, tdef) {
+    return _getTalentManager().canUnlockTalent(p, tdef)
+}
+
+function unlockTalent(p, talentId) {
+    return _getTalentManager().unlockTalent(p, talentId)
+}
+
+// Keep the original ensurePlayerTalents inline for backwards compatibility
+function _ensurePlayerTalents_inline(p) {
     if (!p) return
     if (p.talentPoints == null) p.talentPoints = 0
     if (!p.talents || typeof p.talents !== 'object') p.talents = {}
@@ -947,59 +994,6 @@ function ensurePlayerStatsDefaults(p) {
     }
 
     if (s.weaponElementType === undefined) s.weaponElementType = null
-}
-
-function playerHasTalent(p, talentId) {
-    ensurePlayerTalents(p)
-    return !!(p && p.talents && p.talents[talentId])
-}
-
-function grantTalentPointIfNeeded(p, newLevel) {
-    // Award on 3/6/9/12/... to keep pacing simple.
-    if (!p) return
-    ensurePlayerTalents(p)
-    if (newLevel % 3 === 0) p.talentPoints += 1
-}
-
-
-function getTalentsForClass(classId) {
-    return TALENT_DEFS[classId] || []
-}
-
-function canUnlockTalent(p, tdef) {
-    if (!p || !tdef) return false
-    ensurePlayerTalents(p)
-    if (playerHasTalent(p, tdef.id)) return false
-    if ((p.level || 1) < (tdef.levelReq || 1)) return false
-    if ((p.talentPoints || 0) <= 0) return false
-    return true
-}
-
-function unlockTalent(p, talentId) {
-    if (!p || !talentId) return false
-    ensurePlayerTalents(p)
-    const list = getTalentsForClass(p.classId)
-    const tdef = list.find((t) => t.id === talentId)
-    if (!tdef) return false
-    if (!canUnlockTalent(p, tdef)) return false
-    p.talents[talentId] = true
-    p.talentPoints = Math.max(0, (p.talentPoints || 0) - 1)
-    addLog('Talent unlocked: ' + tdef.name + '.', 'system')
-
-    // Some talents modify derived stats (ex: elemental resist). Apply immediately so
-    // the Character Sheet + combat math reflect the new talent without requiring
-    // an unrelated stat refresh (equip, level-up, etc.).
-    try {
-        if (state && state.player === p) {
-            _recalcPlayerStats()
-            // Keep immediate UI feedback consistent across ALL classes.
-            // (Many talents affect dodge/resistAll/max resource, etc.)
-            try { updateHUD() } catch (_) {}
-            try { refreshCharacterSheetIfOpen(state, playerHasTalent) } catch (_) {}
-            try { if (state.inCombat) updateEnemyPanel() } catch (_) {}
-        }
-    } catch (_) {}
-    return true
 }
 
 // Wrapper functions for character system (pass dependencies)
@@ -2807,209 +2801,47 @@ function updateClassMeterHUD() {
 }
 
 
-
-function renderActions() {
-    const actionsEl = document.getElementById('actions')
-    actionsEl.innerHTML = ''
-
-    if (!state.player) return
-
-    if (state.inCombat) {
-        // Hardening: never allow Explore actions to render while inCombat.
-        // If combat pointers desync, attempt a quick repair.
-        try { ensureCombatPointers() } catch (_) {}
-
-        if (state.inCombat && state.currentEnemy) {
-            renderCombatActions(actionsEl)
-        } else {
-            // If we still can't recover, fall back safely.
-            state.inCombat = false
-            state.currentEnemy = null
-            state.enemies = []
-            state.targetEnemyIndex = 0
-            if (state.combat) {
-                state.combat.busy = false
-                state.combat.phase = 'player'
-            }
-            renderExploreActions(actionsEl)
-        }
-    } else {
-        renderExploreActions(actionsEl)
-    }
+// --- Action Rendering (delegated to actionRenderer module) ------------------
+let _actionRenderer = null
+function _getActionRenderer() {
+    if (_actionRenderer) return _actionRenderer
+    _actionRenderer = createActionRenderer({
+        state,
+        handleExploreClick,
+        openExploreModal,
+        openInventoryModal,
+        openSpellsModal,
+        openTavernModal,
+        openBankModal,
+        openMerchantModal,
+        openTownHallModal,
+        openGovernmentModal,
+        playerBasicAttack,
+        playerInterrupt,
+        tryFlee,
+        ensureCombatPointers,
+        canPlayerActNow,
+        dispatchGameCommand,
+        quests,
+        addLog
+    })
+    return _actionRenderer
 }
 
-function makeActionButton(label, onClick, extraClass, opts) {
-    // Backwards-compatible: allow makeActionButton(label, onClick, opts)
-    let cls = extraClass
-    let o = opts
-    if (cls && typeof cls === 'object' && !o) {
-        o = cls
-        cls = ''
-    }
-
-    const btn = document.createElement('button')
-    btn.className = 'btn small ' + (cls || '')
-    btn.textContent = label
-
-    const cfg = o || {}
-    if (cfg.title) btn.title = String(cfg.title)
-    if (cfg.disabled) {
-        btn.disabled = true
-        btn.classList.add('disabled')
-    }
-
-    btn.addEventListener('click', (e) => {
-        if (btn.disabled) return
-        onClick(e)
-    })
-    return btn
+function renderActions() {
+    return _getActionRenderer().renderActions()
 }
 
 function renderExploreActions(actionsEl) {
-    actionsEl.innerHTML = ''
-    if (!state.player) return
-
-    if (!state.ui) state.ui = {}
-    const ui = state.ui
-    const inVillage = state.area === 'village'
-    const showVillageMenu = inVillage && ui.villageActionsOpen
-
-    // 🔹 VILLAGE SUBMENU MODE ---------------------------------------------------
-    if (showVillageMenu) {
-        actionsEl.appendChild(
-            makeActionButton('Elder Rowan', () => {
-                if (!dispatchGameCommand('GAME_OPEN_ELDER_ROWAN', {})) {
-                    if (quests && quests.openElderRowanDialog) quests.openElderRowanDialog()
-                }
-            })
-        )
-
-        actionsEl.appendChild(
-            makeActionButton('Tavern', () => {
-                if (!dispatchGameCommand('GAME_OPEN_TAVERN', {})) openTavernModal()
-            })
-        )
-
-        actionsEl.appendChild(
-            makeActionButton('Bank', () => {
-                if (!dispatchGameCommand('GAME_OPEN_BANK', {})) openBankModal()
-            })
-        )
-
-        actionsEl.appendChild(
-            makeActionButton('Merchant', () => {
-                if (!dispatchGameCommand('GAME_OPEN_MERCHANT', {})) openMerchantModal()
-            })
-        )
-
-        actionsEl.appendChild(
-            makeActionButton('Town Hall', () => {
-                if (!dispatchGameCommand('GAME_OPEN_TOWN_HALL', {})) openTownHallModal()
-            })
-        )
-
-        actionsEl.appendChild(
-            makeActionButton('Back', () => {
-                ui.villageActionsOpen = false
-                renderActions()
-            })
-        )
-
-        return
-    }
-
-    // 🔹 DEFAULT (NON-VILLAGE or VILLAGE NORMAL BAR) ----------------------------
-    // Village-only: button to enter the village submenu
-    if (inVillage) {
-        actionsEl.appendChild(
-            makeActionButton('Village ▸', () => {
-                ui.villageActionsOpen = true
-                renderActions()
-            })
-        )
-
-        // ✅ Only show Realm & Council if you're in the village
-        actionsEl.appendChild(
-            makeActionButton('Realm & Council', () => {
-                if (!dispatchGameCommand('GAME_OPEN_GOVERNMENT', {})) openGovernmentModal()
-            })
-        )
-    }
-
-    actionsEl.appendChild(
-        makeActionButton(
-            'Explore',
-            () => {
-                if (!dispatchGameCommand('GAME_EXPLORE', {})) handleExploreClick()
-            },
-            ''
-        )
-    )
-
-    actionsEl.appendChild(
-        makeActionButton('Change Area', () => {
-            if (!dispatchGameCommand('GAME_CHANGE_AREA', {})) {
-                ui.exploreChoiceMade = false
-                openExploreModal()
-            }
-        })
-    )
-
-    actionsEl.appendChild(
-        makeActionButton('Inventory', () => {
-            if (!dispatchGameCommand('GAME_OPEN_INVENTORY', { inCombat: false })) openInventoryModal(false)
-        })
-    )
-
-    actionsEl.appendChild(
-        makeActionButton('Spells', () => {
-            if (!dispatchGameCommand('GAME_OPEN_SPELLS', { inCombat: false })) openSpellsModal(false)
-        })
-    )
-
-    // Cheats button removed from the main action bar.
-    // In dev-cheat mode, Cheats are accessed via the 🛠️ HUD pill next to 🧪 and the Menu button.
+    return _getActionRenderer().renderExploreActions(actionsEl)
 }
+
 function renderCombatActions(actionsEl) {
-    actionsEl.innerHTML = ''
+    return _getActionRenderer().renderCombatActions(actionsEl)
+}
 
-    const locked = !canPlayerActNow()
-    const lockTitle = locked ? 'Resolve the current turn first.' : ''
-
-    actionsEl.appendChild(
-        makeActionButton('Attack', () => {
-            if (!dispatchGameCommand('COMBAT_ATTACK', {})) playerBasicAttack()
-        }, '', { disabled: locked, title: lockTitle })
-    )
-
-    actionsEl.appendChild(
-        makeActionButton('Interrupt', () => {
-            if (!dispatchGameCommand('COMBAT_INTERRUPT', {})) playerInterrupt()
-        }, 'outline', { disabled: locked, title: lockTitle })
-    )
-
-    actionsEl.appendChild(
-        makeActionButton('Spells', () => {
-            if (!dispatchGameCommand('GAME_OPEN_SPELLS', { inCombat: true })) openSpellsModal(true)
-        }, '', { disabled: locked, title: lockTitle })
-    )
-
-    actionsEl.appendChild(
-        makeActionButton('Items', () => {
-            if (!dispatchGameCommand('GAME_OPEN_INVENTORY', { inCombat: true })) openInventoryModal(true)
-        }, '', { disabled: locked, title: lockTitle })
-    )
-
-    const isBoss = !!(state.currentEnemy && state.currentEnemy.isBoss)
-    actionsEl.appendChild(
-        makeActionButton(isBoss ? 'No Escape' : 'Flee', () => {
-            if (isBoss) {
-                addLog('This foe blocks your escape!', 'danger')
-            } else {
-                if (!dispatchGameCommand('COMBAT_FLEE', {})) tryFlee()
-            }
-        }, isBoss ? 'outline' : '', { disabled: locked, title: lockTitle })
-    )
+function makeActionButton(label, onClick, extraClass, opts) {
+    return _getActionRenderer().makeActionButton(label, onClick, extraClass, opts)
 }
 
 // HUD swipe tracking
@@ -5705,226 +5537,54 @@ function recordBattleResult(outcome) {
     }
 }
 
-function handleEnemyDefeat(enemyArg) {
-    return withSaveTxn('combat:enemyDefeat', () => {
-    const enemy = enemyArg || state.currentEnemy
-    if (!enemy) return
-
-    // Patch 1.2.70: prevent duplicate reward processing.
-    // Multi-enemy battles can produce several "hp <= 0" enemies in one action.
-    // We mark an enemy as handled so we never grant XP/loot twice (including after load).
-    if (enemy._defeatHandled) return
-    enemy._defeatHandled = true
-
-    // Mark dead
-    enemy.hp = 0
-
-    const rarityTag =
-        enemy.rarityLabel && Number.isFinite(enemy.rarityTier) && enemy.rarityTier >= 3
-            ? ' [' + enemy.rarityLabel + ']'
-            : ''
-
-    const all = getAllEnemies()
-    const alive = getAliveEnemies()
-
-
-    // IMPORTANT: grantExperience() triggers a save/invariant scan.
-    // If this defeat ends the battle, clear combat state BEFORE granting XP so
-    // we never save with inCombat=true and no currentEnemy.
-    if (!alive.length) {
-        state.inCombat = false
-        state.currentEnemy = null
-        state.enemies = []
-        state.targetEnemyIndex = 0
-        if (state.combat) {
-            state.combat.busy = false
-            state.combat.phase = 'player'
-        }
-    } else {
-        // Mid-battle saves require a valid living target.
-        try { syncCurrentEnemyToTarget() } catch (_) {}
-    }
-
-    addLog(
-        'You defeated ' + enemy.name + (enemy.isElite ? ' [Elite]' : '') + rarityTag + '!',
-        'good'
-    )
-
-    // Patch 1.2.0: apply on-kill equipment traits / talent triggers
-    applyEquipmentOnKill(enemy)
-
-    const xp = enemy.xp
-    const gold =
-        enemy.goldMin +
-        randInt(0, enemy.goldMax - enemy.goldMin, 'loot.gold')
-
-    addLog('You gain ' + xp + ' XP and ' + gold + ' gold.', 'good')
-
-    state.player.gold += gold
-    grantExperience(xp)
-
-    // Loot drops (cap drops in multi-enemy battles to reduce spam)
-    const c = ensureCombatTurnState()
-    const dropsSoFar = c ? (c.battleDrops || 0) : 0
-
-    let dropChance = enemy.isBoss ? 1.0 : enemy.isElite ? 0.9 : 0.7
-    if (all.length > 1 && !enemy.isBoss) dropChance *= 0.85
-
-    if (typeof enemy.rarityDropMult === 'number' && Number.isFinite(enemy.rarityDropMult)) {
-        dropChance = Math.max(0, Math.min(1.0, dropChance * enemy.rarityDropMult))
-    }
-
-    const dropCap = all.length > 1 ? 2 : 99
-
-    if (dropsSoFar < dropCap && rand('loot.drop') < dropChance) {
-        const _lootArgs = {
-            area: state.area,
-            playerLevel: state.player.level,
-            enemy,
-            playerResourceKey: state.player.resourceKey
-        }
-        const drops = (() => {
-            try {
-                if (state && state.debug && state.debug.capturePerf) {
-                    return perfWrap(state, 'loot:generateLootDrop', { area: _lootArgs.area }, () => generateLootDrop(_lootArgs))
-                }
-            } catch (_) {}
-            return generateLootDrop(_lootArgs)
-        })()
-
-        if (drops && drops.length) {
-            drops.forEach((d) => addGeneratedItemToInventory(d, d.quantity || 1))
-
-            const names = drops
-                .map(
-                    (d) =>
-                        d.name +
-                        (d.type === 'potion' && (d.quantity || 1) > 1
-                            ? ' ×' + (d.quantity || 1)
-                            : '')
-                )
-                .join(', ')
-
-            addLog('You loot ' + names + '.', 'good')
-
-            if (c) c.battleDrops = (c.battleDrops || 0) + 1
-        }
-    }
-
-    // World event (consumed by questEvents + autosave plugins)
-    try { _engine && _engine.emit && _engine.emit('world:enemyDefeated', { enemy }) } catch (_) {}
-
-    // Legacy quest hook (fallback when questEvents plugin isn't present)
-    if (!_questEventsEnabled()) {
-        try { quests && quests.applyQuestProgressOnEnemyDefeat && quests.applyQuestProgressOnEnemyDefeat(enemy) } catch (_) {}
-    }
-
-    // If any enemies remain, keep fighting.
-    if (alive.length > 0) {
-        // Ensure target is valid.
-        syncCurrentEnemyToTarget()
-        updateHUD()
-        updateEnemyPanel()
-        renderActions()
-        requestSave('legacy')
-        return
-    }
-
-    // Battle ends.
-    state.inCombat = false
-
-    try {
-        _engine && _engine.emit && _engine.emit('world:battleEnded', { result: 'win', finalEnemy: enemy })
-    } catch (_) {}
-
-    // Economy reacts once per battle
-    handleEconomyAfterBattle(state, enemy, state.area)
-
-    // dynamic difficulty: one result per battle
-    recordBattleResult('win')
-
-    state.currentEnemy = null
-    state.enemies = []
-
-    updateHUD()
-    updateEnemyPanel()
-    renderActions()
-    requestSave('legacy')
+// --- Battle Management (delegated to battleManager module) ------------------
+let _battleManager = null
+function _getBattleManager() {
+    if (_battleManager) return _battleManager
+    _battleManager = createBattleManager({
+        state,
+        rand,
+        randInt,
+        addLog,
+        setScene,
+        updateHUD,
+        updateEnemyPanel,
+        renderActions,
+        requestSave,
+        withSaveTxn,
+        getActiveDifficultyConfig,
+        recordInput,
+        recordBattleResult,
+        ensureCombatTurnState,
+        ensureCombatPointers,
+        syncCurrentEnemyToTarget,
+        getAllEnemies,
+        getAliveEnemies,
+        resetPlayerCombatStatus,
+        applyEquipmentOnKill,
+        grantExperience,
+        generateLootDrop,
+        addGeneratedItemToInventory,
+        handleEconomyAfterBattle,
+        openModal,
+        closeModal,
+        loadGameFromSlot: () => loadGame(true),
+        switchScreen,
+        perfWrap,
+        _engine,
+        _questEventsEnabled,
+        quests,
+        modalEl
     })
+    return _battleManager
+}
+
+function handleEnemyDefeat(enemyArg) {
+    return _getBattleManager().handleEnemyDefeat(enemyArg)
 }
 
 function handlePlayerDefeat() {
-    // inform dynamic difficulty system of the loss
-    recordBattleResult('loss')
-
-    // Mark as defeated so exploration/actions can't proceed behind the defeat screen.
-    if (!state.flags) state.flags = {}
-    state.flags.playerDefeated = true
-
-    // Clamp to dead state
-    if (state.player && !state.flags.godMode) state.player.hp = 0
-
-    addLog('You fall to the ground, defeated.', 'danger')
-
-    // Clear combat state completely (multi-enemy aware)
-    state.inCombat = false
-
-    try {
-        _engine && _engine.emit && _engine.emit('world:battleEnded', { result: 'loss' })
-    } catch (_) {}
-    state.currentEnemy = null
-    state.enemies = []
-    state.targetEnemyIndex = 0
-    if (state.combat) {
-        state.combat.busy = false
-        state.combat.phase = 'player'
-    }
-
-    resetPlayerCombatStatus(state.player)
-    updateHUD()
-
-    openModal('Defeat', (body) => {
-        const p = document.createElement('p')
-        p.className = 'modal-subtitle'
-        p.textContent =
-            'Your journey ends here... but legends often get second chances.'
-        body.appendChild(p)
-
-        const row = document.createElement('div')
-        row.className = 'item-actions'
-
-        const btnLoad = document.createElement('button')
-        btnLoad.className = 'btn outline'
-        btnLoad.textContent = 'Load Last Save'
-        btnLoad.addEventListener('click', () => {
-            try { if (modalEl) modalEl.dataset.lock = '0' } catch (_) {}
-            closeModal()
-            loadGame(true)
-        })
-
-        const btnMenu = document.createElement('button')
-        btnMenu.className = 'btn outline'
-        btnMenu.textContent = 'Main Menu'
-        btnMenu.addEventListener('click', () => {
-            try { if (modalEl) modalEl.dataset.lock = '0' } catch (_) {}
-            closeModal()
-            switchScreen('mainMenu')
-        })
-
-        row.appendChild(btnLoad)
-        row.appendChild(btnMenu)
-        body.appendChild(row)
-    })
-
-    // Make defeat modal non-dismissable by clicking outside / pressing ESC.
-    try {
-        if (modalEl) {
-            modalEl.dataset.lock = '1'
-            modalEl.dataset.owner = 'defeat'
-        }
-        const closeBtn = document.getElementById('modalClose')
-        if (closeBtn) closeBtn.style.display = 'none'
-    } catch (_) {}
+    return _getBattleManager().handlePlayerDefeat()
 }
 
 function tryFlee() {
@@ -6170,160 +5830,8 @@ function applyEliteModifiers(enemy, diff) {
 }
 
 function startBattleWith(templateId) {
-    const template = ENEMY_TEMPLATES[templateId]
-    if (!template) return
-
-    // Guard: do not start a new battle if we're already in combat.
-    // This prevents re-entrant explore clicks or modal flows from corrupting combat state.
-    if (state && state.inCombat) {
-        try { ensureCombatPointers() } catch (_) {}
-        return
-    }
-
-    recordInput('combat.start', {
-        templateId,
-        area: state && state.area ? state.area : null
-    })
-
-    const diff = getActiveDifficultyConfig()
-
-    // Zone-based enemy level scaling
-    const areaId = state.area || 'village'
-    const zone = ZONE_DEFS[areaId] || { minLevel: 1, maxLevel: 1 }
-
-    // Multi-enemy encounter sizing (Patch 1.1.9)
-    // Patch 1.2.0: encounter sizing is now difficulty-weighted.
-    //  - Easy:   almost always 1 enemy; rarely 2; never 3.
-    //  - Normal: mostly 1 enemy; noticeably higher chance for 2; rare 3.
-    //  - Hard:   mostly 2 enemies; sometimes 3; rarely 1.
-    let groupSize = 1
-
-    // Cheat override: force the *next* encounter group size (1..3). Auto-clears after use.
-    // This is used by the Cheat Menu's quick spawn tools.
-    try {
-        const forced = state && state.flags ? Number(state.flags.forceNextGroupSize) : NaN
-        if (Number.isFinite(forced) && forced >= 1 && forced <= 3) {
-            groupSize = Math.floor(forced)
-            // one-shot so it doesn't surprise players later
-            state.flags.forceNextGroupSize = null
-        }
-    } catch (_) {}
-    if (!template.isBoss) {
-        const r = rand('encounter.groupSize')
-
-        // Use closestId so Dynamic difficulty also maps cleanly.
-        // Use closestId so Dynamic difficulty also maps cleanly.
-        // NOTE: getActiveDifficultyConfig() returns { id:'dynamic', closestId:'easy'|'normal'|'hard' } for Dynamic.
-        // For fixed difficulties, closestId is undefined so we fall back to diff.id.
-        let diffId = 'normal'
-        if (diff && typeof diff.id === 'string') {
-            if (diff.id === 'dynamic') diffId = (diff.closestId || 'normal')
-            else diffId = diff.id
-        }
-        diffId = String(diffId).toLowerCase()
-
-        if (diffId === 'easy') {
-            // ~95%:1, ~5%:2, 0%:3
-            if (r < 0.05) groupSize = 2
-        } else if (diffId === 'hard') {
-            // ~10%:1, ~65%:2, ~25%:3
-            if (r < 0.25) groupSize = 3
-            else if (r < 0.90) groupSize = 2
-        } else {
-            // Normal (default): ~70%:1, ~28%:2, ~2%:3
-            if (r < 0.02) groupSize = 3
-            else if (r < 0.30) groupSize = 2
-        }
-    }
-
-    const enemies = []
-    for (let i = 0; i < groupSize; i++) {
-        const enemy = buildEnemyForBattle(template, {
-            zone,
-            diffCfg: diff,
-            areaId,
-            rand,
-            randInt,
-            pickEnemyAbilitySet
-        })
-        if (!enemy) continue
-
-        // Runtime combat state
-        enemy.armorBuff = 0
-        enemy.guardTurns = 0
-        enemy.bleedTurns = 0
-        enemy.bleedDamage = 0
-        enemy.burnTurns = 0
-        enemy.burnDamage = 0
-
-        // Group tuning: slightly squish per-enemy durability.
-        if (groupSize === 2) {
-            enemy.maxHp = Math.max(1, Math.floor(enemy.maxHp * 0.78))
-            enemy.attack = Math.max(1, Math.floor(enemy.attack * 0.92))
-            enemy.magic = Math.max(0, Math.floor(enemy.magic * 0.92))
-        } else if (groupSize === 3) {
-            enemy.maxHp = Math.max(1, Math.floor(enemy.maxHp * 0.66))
-            enemy.attack = Math.max(1, Math.floor(enemy.attack * 0.88))
-            enemy.magic = Math.max(0, Math.floor(enemy.magic * 0.88))
-        }
-        enemy.hp = enemy.maxHp
-
-        if (groupSize > 1) {
-            enemy.name = enemy.name + ' #' + (i + 1)
-        }
-
-        enemies.push(enemy)
-    }
-
-    if (!enemies.length) return
-
-    resetPlayerCombatStatus(state.player)
-
-    state.enemies = enemies
-    state.targetEnemyIndex = 0
-    state.currentEnemy = enemies[0]
-    state.inCombat = true
-
-    // Initialize the turn engine.
-    ensureCombatTurnState()
-    state.combat.phase = 'player'
-    state.combat.busy = false
-    state.combat.round = 1
-    state.combat.battleDrops = 0
-
-    const tags = enemies.some((e) => e.isBoss) ? ' [Boss]' : ''
-    const titleName = groupSize === 1 ? enemies[0].name : 'Enemies (' + groupSize + ')'
-
-    setScene('Battle - ' + titleName, titleName + tags + ' stands in your way.')
-
-    if (groupSize === 1) {
-        addLog('A ' + enemies[0].name + ' appears!', enemies[0].isBoss ? 'danger' : 'system')
-    } else {
-        addLog('Enemies appear: ' + enemies.map((e) => e.name).join(', ') + '!', 'danger')
-    }
-
-    // World event (plugins may respond: autosave, analytics, etc.)
-    try {
-        if (_engine && typeof _engine.emit === 'function') {
-            _engine.emit('world:battleStarted', {
-                enemies: enemies.map((e) => ({ id: e.id, name: e.name, isBoss: !!e.isBoss })),
-                groupSize,
-            })
-        }
-    } catch (_) {}
-
-    // Start-of-turn effects for the player (e.g., bleed) should apply as soon as
-    // the player is given control for the first turn.
-    beginPlayerTurn()
-
-    // Ensure HUD + class meters update as soon as the enemies spawn.
-    updateHUD()
-    updateEnemyPanel()
-    renderActions()
-    requestSave('legacy')
+    return _getBattleManager().startBattleWith(templateId)
 }
-// --- AREA / EXPLORATION UI ----------------------------------------------------
-
 function ensureUiState() {
     if (!state.ui) {
         state.ui = { exploreChoiceMade: false }
@@ -6447,249 +5955,68 @@ function openExploreModal() {
 
 // --- EXPLORATION & QUESTS -----------------------------------------------------
 
-function exploreArea() {
-    const p = state.player
-    if (p && finiteNumber(p.hp, 0) <= 0) {
-        if (state.flags && state.flags.godMode) {
-            p.hp = 1
-        } else {
-            // If the player is defeated, keep them on the defeat screen.
-            handlePlayerDefeat()
-            return
-        }
-    }
-
-    // Guard: never run exploration logic while in combat (prevents state corruption).
-    if (state && state.inCombat) {
-        try { ensureCombatPointers() } catch (_) {}
-        addLog('You cannot explore while in combat.', 'danger')
-        return
-    }
-
-    const area = state.area
-    recordInput('explore', { area })
-
-    // Advance world time by one part-of-day whenever you explore
-    // (Patch 1.2.52: unified world tick pipeline)
-    const timeStep = advanceWorldTime(state, 1, 'explore', { addLog })
-    const timeLabel = formatTimeShort(timeStep.after)
-
-    if (timeStep.dayChanged) {
-        addLog('A new day begins in Emberwood. ' + timeLabel + '.', 'system')
-    } else {
-        addLog('Time passes... ' + timeLabel + '.', 'system')
-    }
-
-    updateTimeDisplay()
-    // NEW: update ambient music based on area + time
-    updateAreaMusic(state)
-
-    // Daily ticks are handled inside advanceWorldTime() when the day changes.
-
-    // --- QUESTS (modularized) ------------------------------------------------
-    // Handles main-quest story beats, side-quest events, and boss triggers.
-    if (quests.handleExploreQuestBeats(area)) return
-
-    // --- WANDERING MERCHANT (outside village) ---------------------------------
-    if (area !== 'village') {
-        // Small chance each explore click to meet a traveling merchant
-        if (rand('encounter.rare') < 0.1) {
-            let sceneText =
-                'Along the road, a lone cart creaks to a stop. A cloaked figure raises a hand in greeting.'
-
-            if (area === 'forest') {
-                sceneText =
-                    'Deeper in the forest, a lantern glows between the trees – a traveling merchant has set up a tiny camp.'
-            } else if (area === 'ruins') {
-                sceneText =
-                    'Among the shattered stones of the Spire, a daring merchant has laid out wares on a cracked pillar.'
-            }
-
-            setScene('Wandering Merchant', sceneText)
-            addLog(
-                'You encounter a wandering merchant on your travels.',
-                'system'
-            )
-            openMerchantModal('wandering') // NEW: different context
-            requestSave('legacy')
-            return
-        }
-    }
-
-    // --- GENERIC RANDOM ENCOUNTER LOGIC ---------------------------------------
-    const encounterList = RANDOM_ENCOUNTERS[area] || []
-    if (encounterList.length && rand('encounter.listUse') < 0.7) {
-        const id =
-            encounterList[randInt(0, encounterList.length - 1, 'encounter.listPick')]
-        startBattleWith(id)
-        return
-    }
-
-    // --- NO ENCOUNTER: FLAVOR TEXT --------------------------------------------
-    let title = 'Exploring'
-    let text =
-        'You search the surroundings but find only rustling leaves and distant cries.'
-
-    if (area === 'village') {
-        title = 'Emberwood Village'
-        text =
-            'You wander the streets of Emberwood. The tavern buzzes, the market clinks with coin, and gossip drifts on the air.'
-    } else if (area === 'ruins' && state.flags.dragonDefeated) {
-        title = 'Quiet Ruins'
-        text =
-            'The Spire lies quiet now, yet echoes of past horrors linger. Lesser creatures still prowl the broken halls.'
-    } else if (area === 'forest' && state.flags.goblinBossDefeated) {
-        title = 'Calmer Forest'
-        text =
-            'With the Warlord gone, Emberwood Forest feels less hostile – but not entirely safe.'
-    }
-
-    setScene(title, text)
-    addLog('You explore cautiously. For now, nothing attacks.', 'system')
-
-    // ✅ Make sure the actions bar matches the *current* area
-    renderActions()
-
-    requestSave('legacy')
+// --- Exploration (delegated to explorationManager module) -------------------
+let _explorationManager = null
+function _getExplorationManager() {
+    if (_explorationManager) return _explorationManager
+    _explorationManager = createExplorationManager({
+        state,
+        rand,
+        randInt,
+        addLog,
+        setScene,
+        renderActions,
+        requestSave,
+        recordInput,
+        advanceWorldTime,
+        formatTimeShort,
+        updateTimeDisplay,
+        updateAreaMusic,
+        ensureCombatPointers,
+        startBattleWith,
+        handlePlayerDefeat,
+        finiteNumber,
+        openMerchantModal,
+        quests
+    })
+    return _explorationManager
 }
 
-// --- EXPERIENCE & LEVELING ----------------------------------------------------
+function exploreArea() {
+    return _getExplorationManager().exploreArea()
+}
+// --- Progression (delegated to progressionManager module) -------------------
+let _progressionManager = null
+function _getProgressionManager() {
+    if (_progressionManager) return _progressionManager
+    _progressionManager = createProgressionManager({
+        state,
+        addLog,
+        updateHUD,
+        requestSave,
+        grantTalentPointIfNeeded,
+        rescaleActiveCompanion,
+        ensurePlayerSpellSystems,
+        tryUnlockClassSpells,
+        openSkillLevelUpModal,
+        ensurePlayerTalents,
+        _recalcPlayerStats,
+        ABILITIES
+    })
+    return _progressionManager
+}
 
 function grantExperience(amount) {
-    const p = state.player
-    let remaining = amount
-    while (remaining > 0) {
-        const toNext = p.nextLevelXp - p.xp
-        if (remaining >= toNext) {
-            p.xp += toNext
-            remaining -= toNext
-            levelUp()
-        } else {
-            p.xp += remaining
-            remaining = 0
-        }
-    }
-    updateHUD()
-    requestSave('legacy')
+    return _getProgressionManager().grantExperience(amount)
 }
 
 function cheatMaxLevel(opts = {}) {
-    const p = state.player
-    if (!p) return
-    const target = MAX_PLAYER_LEVEL
-    const startLevel = Number(p.level || 1)
-
-    if (startLevel >= target) {
-        addLog('Cheat: you are already at the level cap (' + target + ').', 'system')
-        return
-    }
-
-    const gainedLevels = target - startLevel
-
-    // Ensure optional containers exist (old saves / smoke sandboxes).
-    if (p.skillPoints == null) p.skillPoints = 0
-    ensurePlayerTalents(p)
-
-    // Award missing talent points exactly as if each level-up had occurred.
-    // This keeps the cheat consistent with real progression.
-    for (let lv = startLevel + 1; lv <= target; lv++) {
-        grantTalentPointIfNeeded(p, lv)
-    }
-
-    // Next-level XP curve (matches levelUp(): nextLevelXp *= 1.4 per level)
-    let next = 100
-    for (let lv = 1; lv < target; lv++) {
-        next = Math.round(next * 1.4)
-    }
-
-    p.level = target
-    p.xp = 0
-    p.nextLevelXp = next
-
-    // Award the missing skill points so you can distribute them manually.
-    p.skillPoints += gainedLevels
-
-    // Patch 1.1.0: grant upgrade tokens + unlocked spells
-    ensurePlayerSpellSystems(p)
-    p.abilityUpgradeTokens = (p.abilityUpgradeTokens || 0) + gainedLevels
-    const unlocks = CLASS_LEVEL_UNLOCKS[p.classId] || []
-    unlocks.forEach((u) => {
-        if (u && u.spell && u.level <= p.level && !p.spells.includes(u.spell)) {
-            p.spells.push(u.spell)
-        }
-    })
-    ensurePlayerSpellSystems(p)
-
-    // Sync + heal
-    rescaleActiveCompanion()
-    _recalcPlayerStats()
-    p.hp = p.maxHp
-    p.resource = p.maxResource
-
-    addLog(
-        'Cheat: set you to level ' +
-            target +
-            ' (+' +
-            gainedLevels +
-            ' skill points, ' +
-            (p.talentPoints || 0) +
-            ' talent points).',
-        'system'
-    )
-
-    updateHUD()
-    requestSave('legacy')
-
-    // Bring up the skill modal so the user can allocate points immediately.
-    // (The modal supports spending multiple points in one sitting.)
-    const wantModal = !(opts && opts.openModal === false)
-    try {
-        if (wantModal && (p.skillPoints || 0) > 0) {
-            // Replace the cheat modal with the skill modal so it can't be hidden behind it.
-            closeModal()
-            openSkillLevelUpModal()
-        }
-    } catch (_) {}
+    return _getProgressionManager().cheatMaxLevel(opts)
 }
 
 function levelUp() {
-    const p = state.player
-    p.level += 1
-    grantTalentPointIfNeeded(p, p.level)
-    p.nextLevelXp = Math.round(p.nextLevelXp * 1.4)
-
-    // Award 1 skill point per level
-    if (p.skillPoints == null) p.skillPoints = 0
-    p.skillPoints += 1
-
-    // Keep companion scaling synced to your level
-    rescaleActiveCompanion()
-
-    // Full heal using current max stats
-    p.hp = p.maxHp
-    p.resource = p.maxResource
-
-// Patch 1.1.0: spell loadouts, upgrades, and progression unlocks
-    ensurePlayerSpellSystems(p)
-    p.abilityUpgradeTokens = (p.abilityUpgradeTokens || 0) + 1
-    const unlocked = tryUnlockClassSpells(p)
-    if (unlocked && unlocked.length) {
-        unlocked.forEach((sid) => {
-            const a = ABILITIES[sid]
-            addLog('Unlocked: ' + (a ? a.name : sid) + '.', 'good')
-        })
-    }
-
-    addLog(
-        'You reach level ' + p.level + '! Choose a skill to improve.',
-        'good'
-    )
-
-    // Open skill selection modal
-    openSkillLevelUpModal()
+    return _getProgressionManager().levelUp()
 }
-
-// Wrapper to keep call sites unchanged
 function openGovernmentModal() {
     return _getGovernmentModal()()
 }
