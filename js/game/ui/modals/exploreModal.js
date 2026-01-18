@@ -50,7 +50,7 @@ export function createExploreModal({
                 },
                 {
                     id: 'forest',
-                    desc: 'Beasts, bandits, and goblin warbands beneath Emberwood's twisted canopy.'
+                    desc: 'Beasts, bandits, and goblin warbands beneath Emberwood twisted canopy.'
                 },
                 {
                     id: 'ruins',
@@ -70,19 +70,19 @@ export function createExploreModal({
                 },
                 {
                     id: 'keep',
-                    desc: 'A black fortress of obsidian and shadow — the source of the realm's corruption.'
+                    desc: 'A black fortress of obsidian and shadow - the source of the realm's corruption.'
                 },
                 {
                     id: 'oathgrove',
-                    desc: 'A hidden grove where the Blackbark Oath was first written — and where sap still listens.'
+                    desc: 'A hidden grove where the Blackbark Oath was first written - and where sap still listens.'
                 },
                 {
                     id: 'blackbarkDepths',
-                    desc: 'Lightless roots and oath‑carved veins beneath the village. Something stalks the dark.'
+                    desc: 'Lightless roots and oath-carved veins beneath the village. Something stalks the dark.'
                 },
                 {
                     id: 'starfallRidge',
-                    desc: 'A windswept ridge where fallen star‑iron hums in the stone.'
+                    desc: 'A windswept ridge where fallen star-iron hums in the stone.'
                 }
             ]
 
