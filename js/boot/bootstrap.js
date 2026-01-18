@@ -364,10 +364,29 @@ async function loadGameVersion(version, { onFail } = {}) {
     } catch (_) {}
   } catch (e) {
     console.error('[bootstrap] Failed to load:', entryUrl, e);
-    alert(`Failed to load:\n${entryUrl}\n\nCheck DevTools Console for details.`);
+    
+    // Enhanced error diagnostics - include stack trace and more details
+    let errorDetails = `Failed to load:\n${entryUrl}\n\n`;
+    errorDetails += `Error: ${e && e.message ? e.message : e}\n\n`;
+    
+    if (e && e.stack) {
+      errorDetails += `Stack trace:\n${e.stack}\n\n`;
+    }
+    
+    errorDetails += `Check DevTools Console for full details.`;
+    
+    alert(errorDetails);
     BootLoader.hide();
     try {
-      diagPush('scriptLoadError', { src: String(entryUrl || ''), version: version.id, message: String(e && e.message ? e.message : e) });
+      // Enhanced diagnostics with stack trace and error type
+      const errorInfo = { 
+        src: String(entryUrl || ''), 
+        version: version.id, 
+        message: String(e && e.message ? e.message : e),
+        errorName: e && e.name ? String(e.name) : 'Error',
+        stack: e && e.stack ? String(e.stack) : null
+      };
+      diagPush('scriptLoadError', errorInfo);
       if (window.PQ_BOOT_DIAG && window.PQ_BOOT_DIAG.renderOverlay) window.PQ_BOOT_DIAG.renderOverlay();
     } catch (_) {}
     BootLoader.hide();

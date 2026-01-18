@@ -173,10 +173,80 @@ export function installBootDiagnostics() {
       actions.appendChild(btnClose)
       overlay.appendChild(actions)
 
+      // Enhanced error display - show errors more prominently
+      const report = diag.buildReport()
+      
+      // If there are errors, display them prominently first
+      if (report.errors && report.errors.length > 0) {
+        const errorSection = document.createElement('div')
+        errorSection.style.background = '#2a0000'
+        errorSection.style.border = '2px solid #aa0000'
+        errorSection.style.borderRadius = '4px'
+        errorSection.style.padding = '12px'
+        errorSection.style.marginBottom = '16px'
+        
+        const errorTitle = document.createElement('div')
+        errorTitle.style.fontSize = '14px'
+        errorTitle.style.fontWeight = '700'
+        errorTitle.style.color = '#ff6666'
+        errorTitle.style.marginBottom = '8px'
+        errorTitle.textContent = `⚠️ ${report.errors.length} Error(s) Detected`
+        errorSection.appendChild(errorTitle)
+        
+        report.errors.forEach((err, idx) => {
+          const errDiv = document.createElement('div')
+          errDiv.style.marginBottom = '10px'
+          errDiv.style.paddingBottom = '10px'
+          errDiv.style.borderBottom = idx < report.errors.length - 1 ? '1px solid #440000' : 'none'
+          
+          const errMsg = document.createElement('div')
+          errMsg.style.fontSize = '13px'
+          errMsg.style.color = '#ffaaaa'
+          errMsg.style.marginBottom = '4px'
+          errMsg.textContent = `Error: ${err.message || 'Unknown error'}`
+          errDiv.appendChild(errMsg)
+          
+          if (err.src) {
+            const srcDiv = document.createElement('div')
+            srcDiv.style.fontSize = '11px'
+            srcDiv.style.color = '#aaaaaa'
+            srcDiv.style.marginBottom = '4px'
+            srcDiv.textContent = `Source: ${err.src}`
+            errDiv.appendChild(srcDiv)
+          }
+          
+          if (err.errorName) {
+            const typeDiv = document.createElement('div')
+            typeDiv.style.fontSize = '11px'
+            typeDiv.style.color = '#aaaaaa'
+            typeDiv.style.marginBottom = '4px'
+            typeDiv.textContent = `Type: ${err.errorName}`
+            errDiv.appendChild(typeDiv)
+          }
+          
+          if (err.stack) {
+            const stackDiv = document.createElement('div')
+            stackDiv.style.fontSize = '10px'
+            stackDiv.style.color = '#888888'
+            stackDiv.style.fontFamily = 'monospace'
+            stackDiv.style.whiteSpace = 'pre-wrap'
+            stackDiv.style.marginTop = '6px'
+            stackDiv.style.maxHeight = '200px'
+            stackDiv.style.overflow = 'auto'
+            stackDiv.textContent = err.stack
+            errDiv.appendChild(stackDiv)
+          }
+          
+          errorSection.appendChild(errDiv)
+        })
+        
+        overlay.appendChild(errorSection)
+      }
+
       const pre = document.createElement('pre')
       pre.style.whiteSpace = 'pre-wrap'
       pre.style.fontSize = '12px'
-      pre.textContent = JSON.stringify(diag.buildReport(), null, 2)
+      pre.textContent = JSON.stringify(report, null, 2)
       overlay.appendChild(pre)
 
       document.body.appendChild(overlay)

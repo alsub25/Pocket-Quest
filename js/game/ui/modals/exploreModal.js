@@ -148,7 +148,7 @@ export function createExploreModal({
 
                         closeModal()
 
-                        // ✅ Rebuild the action bar immediately so Village / Realm buttons disappear
+                        // Rebuild the action bar immediately so Village / Realm buttons disappear
                         renderActions()
 
                         exploreArea()
