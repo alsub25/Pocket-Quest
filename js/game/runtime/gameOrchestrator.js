@@ -77,6 +77,8 @@ import { createSkillLevelUpModal } from '../ui/modals/skillLevelUpModal.js'
 import { createExploreModal } from '../ui/modals/exploreModal.js'
 import { createGovernmentModal } from '../ui/modals/governmentModal.js'
 import { createGameSettingsModal } from '../ui/modals/gameSettingsModal.js'
+import { createChangelogModal } from '../ui/modals/changelogModal.js'
+import { createFeedbackModal } from '../ui/modals/feedbackModal.js'
 import {
     initAudio,
     setMasterVolumePercent,
@@ -4373,6 +4375,39 @@ function _getGameSettingsModal() {
         DIFFICULTY_CONFIG
     })
     return _gameSettingsModalFn
+}
+
+// Changelog modal initialization
+let _changelogModalFn = null
+function _getChangelogModal() {
+    if (_changelogModalFn) return _changelogModalFn
+    _changelogModalFn = createChangelogModal({
+        openModal,
+        closeModal,
+        openPauseMenu,
+        CHANGELOG
+    })
+    return _changelogModalFn
+}
+
+// Feedback modal initialization
+let _feedbackModalFn = null
+function _getFeedbackModal() {
+    if (_feedbackModalFn) return _feedbackModalFn
+    _feedbackModalFn = createFeedbackModal({
+        openModal,
+        state,
+        GAME_PATCH,
+        GAME_PATCH_NAME,
+        SAVE_SCHEMA,
+        getLastCrashReport,
+        copyFeedbackToClipboard,
+        safeStorageGet,
+        safeStorageRemove,
+        copyBugReportBundleToClipboard,
+        _STORAGE_DIAG_KEY_LAST_CRASH
+    })
+    return _feedbackModalFn
 }
 
 function canPayCost(cost) {
@@ -9619,223 +9654,7 @@ function setTheme(themeName) {
 // --- FEEDBACK / BUG REPORT -----------------------------------------------------
 
 function openFeedbackModal() {
-    const isGitHubPages = isRunningOnGitHubPages()
-    
-    // Build GitHub issue button HTML only if on GitHub Pages
-    const githubButtonHtml = isGitHubPages ? `
-    <button class="btn primary small" id="btnCreateGitHubIssue">
-      📝 Create GitHub Issue
-    </button>
-    ` : ''
-    
-    // Adjust subtitle based on where the game is running
-    const subtitle = isGitHubPages 
-        ? 'Help improve Emberwood: The Blackbark Oath by sending structured feedback. You can submit directly to GitHub or copy the text manually.'
-        : 'Help improve Emberwood: The Blackbark Oath by sending structured feedback. Copy this text and paste it wherever you\'re tracking issues.'
-    
-    const bodyHtml = `
-    <div class="modal-subtitle">
-      ${subtitle}
-    </div>
-
-    <div class="field">
-      <label for="feedbackType">Type</label>
-      <select id="feedbackType">
-        <option value="ui">UI issue</option>
-        <option value="bug">Bug</option>
-        <option value="balance">Balance issue</option>
-        <option value="suggestion">Suggestion</option>
-        <option value="other">Other</option>
-      </select>
-    </div>
-
-    <div class="field">
-      <label for="feedbackText">Details</label>
-      <textarea id="feedbackText"
-        placeholder="What happened? What did you expect? Steps to reproduce?"
-      ></textarea>
-    </div>
-
-    ${githubButtonHtml}
-
-    <button class="btn ${isGitHubPages ? 'small outline' : 'primary small'}" id="btnFeedbackCopy" style="${isGitHubPages ? 'margin-top:8px;' : ''}">
-      Copy Feedback To Clipboard
-    </button>
-
-    <button class="btn small outline" id="btnBugBundleCopy" style="margin-top:8px;">
-      Copy Bug Report Bundle (JSON)
-    </button>
-
-    <button class="btn small outline" id="btnClearCrash" style="margin-top:8px;">
-      Clear Crash Report
-    </button>
-    <p class="hint" id="feedbackStatus"></p>
-  `
-
-    openModal('Feedback / Bug Report', (bodyEl) => {
-        bodyEl.innerHTML = bodyHtml
-
-        const btnCreateIssue = document.getElementById('btnCreateGitHubIssue')
-        if (btnCreateIssue) {
-            btnCreateIssue.addEventListener('click', handleCreateGitHubIssue)
-        }
-
-        const btnCopy = document.getElementById('btnFeedbackCopy')
-        if (btnCopy) {
-            btnCopy.addEventListener('click', handleFeedbackCopy)
-        }
-
-        const btnBundle = document.getElementById('btnBugBundleCopy')
-        if (btnBundle) {
-            btnBundle.addEventListener('click', () => {
-                const status = document.getElementById('feedbackStatus')
-                copyBugReportBundleToClipboard()
-                    .then(() => status && (status.textContent = '✅ Copied JSON bundle!'))
-                    .catch(() => status && (status.textContent = '❌ Could not access clipboard.'))
-            })
-        }
-
-        const btnClearCrash = document.getElementById('btnClearCrash')
-        if (btnClearCrash) {
-            const status = document.getElementById('feedbackStatus')
-            const existing = safeStorageGet(_STORAGE_DIAG_KEY_LAST_CRASH, null)
-            btnClearCrash.disabled = !existing
-
-            btnClearCrash.addEventListener('click', () => {
-                safeStorageRemove(_STORAGE_DIAG_KEY_LAST_CRASH)
-                if (status) status.textContent = '🧹 Cleared last crash report.'
-                btnClearCrash.disabled = true
-            })
-        }
-    })
-}
-
-function handleFeedbackCopy() {
-    const typeEl = document.getElementById('feedbackType')
-    const textEl = document.getElementById('feedbackText')
-    const status = document.getElementById('feedbackStatus')
-    if (!typeEl || !textEl || !status) return
-
-    const type = typeEl.value
-    const text = (textEl.value || '').trim()
-
-    const payload = buildFeedbackPayload(type, text)
-
-    copyFeedbackToClipboard(payload)
-        .then(() => (status.textContent = '✅ Copied! Paste this into your tracker.'))
-        .catch(() => (status.textContent = '❌ Could not access clipboard.'))
-}
-
-function handleCreateGitHubIssue() {
-    const typeEl = document.getElementById('feedbackType')
-    const textEl = document.getElementById('feedbackText')
-    const status = document.getElementById('feedbackStatus')
-    if (!typeEl || !textEl || !status) return
-
-    const type = typeEl.value
-    const text = (textEl.value || '').trim()
-
-    if (!text) {
-        status.textContent = '⚠️ Please provide some details about your feedback.'
-        return
-    }
-
-    // Build issue title based on type
-    const typeLabels = {
-        'ui': '🎨 UI Issue',
-        'bug': '🐛 Bug Report',
-        'balance': '⚖️ Balance Issue',
-        'suggestion': '💡 Suggestion',
-        'other': '📝 Feedback'
-    }
-    const issueTitle = `${typeLabels[type] || 'Feedback'}: ${text.substring(0, GITHUB_ISSUE_TITLE_MAX_LENGTH)}${text.length > GITHUB_ISSUE_TITLE_MAX_LENGTH ? '...' : ''}`
-
-    // Build issue body with all context
-    const payload = buildFeedbackPayload(type, text)
-    
-    // Encode for URL
-    const githubUrl = `${GITHUB_REPO_URL}/issues/new?` +
-        `title=${encodeURIComponent(issueTitle)}&` +
-        `body=${encodeURIComponent(payload)}`
-
-    // Validate URL length (conservative browser limit)
-    if (githubUrl.length > GITHUB_URL_MAX_LENGTH) {
-        status.textContent = '⚠️ Feedback too long for URL. Please use "Copy to Clipboard" instead.'
-        return
-    }
-
-    // Open in new tab
-    try {
-        window.open(githubUrl, '_blank')
-        status.textContent = '✅ Opening GitHub issue page...'
-    } catch (error) {
-        status.textContent = '❌ Could not open GitHub. Please copy feedback manually.'
-    }
-}
-
-function buildFeedbackPayload(type, text) {
-    const lines = []
-    lines.push('Emberwood: The Blackbark Oath RPG Feedback')
-    lines.push('-------------------------')
-    lines.push(`Type: ${type}`)
-    lines.push('')
-
-    lines.push('Build:')
-    lines.push(`- Patch: ${GAME_PATCH}${GAME_PATCH_NAME ? ' — ' + GAME_PATCH_NAME : ''}`)
-    lines.push(`- Save Schema: ${SAVE_SCHEMA}`)
-    lines.push('')
-
-    if (text) {
-        lines.push('Description:')
-        lines.push(text)
-        lines.push('')
-    }
-
-    if (state && state.player) {
-        const p = state.player
-        lines.push('Game Context:')
-        lines.push(`- Player: ${p.name} (${p.classId})`)
-        lines.push(`- Level: ${p.level} (XP: ${p.xp}/${p.nextLevelXp})`)
-        lines.push(`- Gold: ${p.gold}`)
-        lines.push(`- Area: ${state.area}`)
-        if (state.inCombat && state.currentEnemy) {
-            lines.push(`- In Combat: YES (Enemy: ${state.currentEnemy.name})`)
-        } else {
-            lines.push(`- In Combat: NO`)
-        }
-        lines.push('')
-    }
-
-    const crashReport = getLastCrashReport()
-    if (crashReport) {
-        lines.push('Last Crash:')
-        lines.push(`- Kind: ${crashReport.kind}`)
-        lines.push(`- Time: ${new Date(crashReport.time).toISOString()}`)
-        lines.push(`- Message: ${crashReport.message}`)
-        if (crashReport.stack) {
-            lines.push('- Stack:')
-            lines.push(String(crashReport.stack))
-        }
-        lines.push('')
-    }
-
-    if (state && Array.isArray(state.log) && state.log.length) {
-        const tail = state.log.slice(-30)
-        lines.push('Recent Log (last 30):')
-        tail.forEach((e) => {
-            const tag = e && e.type ? e.type : 'normal'
-            const msg = e && e.text ? e.text : ''
-            lines.push(`- [${tag}] ${msg}`)
-        })
-        lines.push('')
-    }
-
-    lines.push('Client Info:')
-    lines.push(`- Time: ${new Date().toISOString()}`)
-    lines.push(`- User Agent: ${navigator.userAgent}`)
-    lines.push('')
-
-    return lines.join('\n')
+    return _getFeedbackModal()()
 }
 
 
@@ -15099,186 +14918,9 @@ section('State Invariants')
 // --- CHANGELOG MODAL --------------------------------------------------------
 
 function openChangelogModal(opts = {}) {
-    const fromPause = !!(opts && opts.fromPause)
-    const onBack = typeof opts?.onBack === 'function' ? opts.onBack : null
-
-    openModal('Changelog', (body) => {
-        const wrapper = document.createElement('div')
-        wrapper.className = 'changelog-modal'
-
-        // Lock Changelog to vertical scrolling only (prevents sideways panning on touchpads/mobile)
-        ;(() => {
-            let sx = 0
-            let sy = 0
-
-            wrapper.addEventListener(
-                'wheel',
-                (e) => {
-                    // Trackpads can emit horizontal delta even during normal scroll; block it for this modal.
-                    if (Math.abs(e.deltaX || 0) > 0.5) e.preventDefault()
-                },
-                { passive: false }
-            )
-
-            wrapper.addEventListener(
-                'touchstart',
-                (e) => {
-                    const t = e.touches && e.touches[0]
-                    if (!t) return
-                    sx = t.clientX
-                    sy = t.clientY
-                },
-                { passive: true }
-            )
-
-            wrapper.addEventListener(
-                'touchmove',
-                (e) => {
-                    const t = e.touches && e.touches[0]
-                    if (!t) return
-                    const dx = t.clientX - sx
-                    const dy = t.clientY - sy
-                    // If the gesture is primarily horizontal, cancel it so the panel cannot drift sideways.
-                    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 6) e.preventDefault()
-                },
-                { passive: false }
-            )
-        })()
-
-
-        const intro = document.createElement('p')
-        intro.className = 'modal-subtitle'
-        intro.innerHTML =
-            'All notable changes to <strong>Emberwood: The Blackbark Oath</strong> are listed here.'
-        wrapper.appendChild(intro)
-
-        const isV1 = (v) => /^1\.\d+\.\d+$/.test(String(v || '').trim())
-
-        const release = CHANGELOG.filter((e) => isV1(e.version))
-        const alpha = CHANGELOG.filter((e) => !isV1(e.version))
-
-        function normalizeChangelogEntry(entry) {
-            if (!entry || typeof entry !== 'object') {
-                return { version: '', title: '', sections: [] }
-            }
-
-            const version = String(entry.version || '')
-            const title = String(entry.title || entry.date || entry.name || '').trim()
-
-            // Support either legacy schema:
-            //   { version, title, sections:[{ heading, items: [...] }] }
-            // ...or newer schema:
-            //   { version, date, changes:[{ category, items: [...] }] }
-            let sections = []
-            if (Array.isArray(entry.sections)) {
-                sections = entry.sections
-            } else if (Array.isArray(entry.changes)) {
-                sections = entry.changes.map((c) => ({
-                    heading: c.heading || c.category || 'Changes',
-                    items: Array.isArray(c.items) ? c.items : [],
-                }))
-            }
-
-            return { version, title, sections }
-        }
-
-        function renderEntries(entries, host, { openFirst = false } = {}) {
-            const normalized = (entries || []).map(normalizeChangelogEntry)
-            normalized.forEach((entry, index) => {
-                const details = document.createElement('details')
-                if (openFirst && index === 0) details.open = true
-
-                const summary = document.createElement('summary')
-                summary.innerHTML = `<strong>${entry.version}${entry.title ? ' – ' + entry.title : ''}</strong>`
-                details.appendChild(summary)
-
-                entry.sections.forEach((section) => {
-                    const h4 = document.createElement('h4')
-                    h4.textContent = section.heading
-                    details.appendChild(h4)
-
-                    const ul = document.createElement('ul')
-
-                    section.items.forEach((item) => {
-                        const li = document.createElement('li')
-
-                        // Support either simple strings OR {title, bullets}
-                        if (typeof item === 'string') {
-                            li.textContent = item
-                        } else {
-                            const titleSpan = document.createElement('strong')
-                            titleSpan.textContent = item.title
-                            li.appendChild(titleSpan)
-
-                            if (item.bullets && item.bullets.length) {
-                                const innerUl = document.createElement('ul')
-                                item.bullets.forEach((text) => {
-                                    const innerLi = document.createElement('li')
-                                    innerLi.textContent = text
-                                    innerUl.appendChild(innerLi)
-                                })
-                                li.appendChild(innerUl)
-                            }
-                        }
-
-                        ul.appendChild(li)
-                    })
-
-                    details.appendChild(ul)
-                })
-
-                host.appendChild(details)
-            })
-        }
-
-        function renderEraPanel(title, entries, { open = false, openFirstEntry = false } = {}) {
-            const panel = document.createElement('details')
-            panel.open = !!open
-
-            const summary = document.createElement('summary')
-            summary.innerHTML = `<strong>${title}</strong>`
-            panel.appendChild(summary)
-
-            renderEntries(entries, panel, { openFirst: openFirstEntry })
-            wrapper.appendChild(panel)
-        }
-
-        // V1.x.x gets its own collapsible panel (newest open by default)
-        renderEraPanel('Release (V1.x.x)', release, { open: true, openFirstEntry: true })
-
-        // Everything else lives in a collapsible Alpha / Early Access panel
-        renderEraPanel('Alpha / Early Access (pre-1.0.0)', alpha, { open: false, openFirstEntry: false })
-
-        body.appendChild(wrapper)
-
-        // If opened from the pause menu (or provided with a back callback), show an explicit Back button
-        if (fromPause || onBack) {
-            const actions = document.createElement('div')
-            actions.className = 'modal-actions'
-
-            const btnBack = document.createElement('button')
-            btnBack.className = 'btn outline'
-            btnBack.textContent = fromPause ? 'Back to Game Menu' : 'Back'
-            btnBack.addEventListener('click', () => {
-                closeModal()
-                if (onBack) {
-                    try {
-                        onBack()
-                        return
-                    } catch (_) {
-                        // fall through
-                    }
-                }
-                if (fromPause) {
-                    try { openPauseMenu() } catch (_) {}
-                }
-            })
-
-            actions.appendChild(btnBack)
-            body.appendChild(actions)
-        }
-    })
+    return _getChangelogModal()(opts)
 }
+
 
 export function bootGame(engine) {
     _engine = engine || null
