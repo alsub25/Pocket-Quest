@@ -26,15 +26,42 @@ export function initWorld3DManager(engine) {
     }
   };
   
-  // Expose building modal handler
-  window.openBuildingModal = (buildingName) => {
-    // This will be called when a building is clicked
-    if (engine && engine.emit) {
-      engine.emit('map:buildingClick', { building: buildingName });
+  // Expose game modal opening functions
+  window.openGameModal = (buildingName) => {
+    console.log(`Opening modal for ${buildingName}`);
+    // Call appropriate modal function based on building name
+    switch(buildingName) {
+      case 'Tavern':
+        if (window.openTavern) {
+          window.openTavern();
+        } else {
+          console.warn('openTavern function not available');
+        }
+        break;
+      case 'Bank':
+        if (window.openBank) {
+          window.openBank();
+        } else {
+          console.warn('openBank function not available');
+        }
+        break;
+      case 'Town Hall':
+        if (window.openTownHall) {
+          window.openTownHall();
+        } else {
+          console.warn('openTownHall function not available');
+        }
+        break;
+      case 'Merchant':
+        if (window.openMerchant) {
+          window.openMerchant();
+        } else {
+          console.warn('openMerchant function not available');
+        }
+        break;
+      default:
+        console.warn(`No modal handler for ${buildingName}`);
     }
-    console.log(`Building clicked: ${buildingName}`);
-    // For now, show alert - game system should provide modal
-    alert(`Entered ${buildingName}\n\nThis will open the ${buildingName} modal when integrated with game systems.`);
   };
   
   // Listen for game area changes to sync the map

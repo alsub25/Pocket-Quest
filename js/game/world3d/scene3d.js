@@ -26,9 +26,9 @@ const MAX_ZOOM = 60;
 // Current area/map
 let currentArea = 'town';
 const areas = {
-  town: { offsetX: 0, offsetY: 0, trees: [], buildings: [], rocks: [], paths: [] },
-  forest: { offsetX: 100, offsetY: 0, trees: [], buildings: [], rocks: [], paths: [] },
-  mountains: { offsetX: 0, offsetY: 100, trees: [], buildings: [], rocks: [], paths: [] }
+  town: { offsetX: 0, offsetY: 0, trees: [], buildings: [], rocks: [], paths: [], npcs: [] },
+  forest: { offsetX: 100, offsetY: 0, trees: [], buildings: [], rocks: [], paths: [], npcs: [] },
+  mountains: { offsetX: 0, offsetY: 100, trees: [], buildings: [], rocks: [], paths: [], npcs: [] }
 };
 
 // Pathfinding
@@ -143,6 +143,20 @@ function initWorldObjects() {
       type: 'stone'
     });
   }
+  
+  // Town NPCs - wandering characters
+  town.npcs.push({
+    name: 'Rowan',
+    x: 5,
+    y: 10,
+    angle: 0,
+    targetX: 5,
+    targetY: 10,
+    speed: 0.02,
+    pauseTime: 0,
+    color: '#4a9d5f',
+    radius: 0.4
+  });
   
   // Forest area - dense trees
   const forest = areas.forest;
@@ -395,17 +409,62 @@ function handleWheel(event) {
 }
 
 /**
- * Handle building click - open modal
+ * Handle building click - walk to building then open modal
  */
+let pendingBuildingModal = null;
+
 function onBuildingClick(buildingName) {
   console.log(`Clicked on ${buildingName}`);
   
-  // Emit event for game system to handle
-  if (window.openBuildingModal) {
-    window.openBuildingModal(buildingName);
-  } else {
-    // Fallback - show alert
-    alert(`Entered ${buildingName} - Modal integration pending`);
+  // Find the building
+  const area = areas[currentArea];
+  const building = area.buildings.find(b => b.name === buildingName);
+  if (!building) return;
+  
+  // Calculate entrance position (front of building)
+  const entranceX = building.x;
+  const entranceY = building.y + building.height / 2 + 1; // Just outside front door
+  
+  // Set target to walk to building
+  player.targetX = entranceX;
+  player.targetY = entranceY;
+  player.isMoving = true;
+  pendingBuildingModal = buildingName;
+  
+  console.log(`Walking to ${buildingName}...`);
+}
+
+/**
+ * Check if player has reached building and open modal
+ */
+function checkBuildingArrival() {
+  if (pendingBuildingModal && !player.isMoving) {
+    const buildingName = pendingBuildingModal;
+    pendingBuildingModal = null;
+    
+    // Open the appropriate game modal via window functions
+    if (window.openGameModal) {
+      window.openGameModal(buildingName);
+    } else {
+      // Fallback - try direct functions
+      switch(buildingName) {
+        case 'Tavern':
+          if (window.openTavern) window.openTavern();
+          break;
+        case 'Bank':
+          if (window.openBank) window.openBank();
+          break;
+        case 'Town Hall':
+          if (window.openTownHall) window.openTownHall();
+          break;
+        case 'Merchant':
+          if (window.openMerchant) window.openMerchant();
+          break;
+        default:
+          console.warn(`No modal handler for ${buildingName}`);
+          alert(`Entered ${buildingName}`);
+      }
+    }
   }
 }
 
@@ -423,6 +482,9 @@ function updateMovement() {
       player.isMoving = false;
       player.x = player.targetX;
       player.y = player.targetY;
+      
+      // Check if we reached a building
+      checkBuildingArrival();
     } else {
       // Move toward target
       const angle = Math.atan2(dx, dy);
@@ -439,6 +501,59 @@ function updateMovement() {
       } else {
         // Stop if we hit a building
         player.isMoving = false;
+        checkBuildingArrival();
+      }
+    }
+  }
+}
+
+/**
+ * Update NPCs - wandering behavior
+ */
+function updateNPCs() {
+  const area = areas[currentArea];
+  if (!area.npcs) return;
+  
+  for (const npc of area.npcs) {
+    // Check if paused
+    if (npc.pauseTime > 0) {
+      npc.pauseTime -= 0.016; // Assume ~60fps
+      continue;
+    }
+    
+    const dx = npc.targetX - npc.x;
+    const dy = npc.targetY - npc.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance < 0.2) {
+      // Reached target - pause and pick new target
+      npc.pauseTime = 2 + Math.random() * 3; // Pause 2-5 seconds
+      
+      // Pick a new random target within bounds
+      npc.targetX = npc.x + (Math.random() - 0.5) * 15;
+      npc.targetY = npc.y + (Math.random() - 0.5) * 15;
+      
+      // Keep within area bounds
+      npc.targetX = Math.max(-20, Math.min(20, npc.targetX));
+      npc.targetY = Math.max(-20, Math.min(20, npc.targetY));
+    } else {
+      // Move toward target
+      const angle = Math.atan2(dx, dy);
+      npc.angle = angle;
+      
+      const newX = npc.x + Math.sin(angle) * npc.speed;
+      const newY = npc.y + Math.cos(angle) * npc.speed;
+      
+      // Check collision with buildings
+      const building = checkBuildingCollision(newX, newY);
+      if (!building) {
+        npc.x = newX;
+        npc.y = newY;
+      } else {
+        // Hit a building - pick new target
+        npc.pauseTime = 0.5;
+        npc.targetX = npc.x + (Math.random() - 0.5) * 10;
+        npc.targetY = npc.y + (Math.random() - 0.5) * 10;
       }
     }
   }
@@ -553,43 +668,128 @@ function render() {
     ctx.stroke();
   });
   
-  // Draw buildings
+  // Draw buildings with enhanced textures
   area.buildings.forEach(building => {
     const pos = worldToScreen(building.x, building.y);
     const w = building.width * ZOOM;
     const h = building.height * ZOOM;
     
-    // Building base
+    // Building base with stone texture
     ctx.fillStyle = building.color;
+    ctx.fillRect(pos.x - w/2, pos.y - h/2, w, h);
+    
+    // Stone brick texture
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.lineWidth = 1;
+    const brickH = ZOOM * 0.3;
+    const brickW = ZOOM * 0.5;
+    for (let by = pos.y - h/2; by < pos.y + h/2; by += brickH) {
+      const offset = (Math.floor(by / brickH) % 2) * (brickW / 2);
+      for (let bx = pos.x - w/2 + offset; bx < pos.x + w/2; bx += brickW) {
+        ctx.strokeRect(bx, by, brickW, brickH);
+      }
+    }
+    
+    // Building outline
     ctx.strokeStyle = '#6b5d50';
     ctx.lineWidth = 2;
-    ctx.fillRect(pos.x - w/2, pos.y - h/2, w, h);
     ctx.strokeRect(pos.x - w/2, pos.y - h/2, w, h);
     
-    // Windows
-    ctx.fillStyle = '#4a6fa5';
-    ctx.fillRect(pos.x - w * 0.3, pos.y - h * 0.2, w * 0.2, h * 0.25);
-    ctx.fillRect(pos.x + w * 0.1, pos.y - h * 0.2, w * 0.2, h * 0.25);
+    // Windows with detailed frame
+    ctx.fillStyle = '#8ab4f8';
+    const winW = w * 0.18;
+    const winH = h * 0.22;
+    const win1X = pos.x - w * 0.25;
+    const win2X = pos.x + w * 0.07;
+    const winY = pos.y - h * 0.2;
     
-    // Roof
+    // Window 1
+    ctx.fillRect(win1X, winY, winW, winH);
+    ctx.strokeStyle = '#3a2510';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(win1X, winY, winW, winH);
+    // Cross pattern
+    ctx.beginPath();
+    ctx.moveTo(win1X + winW/2, winY);
+    ctx.lineTo(win1X + winW/2, winY + winH);
+    ctx.moveTo(win1X, winY + winH/2);
+    ctx.lineTo(win1X + winW, winY + winH/2);
+    ctx.stroke();
+    
+    // Window 2
+    ctx.fillStyle = '#8ab4f8';
+    ctx.fillRect(win2X, winY, winW, winH);
+    ctx.strokeStyle = '#3a2510';
+    ctx.strokeRect(win2X, winY, winW, winH);
+    // Cross pattern
+    ctx.beginPath();
+    ctx.moveTo(win2X + winW/2, winY);
+    ctx.lineTo(win2X + winW/2, winY + winH);
+    ctx.moveTo(win2X, winY + winH/2);
+    ctx.lineTo(win2X + winW, winY + winH/2);
+    ctx.stroke();
+    
+    // Roof with tile texture
     ctx.fillStyle = '#8b0000';
-    ctx.strokeStyle = '#6b0000';
     ctx.beginPath();
     ctx.moveTo(pos.x, pos.y - h/2 - w * 0.2);
     ctx.lineTo(pos.x - w/2 - w * 0.1, pos.y - h/2);
     ctx.lineTo(pos.x + w/2 + w * 0.1, pos.y - h/2);
     ctx.closePath();
     ctx.fill();
+    
+    // Roof tiles
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.lineWidth = 1;
+    const tileH = ZOOM * 0.15;
+    for (let ty = pos.y - h/2 - w * 0.2; ty < pos.y - h/2; ty += tileH) {
+      const progress = (ty - (pos.y - h/2 - w * 0.2)) / (w * 0.2);
+      const roofW = (w + w * 0.2) * (1 - progress);
+      ctx.beginPath();
+      ctx.moveTo(pos.x - roofW/2, ty);
+      ctx.lineTo(pos.x + roofW/2, ty);
+      ctx.stroke();
+    }
+    
+    // Roof outline
+    ctx.strokeStyle = '#6b0000';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y - h/2 - w * 0.2);
+    ctx.lineTo(pos.x - w/2 - w * 0.1, pos.y - h/2);
+    ctx.lineTo(pos.x + w/2 + w * 0.1, pos.y - h/2);
+    ctx.closePath();
     ctx.stroke();
     
-    // Door
+    // Door with wood grain
     ctx.fillStyle = '#654321';
-    ctx.strokeStyle = '#3a2510';
-    ctx.lineWidth = 1;
     const doorW = w * 0.3;
     const doorH = h * 0.4;
-    ctx.fillRect(pos.x - doorW/2, pos.y + h/2 - doorH, doorW, doorH);
-    ctx.strokeRect(pos.x - doorW/2, pos.y + h/2 - doorH, doorW, doorH);
+    const doorX = pos.x - doorW/2;
+    const doorY = pos.y + h/2 - doorH;
+    ctx.fillRect(doorX, doorY, doorW, doorH);
+    
+    // Wood grain (vertical lines)
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 4; i++) {
+      const gx = doorX + (doorW / 4) * i;
+      ctx.beginPath();
+      ctx.moveTo(gx, doorY);
+      ctx.lineTo(gx, doorY + doorH);
+      ctx.stroke();
+    }
+    
+    // Door outline
+    ctx.strokeStyle = '#3a2510';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(doorX, doorY, doorW, doorH);
+    
+    // Door handle
+    ctx.fillStyle = '#d4af37';
+    ctx.beginPath();
+    ctx.arc(doorX + doorW * 0.8, doorY + doorH * 0.5, ZOOM * 0.08, 0, Math.PI * 2);
+    ctx.fill();
     
     // Building name
     ctx.fillStyle = 'white';
@@ -636,6 +836,42 @@ function render() {
     ctx.stroke();
   }
   
+  // Draw NPCs
+  if (area.npcs) {
+    area.npcs.forEach(npc => {
+      const npcScreen = worldToScreen(npc.x, npc.y);
+      
+      // NPC body (circle)
+      ctx.fillStyle = npc.color;
+      ctx.strokeStyle = '#2a4a2a';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(npcScreen.x, npcScreen.y, npc.radius * ZOOM, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      
+      // Direction indicator
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(npcScreen.x, npcScreen.y);
+      ctx.lineTo(
+        npcScreen.x + Math.sin(npc.angle) * ZOOM * 0.5,
+        npcScreen.y - Math.cos(npc.angle) * ZOOM * 0.5
+      );
+      ctx.stroke();
+      
+      // NPC name
+      ctx.fillStyle = 'white';
+      ctx.strokeStyle = 'black';
+      ctx.lineWidth = 3;
+      ctx.font = 'bold 10px Arial';
+      ctx.textAlign = 'center';
+      ctx.strokeText(npc.name, npcScreen.x, npcScreen.y - npc.radius * ZOOM - 5);
+      ctx.fillText(npc.name, npcScreen.x, npcScreen.y - npc.radius * ZOOM - 5);
+    });
+  }
+  
   // Area name display
   ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
   ctx.fillRect(10, 10, 200, 40);
@@ -657,6 +893,7 @@ function render() {
  */
 function animate() {
   updateMovement();
+  updateNPCs();
   render();
   requestAnimationFrame(animate);
 }
