@@ -111,7 +111,14 @@ function diagPush(kind, payload) {
   try {
     const d = window.PQ_BOOT_DIAG
     if (d && typeof d === 'object' && Array.isArray(d.errors)) {
-      d.errors.push({ t: new Date().toISOString(), kind, ...payload })
+      const entry = { t: new Date().toISOString(), kind, ...payload };
+      
+      // Try to add location information if not already present
+      if (!entry.location && kind === 'scriptLoadError' && payload.src) {
+        entry.location = payload.src;
+      }
+      
+      d.errors.push(entry);
       if (d.errors.length > 80) d.errors.splice(0, d.errors.length - 80)
     }
   } catch (_) {}
@@ -249,7 +256,30 @@ async function loadGameVersion(version, { onFail } = {}) {
       });
       if ((result.missing && result.missing.length) || (result.bad && result.bad.length)) {
         mark('preflightEnd');
-        diagPush('preflight', { version: version.id, ...result });
+        
+        // Enhanced diagnostic logging for missing/bad modules
+        console.error('[bootstrap] ❌ Preflight check failed');
+        if (result.missing && result.missing.length) {
+          console.error(`  Missing modules (${result.missing.length}):`);
+          result.missing.forEach(m => {
+            console.error(`    📍 ${m.url} (HTTP ${m.status} ${m.statusText})`);
+          });
+        }
+        if (result.bad && result.bad.length) {
+          console.error(`  Failed to fetch (${result.bad.length}):`);
+          result.bad.forEach(b => {
+            console.error(`    📍 ${b.url}`);
+            console.error(`       Error: ${b.message}`);
+          });
+        }
+        
+        diagPush('preflight', { 
+          version: version.id, 
+          ...result,
+          // Add formatted messages for display
+          missingFiles: result.missing ? result.missing.map(m => `${m.url} (HTTP ${m.status})`) : [],
+          failedFiles: result.bad ? result.bad.map(b => `${b.url}: ${b.message}`) : []
+        });
         if (window.PQ_BOOT_DIAG && window.PQ_BOOT_DIAG.renderOverlay) window.PQ_BOOT_DIAG.renderOverlay();
         BootLoader.hide();
         try {
@@ -323,7 +353,7 @@ async function loadGameVersion(version, { onFail } = {}) {
       await import(entryUrl);
     }
     mark('importEnd');
-    console.log('[bootstrap] Loaded:', entryUrl);
+    console.log(`[bootstrap] ✅ Loaded successfully: ${entryUrl}`);
     try {
       if (window.PQ_BOOT_DIAG && typeof window.PQ_BOOT_DIAG.markBootOk === 'function') {
         window.PQ_BOOT_DIAG.markBootOk();
@@ -363,8 +393,34 @@ async function loadGameVersion(version, { onFail } = {}) {
       try { window.__EW_BOOT_METRICS__ = boot; } catch (_) {}
     } catch (_) {}
   } catch (e) {
-    console.error('[bootstrap] Failed to load:', entryUrl, e);
-    alert(`Failed to load:\n${entryUrl}\n\nCheck DevTools Console for details.`);
+    // Enhanced error logging with file/line information
+    const errorMsg = e && e.message ? e.message : String(e);
+    const errorStack = e && e.stack ? e.stack : '';
+    
+    // Extract file location from error if available
+    let fileLocation = 'unknown';
+    if (errorStack) {
+      const stackMatch = errorStack.match(/at\s+(?:.*?\s+\()?([^):\s]+):(\d+):(\d+)/);
+      if (stackMatch) {
+        fileLocation = `${stackMatch[1]}:${stackMatch[2]}:${stackMatch[3]}`;
+      }
+    }
+    
+    console.error(`[bootstrap] ❌ Failed to load module`);
+    console.error(`  Entry: ${entryUrl}`);
+    if (fileLocation !== 'unknown') {
+      console.error(`  Location: ${fileLocation}`);
+    }
+    console.error(`  Error: ${errorMsg}`);
+    if (errorStack) {
+      console.error(`  Stack trace:\n${errorStack}`);
+    }
+    
+    alert(`Failed to load game module:\n\n` +
+          `Entry: ${entryUrl}\n` +
+          (fileLocation !== 'unknown' ? `Location: ${fileLocation}\n` : '') +
+          `Error: ${errorMsg}\n\n` +
+          `Check DevTools Console for full stack trace.`);
     BootLoader.hide();
     try {
       diagPush('scriptLoadError', { src: String(entryUrl || ''), version: version.id, message: String(e && e.message ? e.message : e) });

@@ -79,19 +79,53 @@ export function installBootDiagnostics() {
   }
 
   window.addEventListener('error', (ev) => {
+    const filename = ev.filename || '';
+    const lineno = ev.lineno || 0;
+    const colno = ev.colno || 0;
+    const location = filename ? `${filename}:${lineno}:${colno}` : 'unknown location';
+    
     push('error', {
       message: String(ev.message || 'Unknown error'),
-      filename: ev.filename || '',
-      lineno: ev.lineno || 0,
-      colno: ev.colno || 0
+      filename,
+      lineno,
+      colno,
+      location,
+      displayMessage: filename 
+        ? `${ev.message || 'Unknown error'}\n  at ${location}`
+        : String(ev.message || 'Unknown error')
     })
   })
 
   window.addEventListener('unhandledrejection', (ev) => {
-    const reason = ev && ev.reason
+    const reason = ev && ev.reason;
+    const message = reason && reason.message ? String(reason.message) : String(reason);
+    const stack = reason && reason.stack ? String(reason.stack) : '';
+    
+    // Try to extract file location from stack trace
+    let location = 'unknown location';
+    let displayMessage = message;
+    
+    if (stack) {
+      // Match common stack trace patterns: at <location> (file:line:col) or at file:line:col
+      const stackMatch = stack.match(/at\s+(?:.*?\s+\()?([^):\s]+):(\d+):(\d+)/);
+      if (stackMatch) {
+        const [, file, line, col] = stackMatch;
+        location = `${file}:${line}:${col}`;
+        displayMessage = `${message}\n  at ${location}`;
+      } else if (stack.split('\n').length > 1) {
+        // If no match but we have a stack, show first meaningful line
+        const lines = stack.split('\n').filter(l => l.trim() && !l.includes('addEventListener'));
+        if (lines.length > 1) {
+          displayMessage = `${message}\n  ${lines[1].trim()}`;
+        }
+      }
+    }
+    
     push('unhandledrejection', {
-      message: reason && reason.message ? String(reason.message) : String(reason),
-      stack: reason && reason.stack ? String(reason.stack) : ''
+      message,
+      stack,
+      location,
+      displayMessage
     })
   })
 
@@ -131,6 +165,64 @@ export function installBootDiagnostics() {
       sub.style.marginBottom = '12px'
       sub.textContent = 'If the game fails to load, screenshot this overlay. Use Copy Report for a text bug report.'
       overlay.appendChild(sub)
+
+      // Add error summary section if there are errors
+      if (diag.errors && diag.errors.length > 0) {
+        const errorSummary = document.createElement('div')
+        errorSummary.style.background = 'rgba(255, 0, 0, 0.15)'
+        errorSummary.style.border = '1px solid rgba(255, 0, 0, 0.4)'
+        errorSummary.style.borderRadius = '4px'
+        errorSummary.style.padding = '12px'
+        errorSummary.style.marginBottom = '12px'
+        errorSummary.style.fontSize = '13px'
+        
+        const summaryTitle = document.createElement('div')
+        summaryTitle.style.fontWeight = '700'
+        summaryTitle.style.marginBottom = '8px'
+        summaryTitle.style.color = '#ff6b6b'
+        summaryTitle.textContent = `${diag.errors.length} Error${diag.errors.length === 1 ? '' : 's'} Detected`
+        errorSummary.appendChild(summaryTitle)
+        
+        // Show last few errors with file locations prominently
+        const recentErrors = diag.errors.slice(-3).reverse()
+        recentErrors.forEach((err, idx) => {
+          const errDiv = document.createElement('div')
+          errDiv.style.marginBottom = idx < recentErrors.length - 1 ? '8px' : '0'
+          
+          // Show error type
+          const typeSpan = document.createElement('div')
+          typeSpan.style.fontSize = '11px'
+          typeSpan.style.opacity = '0.7'
+          typeSpan.style.marginBottom = '2px'
+          typeSpan.textContent = `[${err.kind}] ${err.t || ''}`
+          errDiv.appendChild(typeSpan)
+          
+          // Show file location prominently if available
+          if (err.location && err.location !== 'unknown location') {
+            const locDiv = document.createElement('div')
+            locDiv.style.fontFamily = 'Monaco, Consolas, monospace'
+            locDiv.style.fontSize = '13px'
+            locDiv.style.fontWeight = '700'
+            locDiv.style.color = '#ffd43b'
+            locDiv.style.marginBottom = '4px'
+            locDiv.textContent = `📍 ${err.location}`
+            errDiv.appendChild(locDiv)
+          }
+          
+          // Show message
+          const msgDiv = document.createElement('div')
+          msgDiv.style.fontFamily = 'Monaco, Consolas, monospace'
+          msgDiv.style.fontSize = '12px'
+          msgDiv.style.whiteSpace = 'pre-wrap'
+          msgDiv.style.wordBreak = 'break-word'
+          msgDiv.textContent = err.displayMessage || err.message || 'Unknown error'
+          errDiv.appendChild(msgDiv)
+          
+          errorSummary.appendChild(errDiv)
+        })
+        
+        overlay.appendChild(errorSummary)
+      }
 
       const actions = document.createElement('div')
       actions.style.display = 'flex'
