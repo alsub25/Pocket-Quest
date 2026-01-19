@@ -57,7 +57,7 @@ function createWorld3DContainer() {
     color: white;
     padding: 20px;
     border-radius: 10px;
-    font-family: Arial, sans-serif;
+    font-family: var(--font, Arial, sans-serif);
     z-index: 1001;
     pointer-events: none;
   `;

@@ -3223,19 +3223,19 @@ body.no-motion .spell-card.meter-buffed::after{
   backdrop-filter: blur(10px);
 }
 
-.instructions-panel h3 {
+.world-3d-instructions .instructions-panel h3 {
   margin: 0 0 12px 0;
   font-size: 18px;
   font-weight: 600;
 }
 
-.instructions-panel p {
+.world-3d-instructions .instructions-panel p {
   margin: 8px 0;
   font-size: 14px;
   line-height: 1.5;
 }
 
-.instructions-panel strong {
+.world-3d-instructions .instructions-panel strong {
   color: var(--accent, #4fc3f7);
 }
 

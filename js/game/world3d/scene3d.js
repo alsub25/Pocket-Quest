@@ -243,15 +243,17 @@ function renderBuilding(obj) {
   ctx.fill();
   ctx.stroke();
   
-  // Draw roof (simple triangle on top)
-  const topCorners = corners.map(c => {
-    const p = project(
-      building.x + (c.x > canvas.width / 2 ? building.width/2 : -building.width/2),
-      building.height,
-      building.z + (corners.indexOf(c) > 1 ? building.depth/2 : -building.depth/2)
-    );
-    return p;
-  }).filter(p => p !== null);
+  // Draw roof (simple quadrilateral on top)
+  const roofCorners = [
+    { x: building.x - building.width/2, z: building.z - building.depth/2 },
+    { x: building.x + building.width/2, z: building.z - building.depth/2 },
+    { x: building.x + building.width/2, z: building.z + building.depth/2 },
+    { x: building.x - building.width/2, z: building.z + building.depth/2 }
+  ];
+  
+  const topCorners = roofCorners.map(corner => 
+    project(corner.x, building.height, corner.z)
+  ).filter(p => p !== null);
   
   if (topCorners.length >= 4) {
     ctx.fillStyle = '#8b0000';
