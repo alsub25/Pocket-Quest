@@ -431,47 +431,6 @@ function render() {
   ctx.font = '12px Arial';
   ctx.fillText('Click/Tap to move', 20, canvas.height - 25);
 }
-  ctx.strokeStyle = '#2a5a8a';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.arc(playerScreen.x, playerScreen.y, 0.4 * ZOOM, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-  
-  // Direction indicator
-  ctx.strokeStyle = '#fff';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(playerScreen.x, playerScreen.y);
-  ctx.lineTo(
-    playerScreen.x + Math.sin(player.angle) * ZOOM,
-    playerScreen.y - Math.cos(player.angle) * ZOOM
-  );
-  ctx.stroke();
-  
-  // Mini compass
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-  ctx.fillRect(canvas.width - 60, 10, 50, 50);
-  ctx.strokeStyle = '#fff';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.arc(canvas.width - 35, 35, 20, 0, Math.PI * 2);
-  ctx.stroke();
-  
-  // North indicator
-  ctx.fillStyle = '#ff0000';
-  ctx.beginPath();
-  ctx.moveTo(canvas.width - 35, 20);
-  ctx.lineTo(canvas.width - 40, 30);
-  ctx.lineTo(canvas.width - 30, 30);
-  ctx.closePath();
-  ctx.fill();
-  
-  ctx.fillStyle = '#fff';
-  ctx.font = 'bold 10px Arial';
-  ctx.textAlign = 'center';
-  ctx.fillText('N', canvas.width - 35, 18);
-}
 
 /**
  * Animation loop
