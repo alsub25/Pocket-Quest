@@ -1,7 +1,7 @@
 // js/game/world3d/world3dManager.js
 // Manages the 3D world integration with the game
 
-import { init3DWorld, setupControls, dispose3DWorld, getPlayerPosition, setPlayerPosition, changeArea, getCurrentArea, getAvailableAreas } from './scene3d.js';
+import { init3DWorld, dispose3DWorld, getPlayerPosition, setPlayerPosition, changeArea, getCurrentArea, getAvailableAreas } from './scene3d.js';
 
 let is3DActive = false;
 let world3DContainer = null;
@@ -129,7 +129,6 @@ export function toggle3DWorld(engine) {
     // Initialize the 3D scene if not already done
     if (!world3DContainer.querySelector('canvas')) {
       init3DWorld(world3DContainer);
-      setupControls();
       
       // Sync player position from game state if available
       const state = engine?.state;

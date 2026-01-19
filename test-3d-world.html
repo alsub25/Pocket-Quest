@@ -55,12 +55,11 @@
   <div id="container"></div>
   <script type="module">
     // Import the 3D world module
-    import { init3DWorld, setupControls } from './js/game/world3d/scene3d.js';
+    import { init3DWorld } from './js/game/world3d/scene3d.js';
     
     // Initialize
     const container = document.getElementById('container');
     init3DWorld(container);
-    setupControls();
     
     // Exit button handler
     document.getElementById('exitBtn').addEventListener('click', () => {
