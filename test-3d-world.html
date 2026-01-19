@@ -17,6 +17,27 @@
       padding: 15px;
       border-radius: 8px;
       z-index: 1001;
+      pointer-events: none;
+    }
+    #exitBtn {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: rgba(220, 53, 69, 0.9);
+      color: white;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-family: Arial, sans-serif;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      z-index: 1001;
+      transition: all 0.2s;
+    }
+    #exitBtn:hover {
+      background: rgba(220, 53, 69, 1);
+      transform: scale(1.05);
     }
     #container {
       width: 100vw;
@@ -26,11 +47,11 @@
 </head>
 <body>
   <div id="controls">
-    <h3>🌍 3D World Test</h3>
-    <p><strong>Forward/Back:</strong> W/S or Up/Down</p>
-    <p><strong>Strafe:</strong> A/D</p>
-    <p><strong>Turn:</strong> Left/Right arrows</p>
+    <h3>🎮 3D World Controls</h3>
+    <p><strong>Desktop:</strong> W/A/S/D + Arrow keys</p>
+    <p><strong>Mobile:</strong> Swipe to move and turn</p>
   </div>
+  <button id="exitBtn">✕ Exit 3D World</button>
   <div id="container"></div>
   <script type="module">
     // Import the 3D world module
@@ -40,6 +61,11 @@
     const container = document.getElementById('container');
     init3DWorld(container);
     setupControls();
+    
+    // Exit button handler
+    document.getElementById('exitBtn').addEventListener('click', () => {
+      alert('Exit button clicked! In the actual game, this returns you to the 2D view.');
+    });
     
     console.log('3D World test initialized');
   </script>
