@@ -300,6 +300,36 @@ User Input → UI Bindings → Game Systems → State Update → Events → UI R
 <details>
 <summary><b>Detailed architecture documentation (click to expand)</b></summary>
 
+### Layer Architecture
+
+```
+Boot Layer (js/boot/) → Shared Layer (js/shared/) → Engine Layer (js/engine/) → Game Layer (js/game/)
+```
+
+- **Boot**: First code execution, storage checks, loading screen
+- **Shared**: Cross-layer utilities, no dependencies
+- **Engine**: Generic game engine, state/events/plugins
+- **Game**: Emberwood-specific content and systems
+
+### State Structure
+
+```javascript
+state = {
+  player: { /* character stats, inventory, equipment */ },
+  time: { /* day, dayPart */ },
+  village: { /* economy, merchant, population */ },
+  quests: { /* active, completed */ },
+  combat: { /* enemies, turn count (only during battle) */ },
+  bank: { /* deposits, loans */ },
+  government: { /* decrees, petitions */ },
+  ui: { /* current screen, modals */ },
+  flags: { /* dev cheats, debug modes */ },
+  log: [ /* event history */ ]
+}
+```
+
+</details>
+
 ---
 
 ## ⚙️ Gameplay Systems
