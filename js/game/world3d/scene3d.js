@@ -35,6 +35,36 @@ const areas = {
 let pathToTarget = [];
 
 /**
+ * Check if a point collides with a building
+ * @param {number} worldX - World X coordinate
+ * @param {number} worldY - World Y coordinate
+ * @param {Object} building - Building object with x, y, width, height
+ * @returns {boolean} True if point is inside building
+ */
+function isPointInBuilding(worldX, worldY, building) {
+  const halfW = building.width / 2;
+  const halfH = building.height / 2;
+  return worldX >= building.x - halfW && worldX <= building.x + halfW &&
+         worldY >= building.y - halfH && worldY <= building.y + halfH;
+}
+
+/**
+ * Check if a point collides with any building in current area
+ * @param {number} worldX - World X coordinate
+ * @param {number} worldY - World Y coordinate
+ * @returns {Object|null} Building if collision, null otherwise
+ */
+function checkBuildingCollision(worldX, worldY) {
+  const area = areas[currentArea];
+  for (const building of area.buildings) {
+    if (isPointInBuilding(worldX, worldY, building)) {
+      return building;
+    }
+  }
+  return null;
+}
+
+/**
  * Initialize the 2D top-down world
  * @param {HTMLElement} container - DOM element to render into
  */
@@ -203,40 +233,21 @@ function handleMapClick(event) {
   const worldY = -(clickY - canvas.height / 2) / ZOOM - cameraOffset.y;
   
   // Check if clicking on a clickable building
-  const area = areas[currentArea];
-  for (const building of area.buildings) {
-    if (building.clickable) {
-      const halfW = building.width / 2;
-      const halfH = building.height / 2;
-      if (worldX >= building.x - halfW && worldX <= building.x + halfW &&
-          worldY >= building.y - halfH && worldY <= building.y + halfH) {
-        // Clicked on building - open modal
-        onBuildingClick(building.name);
-        return;
-      }
-    }
+  const building = checkBuildingCollision(worldX, worldY);
+  if (building && building.clickable) {
+    onBuildingClick(building.name);
+    return;
   }
   
-  // Check collision with buildings
-  let canMove = true;
-  for (const building of area.buildings) {
-    const halfW = building.width / 2;
-    const halfH = building.height / 2;
-    if (worldX >= building.x - halfW && worldX <= building.x + halfW &&
-        worldY >= building.y - halfH && worldY <= building.y + halfH) {
-      canMove = false;
-      console.log(`Cannot move into ${building.name}`);
-      break;
-    }
-  }
-  
-  if (canMove) {
+  if (!building) {
     // Set target
     player.targetX = worldX;
     player.targetY = worldY;
     player.isMoving = true;
     
     console.log(`Moving to (${worldX.toFixed(2)}, ${worldY.toFixed(2)})`);
+  } else {
+    console.log(`Cannot move into ${building.name}`);
   }
 }
 
@@ -256,33 +267,13 @@ function handleMapTouch(event) {
     const worldY = -(clickY - canvas.height / 2) / ZOOM - cameraOffset.y;
     
     // Check if clicking on a clickable building
-    const area = areas[currentArea];
-    for (const building of area.buildings) {
-      if (building.clickable) {
-        const halfW = building.width / 2;
-        const halfH = building.height / 2;
-        if (worldX >= building.x - halfW && worldX <= building.x + halfW &&
-            worldY >= building.y - halfH && worldY <= building.y + halfH) {
-          // Clicked on building - open modal
-          onBuildingClick(building.name);
-          return;
-        }
-      }
+    const building = checkBuildingCollision(worldX, worldY);
+    if (building && building.clickable) {
+      onBuildingClick(building.name);
+      return;
     }
     
-    // Check collision with buildings
-    let canMove = true;
-    for (const building of area.buildings) {
-      const halfW = building.width / 2;
-      const halfH = building.height / 2;
-      if (worldX >= building.x - halfW && worldX <= building.x + halfW &&
-          worldY >= building.y - halfH && worldY <= building.y + halfH) {
-        canMove = false;
-        break;
-      }
-    }
-    
-    if (canMove) {
+    if (!building) {
       // Set target
       player.targetX = worldX;
       player.targetY = worldY;
@@ -441,19 +432,8 @@ function updateMovement() {
       const newY = player.y + Math.cos(angle) * MOVE_SPEED;
       
       // Check collision with buildings
-      const area = areas[currentArea];
-      let colliding = false;
-      for (const building of area.buildings) {
-        const halfW = building.width / 2;
-        const halfH = building.height / 2;
-        if (newX >= building.x - halfW && newX <= building.x + halfW &&
-            newY >= building.y - halfH && newY <= building.y + halfH) {
-          colliding = true;
-          break;
-        }
-      }
-      
-      if (!colliding) {
+      const building = checkBuildingCollision(newX, newY);
+      if (!building) {
         player.x = newX;
         player.y = newY;
       } else {
