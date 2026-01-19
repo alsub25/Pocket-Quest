@@ -2,33 +2,7 @@
 // Patch 1.2.86: User acceptance gate (boot diagnostics moved to bootDiagnostics.js)
 
 import { safeStorageGet, safeStorageSet, safeStorageRemove } from './lib/safeStorage.js';
-// Import boot diagnostics from separate module for easier maintenance
-import './bootDiagnostics.js';
-
-/* ==========================================================================
-   userAcceptance.js  (2 SEPARATE PANELS + SCROLL-TO-BOTTOM UNLOCK PER PANEL)
-   --------------------------------------------------------------------------
-   - Blocks play until the user accepts BOTH:
-       (1) User Acceptance Terms
-       (2) Legal Notice
-   - Each panel has its OWN scroll box + its OWN checkbox directly under it.
-   - Each checkbox is DISABLED until its panel is scrolled to the bottom.
-
-   Reuses existing #modal UI.
-
-   Requires existing DOM nodes:
-     #modal, #modalTitle, #modalBody, #modalClose
-
-   Buttons it gates:
-     #btnNewGame, #btnLoadGame, #btnStartGame
-
-   Install:
-     <script type="module" src="userAcceptance.js"></script>
-     <script type="module" src="bootstrap.js"></script>
-
-   To force re-accept after changing terms:
-     - bump ACCEPTANCE_VERSION
-   ========================================================================== */
+// Boot diagnostics is loaded separately in index.html before this module
 
 /* ==========================================================================
    userAcceptance.js  (2 SEPARATE PANELS + SCROLL-TO-BOTTOM UNLOCK PER PANEL)
@@ -532,3 +506,101 @@ function buildTermsHtml() {
       <li><strong>“Device”</strong> includes your computer/phone/tablet/browser profile and its storage.</li>
     </ul>
 
+    <p><strong>2) Eligibility & Authority.</strong> You represent that you can form a legally binding agreement where you live, and if accepting for an entity, you have authority to bind it.</p>
+
+    <p><strong>3) License Grant (Limited).</strong> Subject to compliance, you receive a limited, revocable, non-exclusive, non-transferable license to run the Game for personal, non-commercial entertainment. No ownership transfers.</p>
+
+    <p><strong>4) Prototype Status / Volatility.</strong> The Game may be experimental and incomplete. Features may change or be removed; mechanics may be rebalanced; saves may become incompatible; and access may be discontinued without notice.</p>
+
+    <p><strong>5) Saves, Storage, and Reliability (Strict).</strong></p>
+    <ul>
+      <li>Saves/settings may be stored locally (e.g., localStorage). The Creator may be unable to restore data for any reason.</li>
+      <li>Clearing site data, browser resets, private mode, extensions, security tools, OS cleanup, quota limits, and updates can delete/corrupt saves.</li>
+      <li>You are solely responsible for any backups (if feasible) and for securing your Device.</li>
+    </ul>
+
+    <p><strong>6) Conduct & Restrictions (Zero-Tolerance).</strong> You agree you will not:</p>
+    <ul>
+      <li>Bypass, disable, or undermine gating systems, cooldowns, fairness constraints, integrity checks, or other protections.</li>
+      <li>Reverse engineer, decompile, disassemble, or attempt to extract proprietary logic except where a non-waivable law permits it.</li>
+      <li>Use scripts/bots/automation to gain unfair advantage or to stress/disrupt the Game.</li>
+      <li>Inject malicious code, tamper with local storage to crash/cheat, or exfiltrate data from any part of the Game.</li>
+      <li>Use the Game to harass, threaten, impersonate, or encourage harmful/illegal activity.</li>
+    </ul>
+
+    <p><strong>7) Safety & Health.</strong> The Game may include flashing visuals, rapid animations, high contrast, or repetitive motion. Stop immediately if you feel discomfort (dizziness, nausea, headaches, seizures, eye strain). Do not play when alertness is required.</p>
+
+    <p><strong>8) No Support Obligation.</strong> The Creator has no obligation to provide support, maintenance, compatibility fixes, or restore lost progress. Any support is voluntary and may stop at any time.</p>
+
+    <p><strong>9) Feedback License.</strong> If you submit ideas/bug reports/suggestions, you grant the Creator a perpetual, worldwide, royalty-free right to use, modify, publish, and incorporate them without compensation or attribution (unless required by law).</p>
+
+    <p><strong>10) Changes & Re-Acceptance.</strong> Terms may change. The Game may require re-acceptance before continued use. Continued use after updates constitutes acceptance.</p>
+
+    <p><strong>11) Termination.</strong> Permission to use the Game ends immediately upon any breach. You must stop using the Game and delete unauthorized copies/derivatives.</p>
+
+    <p><strong>12) Disclaimer of Warranties (Maximum).</strong> THE GAME IS PROVIDED “AS IS” AND “AS AVAILABLE.” TO THE MAXIMUM EXTENT PERMITTED BY LAW, ALL WARRANTIES ARE DISCLAIMED, INCLUDING MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT.</p>
+
+    <p><strong>13) Assumption of Risk.</strong> You accept that gameplay outcomes, randomness, balance, and progression are not guaranteed; content may be inaccurate; and the Game may fail without warning. You proceed anyway.</p>
+  `;
+}
+
+function buildLegalHtml() {
+  // Generic strict legal notice (not legal advice). Keep as HTML string.
+  return `
+    <p><strong>Scope.</strong> This notice covers intellectual property, liability limits, indemnity, third-party materials, and related legal concepts applying to the Game and Content.</p>
+
+    <p><strong>1) Ownership & Intellectual Property.</strong></p>
+    <ul>
+      <li>All right, title, and interest in the Game and Content remain with the Creator and/or licensors.</li>
+      <li>The Game is licensed, not sold. No ownership rights transfer to you.</li>
+      <li>You must not remove or obscure copyright, trademark, attribution, or proprietary notices.</li>
+    </ul>
+
+    <p><strong>2) Copying / Distribution / Commercial Restrictions.</strong></p>
+    <ul>
+      <li>You may not sell, resell, sublicense, distribute, publish, publicly perform/display, or commercially exploit the Game or Content without explicit written permission.</li>
+      <li>You may not bundle the Game into another product, launcher, paid service, or monetized pack without permission.</li>
+      <li>You may not redistribute raw assets (art/audio/fonts) or extracted asset packs.</li>
+    </ul>
+
+    <p><strong>3) Streaming / Recording.</strong> Unless separate guidelines exist, personal streaming/recording may be permitted for non-commercial sharing if you do not misrepresent ownership, do not distribute raw assets, and comply with platform rules and applicable law. Permission may be revoked in cases of abuse or misrepresentation.</p>
+
+    <p><strong>4) Third-Party Materials & Licenses.</strong></p>
+    <ul>
+      <li>Third-party trademarks and names (if any) belong to their owners and do not imply endorsement.</li>
+      <li>Third-party libraries/fonts/assets may be governed by separate licenses; you are responsible for compliance where applicable.</li>
+    </ul>
+
+    <p><strong>5) Privacy / Data Handling (General).</strong></p>
+    <ul>
+      <li>The Game may store saves/settings locally on your Device.</li>
+      <li>If online features/telemetry/accounts/analytics are added later, additional notices/consents may be required.</li>
+      <li>Anyone with access to your device/browser profile may access local saves. You are responsible for device security.</li>
+    </ul>
+
+    <p><strong>6) Security & Integrity.</strong> You agree not to attempt unauthorized access, tamper with storage, exploit vulnerabilities, or create/share tools that facilitate cheating, exploitation, disruption, or unauthorized copying.</p>
+
+    <p><strong>7) Indemnity.</strong> To the maximum extent permitted by law, you agree to defend, indemnify, and hold harmless the Creator from claims, liabilities, damages, losses, and expenses (including reasonable legal fees) arising out of: (a) your misuse of the Game, (b) your violation of these documents, or (c) your violation of law or third-party rights.</p>
+
+    <p><strong>8) Limitation of Liability (Broad).</strong> TO THE MAXIMUM EXTENT PERMITTED BY LAW:</p>
+    <ul>
+      <li>The Creator is not liable for indirect, incidental, special, consequential, exemplary, or punitive damages.</li>
+      <li>The Creator is not liable for loss of data/saves, loss of profits, device issues, downtime, or content inaccuracies.</li>
+      <li>If liability cannot be excluded, it is limited to the maximum extent permitted by law and may be capped at the amount you paid (if any), where such a cap is allowed.</li>
+    </ul>
+
+    <p><strong>9) Governing Law / Venue.</strong> Disputes are governed by applicable law as required in your jurisdiction. Where allowed, disputes must be brought in an appropriate venue under that governing law. (Customize if you need a specific jurisdiction clause.)</p>
+
+    <p><strong>10) Severability & Entire Agreement.</strong> If any provision is unenforceable, the remainder remains effective. These documents form the entire agreement regarding access to the Game unless superseded by a written agreement.</p>
+
+    <p><strong>11) Notice & Contact.</strong> If the Game provides an official contact method, that is the channel for notices. If none is provided, response is not guaranteed.</p>
+  `;
+}
+
+// Auto-init
+initUserAcceptanceGate();
+
+// Optional debug helpers
+if (typeof window !== "undefined") {
+  window.PQ_ACCEPT = { hasUserAccepted, resetUserAcceptance };
+}

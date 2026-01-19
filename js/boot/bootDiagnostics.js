@@ -2,10 +2,24 @@
 // Patch 1.2.86: Separated boot diagnostics for easier maintenance
 // Captures early load errors and renders diagnostic overlay with precise file locations
 
-import { GAME_PATCH } from '../game/systems/version.js';
-
 function _pqNowIso() {
   try { return new Date().toISOString(); } catch (_) { return String(Date.now()); }
+}
+
+// Get game patch version safely without importing from game modules
+// (which may be broken when diagnostics are needed)
+function getGamePatch() {
+  try {
+    // Try to get from window if already set
+    if (window.__GAME_PATCH__) return window.__GAME_PATCH__;
+    // Fallback to checking localStorage for last known version
+    const lastBoot = localStorage.getItem('pq-last-boot-errors');
+    if (lastBoot) {
+      const data = JSON.parse(lastBoot);
+      if (data.patch) return data.patch;
+    }
+  } catch (_) {}
+  return '1.2.86'; // Fallback version
 }
 
 /**
@@ -178,16 +192,7 @@ export function installBootDiagnostics() {
     
     // Check if the error object has additional location info
     if (error && error.stack) {
-      // Log full error for debugging
-      console.log('[bootDiagnostics] Full error object:', {
-        message: error.message,
-        stack: error.stack,
-        filename: ev.filename,
-        lineno: ev.lineno,
-        colno: ev.colno
-      });
-      
-      actualFile = parseErrorMessage(message, error.stack);
+      actualFile = parseErrorMessage(message, error.stack, error);
     }
     
     if (actualFile) {
@@ -274,7 +279,7 @@ export function installBootDiagnostics() {
       title.style.fontSize = '18px';
       title.style.fontWeight = '700';
       title.style.marginBottom = '10px';
-      title.textContent = `Boot Diagnostics (Patch ${GAME_PATCH})`;
+      title.textContent = `Boot Diagnostics (Patch ${getGamePatch()})`;
       overlay.appendChild(title);
 
       const sub = document.createElement('div');
