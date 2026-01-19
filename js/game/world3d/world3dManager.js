@@ -1,7 +1,7 @@
 // js/game/world3d/world3dManager.js
 // Manages the 3D world integration with the game
 
-import { init3DWorld, setupControls, dispose3DWorld, getPlayerPosition, setPlayerPosition } from './scene3d.js';
+import { init3DWorld, setupControls, dispose3DWorld, getPlayerPosition, setPlayerPosition, changeArea, getCurrentArea, getAvailableAreas } from './scene3d.js';
 
 let is3DActive = false;
 let world3DContainer = null;
@@ -11,13 +11,20 @@ let world3DContainer = null;
  * @param {Object} engine - Game engine reference
  */
 export function initWorld3DManager(engine) {
-  console.log('3D World Manager initialized');
+  console.log('2D Map Manager initialized');
   
   // Create the 3D world container in the DOM
   createWorld3DContainer();
   
   // Set up the toggle button
   setupToggleButton(engine);
+  
+  // Expose area change function globally for integration
+  window.changeMapArea = (areaName) => {
+    if (is3DActive) {
+      changeArea(areaName);
+    }
+  };
 }
 
 /**
@@ -42,9 +49,9 @@ function createWorld3DContainer() {
   instructions.className = 'world-3d-instructions';
   instructions.innerHTML = `
     <div class="instructions-panel">
-      <h3>🗺️ 2D Top-Down View</h3>
-      <p><strong>Desktop:</strong> W/A/S/D to move, Arrow keys to rotate</p>
-      <p><strong>Mobile:</strong> Swipe to move and turn</p>
+      <h3>🗺️ World Map</h3>
+      <p><strong>Click/Tap:</strong> Move to location</p>
+      <p><strong>Areas:</strong> Town, Forest, Mountains</p>
     </div>
   `;
   instructions.style.cssText = `
