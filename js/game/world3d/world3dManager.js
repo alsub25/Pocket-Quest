@@ -1,7 +1,7 @@
 // js/game/world3d/world3dManager.js
 // Manages the 3D world integration with the game
 
-import { init3DWorld, dispose3DWorld, getPlayerPosition, setPlayerPosition, changeArea, getCurrentArea, getAvailableAreas, syncFromGameArea } from './scene3d.js';
+import { init3DWorld, dispose3DWorld, getPlayerPosition, setPlayerPosition, getWorldBounds, getWorldObjects } from './scene3d.js';
 
 let is3DActive = false;
 let world3DContainer = null;
@@ -19,19 +19,18 @@ export function initWorld3DManager(engine) {
   // Set up the toggle button
   setupToggleButton(engine);
   
-  // Expose area change function globally for integration
-  window.changeMapArea = (areaName) => {
-    if (is3DActive) {
-      changeArea(areaName);
-    }
-  };
-  
   // Building name to modal function mapping
   const buildingModals = {
     'Tavern': 'openTavern',
     'Bank': 'openBank',
     'Town Hall': 'openTownHall',
-    'Merchant': 'openMerchant'
+    'Merchant': 'openMerchant',
+    'House': 'openHouse',
+    'Cottage': 'openCottage',
+    'Smithy': 'openSmithy',
+    'Inn': 'openInn',
+    'Cabin': 'openCabin',
+    'Mine Entrance': 'openMine'
   };
   
   // Expose game modal opening function
@@ -45,28 +44,6 @@ export function initWorld3DManager(engine) {
       console.warn(`No modal handler for ${buildingName}`);
     }
   };
-  
-  // Listen for game area changes to sync the map
-  if (engine && engine.on) {
-    engine.on('area:enter', (data) => {
-      if (is3DActive && data && data.id) {
-        syncFromGameArea(data.id);
-      }
-    });
-  }
-  
-  // Expose setArea from game for map to use
-  if (engine && engine.getState) {
-    const state = engine.getState();
-    if (state && state.area) {
-      // Get setArea function from runtime
-      window.gameSetArea = (areaId, opts) => {
-        if (engine.emit) {
-          engine.emit('game:setArea', { area: areaId, ...opts });
-        }
-      };
-    }
-  }
 }
 
 /**
@@ -91,11 +68,11 @@ function createWorld3DContainer() {
   instructions.className = 'world-3d-instructions';
   instructions.innerHTML = `
     <div class="instructions-panel">
-      <h3>🗺️ World Map</h3>
+      <h3>🗺️ Unified World Map</h3>
       <p><strong>Tap/Click:</strong> Move or enter buildings</p>
       <p><strong>Drag:</strong> Pan camera</p>
       <p><strong>Pinch/Wheel:</strong> Zoom in/out</p>
-      <p><strong>Buildings:</strong> Tavern, Bank, Town Hall, Merchant</p>
+      <p><strong>Explore:</strong> Town, Forest, Mountains (120x120 world)</p>
     </div>
   `;
   instructions.style.cssText = `
