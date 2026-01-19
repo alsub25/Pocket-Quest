@@ -27,6 +27,16 @@ const MAX_ZOOM = 60;
 const WORLD_SIZE = 120;
 const WORLD_HALF = WORLD_SIZE / 2;
 
+// Building texture scaling constants
+const BRICK_HEIGHT_DIVISIONS = 10;  // Number of bricks vertically
+const BRICK_WIDTH_DIVISIONS = 8;    // Number of bricks horizontally
+const BRICK_MIN_HEIGHT = 3;         // Minimum brick height in pixels
+const BRICK_MIN_WIDTH = 4;          // Minimum brick width in pixels
+const ROOF_TILE_SCALE = 0.2;        // Roof tile size relative to ZOOM
+const ROOF_MIN_TILES = 3;           // Minimum number of roof tiles
+const DOOR_PLANK_SCALE = 0.15;      // Door plank width relative to ZOOM
+const DOOR_MIN_PLANKS = 3;          // Minimum number of door planks
+
 // World objects (single unified world, no more areas)
 let worldObjects = {
   trees: [],
@@ -1019,8 +1029,8 @@ function render() {
     // IMPROVED: Brick texture that fits building dimensions
     ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
     ctx.lineWidth = 1;
-    const brickH = Math.max(h / 10, 3); // Scale bricks to building height
-    const brickW = Math.max(w / 8, 4); // Scale bricks to building width
+    const brickH = Math.max(h / BRICK_HEIGHT_DIVISIONS, BRICK_MIN_HEIGHT); // Scale bricks to building height
+    const brickW = Math.max(w / BRICK_WIDTH_DIVISIONS, BRICK_MIN_WIDTH); // Scale bricks to building width
     
     for (let by = 0; by < h; by += brickH) {
       const offset = (Math.floor(by / brickH) % 2) * (brickW / 2);
@@ -1081,7 +1091,7 @@ function render() {
     // Roof tiles - scaled to roof size
     ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
     ctx.lineWidth = 1;
-    const numTiles = Math.max(Math.floor(roofHeight / (ZOOM * 0.2)), 3);
+    const numTiles = Math.max(Math.floor(roofHeight / (ZOOM * ROOF_TILE_SCALE)), ROOF_MIN_TILES);
     for (let i = 0; i < numTiles; i++) {
       const ty = pos.y - h/2 - roofHeight + (i * roofHeight / numTiles);
       const progress = i / numTiles;
@@ -1113,7 +1123,7 @@ function render() {
     // Wood grain (vertical lines)
     ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
     ctx.lineWidth = 1;
-    const numPlanks = Math.max(Math.floor(doorW / (ZOOM * 0.15)), 3);
+    const numPlanks = Math.max(Math.floor(doorW / (ZOOM * DOOR_PLANK_SCALE)), DOOR_MIN_PLANKS);
     for (let i = 0; i <= numPlanks; i++) {
       const gx = doorX + (doorW / numPlanks) * i;
       ctx.beginPath();
