@@ -635,6 +635,8 @@
             </symbol>
         </svg>
 
+        <!-- Boot diagnostics loaded first, independently, before everything else -->
+        <script type="module" src="js/boot/bootDiagnostics.js"></script>
         <!-- after -->
         <script type="module" src="js/boot/userAcceptance.js"></script>
         <script type="module" src="js/boot/bootstrap.js"></script>

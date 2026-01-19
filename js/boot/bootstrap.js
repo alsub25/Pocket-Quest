@@ -4,6 +4,7 @@ import { GAME_FULL_LABEL } from '../game/systems/version.js';
 import { safeStorageGet, safeStorageSet } from './lib/safeStorage.js';
 import { BootLoader } from './bootLoader.js';
 import { showSplashSequence } from './splashScreen.js';
+import { trackedImport, getImportChain } from './importTracker.js';
 
 // Persisted boot timings for QA / bug reports.
 const BOOT_METRICS_KEY = 'ew-last-boot-metrics';
@@ -111,7 +112,14 @@ function diagPush(kind, payload) {
   try {
     const d = window.PQ_BOOT_DIAG
     if (d && typeof d === 'object' && Array.isArray(d.errors)) {
-      d.errors.push({ t: new Date().toISOString(), kind, ...payload })
+      const entry = { t: new Date().toISOString(), kind, ...payload };
+      
+      // Try to add location information if not already present
+      if (!entry.location && kind === 'scriptLoadError' && payload.src) {
+        entry.location = payload.src;
+      }
+      
+      d.errors.push(entry);
       if (d.errors.length > 80) d.errors.splice(0, d.errors.length - 80)
     }
   } catch (_) {}
@@ -249,7 +257,30 @@ async function loadGameVersion(version, { onFail } = {}) {
       });
       if ((result.missing && result.missing.length) || (result.bad && result.bad.length)) {
         mark('preflightEnd');
-        diagPush('preflight', { version: version.id, ...result });
+        
+        // Enhanced diagnostic logging for missing/bad modules
+        console.error('[bootstrap] ❌ Preflight check failed');
+        if (result.missing && result.missing.length) {
+          console.error(`  Missing modules (${result.missing.length}):`);
+          result.missing.forEach(m => {
+            console.error(`    📍 ${m.url} (HTTP ${m.status} ${m.statusText})`);
+          });
+        }
+        if (result.bad && result.bad.length) {
+          console.error(`  Failed to fetch (${result.bad.length}):`);
+          result.bad.forEach(b => {
+            console.error(`    📍 ${b.url}`);
+            console.error(`       Error: ${b.message}`);
+          });
+        }
+        
+        diagPush('preflight', { 
+          version: version.id, 
+          ...result,
+          // Add formatted messages for display
+          missingFiles: result.missing ? result.missing.map(m => `${m.url} (HTTP ${m.status})`) : [],
+          failedFiles: result.bad ? result.bad.map(b => `${b.url}: ${b.message}`) : []
+        });
         if (window.PQ_BOOT_DIAG && window.PQ_BOOT_DIAG.renderOverlay) window.PQ_BOOT_DIAG.renderOverlay();
         BootLoader.hide();
         try {
@@ -320,10 +351,10 @@ async function loadGameVersion(version, { onFail } = {}) {
     if (location.protocol === 'file:') {
       await loadModuleViaScriptTag(entryUrl);
     } else {
-      await import(entryUrl);
+      await trackedImport(entryUrl);
     }
     mark('importEnd');
-    console.log('[bootstrap] Loaded:', entryUrl);
+    console.log(`[bootstrap] ✅ Loaded successfully: ${entryUrl}`);
     try {
       if (window.PQ_BOOT_DIAG && typeof window.PQ_BOOT_DIAG.markBootOk === 'function') {
         window.PQ_BOOT_DIAG.markBootOk();
@@ -363,11 +394,115 @@ async function loadGameVersion(version, { onFail } = {}) {
       try { window.__EW_BOOT_METRICS__ = boot; } catch (_) {}
     } catch (_) {}
   } catch (e) {
-    console.error('[bootstrap] Failed to load:', entryUrl, e);
-    alert(`Failed to load:\n${entryUrl}\n\nCheck DevTools Console for details.`);
+    // Enhanced error logging with file/line information
+    const errorMsg = e && e.message ? e.message : String(e);
+    const errorStack = e && e.stack ? e.stack : '';
+    
+    // Check if we have enhanced error info from trackedImport
+    let fileLocation = 'unknown';
+    let isSyntaxError = errorMsg.includes('Unexpected token') || errorMsg.includes('Unexpected end') || e.name === 'SyntaxError';
+    
+    // First, check if trackedImport provided actualFile information
+    if (e.actualFile) {
+      fileLocation = e.actualFile;
+      console.log(`[bootstrap] 📍 Import tracker identified file: ${fileLocation}`);
+    }
+    
+    // Try to get import chain information
+    const importChain = getImportChain();
+    if (fileLocation === 'unknown' && importChain.failedImports && importChain.failedImports.length > 0) {
+      const lastFailed = importChain.failedImports[importChain.failedImports.length - 1];
+      if (lastFailed.actualFile) {
+        fileLocation = lastFailed.actualFile;
+        console.log(`[bootstrap] 📍 Import chain identified file: ${fileLocation}`);
+      }
+    }
+    
+    // Fallback: Try to parse the stack to find files OTHER than bootstrap/boot files
+    if (fileLocation === 'unknown' && errorStack) {
+      const lines = errorStack.split('\n');
+      const relevantFiles = [];
+      
+      for (const line of lines) {
+        // Skip all boot infrastructure files
+        if (line.includes('bootstrap.js') || 
+            line.includes('bootDiagnostics.js') || 
+            line.includes('userAcceptance.js') ||
+            line.includes('bootLoader.js') ||
+            line.includes('splashScreen.js') ||
+            line.includes('importTracker.js') ||
+            line.includes('safeStorage.js')) {
+          continue;
+        }
+        
+        // Match full URLs with line/col numbers
+        const urlMatch = line.match(/(https?:\/\/[^\s)]+\.js)(?::(\d+):(\d+))?/);
+        if (urlMatch) {
+          const [, url, lineNum, col] = urlMatch;
+          const fileName = url.split('/').pop();
+          const location = lineNum ? `${fileName}:${lineNum}:${col}` : fileName;
+          relevantFiles.push(location);
+        }
+      }
+      
+      // Use the first relevant file found
+      if (relevantFiles.length > 0) {
+        fileLocation = relevantFiles[0];
+      }
+    }
+    
+    // Fallback: Check for fileName property (Firefox)
+    if (fileLocation === 'unknown' && e.fileName) {
+      const fileName = e.fileName.split('/').pop();
+      const line = e.lineNumber || '';
+      const col = e.columnNumber || '';
+      fileLocation = line ? `${fileName}:${line}:${col}` : fileName;
+    }
+    
+    console.error(`[bootstrap] ❌ Failed to load module`);
+    console.error(`  Entry: ${entryUrl}`);
+    if (fileLocation !== 'unknown') {
+      console.error(`  📍 Actual location: ${fileLocation}`);
+    } else if (isSyntaxError) {
+      console.error(`  ⚠️  Syntax error in imported module (check browser DevTools > Sources tab)`);
+    }
+    console.error(`  Error: ${errorMsg}`);
+    if (errorStack && errorStack.length > 100) {
+      console.error(`  Stack trace:\n${errorStack}`);
+    }
+    
+    // Log import chain for debugging
+    if (importChain.failedImports && importChain.failedImports.length > 0) {
+      console.error(`  Import chain:`);
+      importChain.failedImports.forEach((imp, idx) => {
+        console.error(`    ${idx + 1}. ${imp.url} ${imp.actualFile ? `→ ${imp.actualFile}` : ''}`);
+      });
+    }
+    
+    // Provide helpful message for syntax errors where we can't determine the file
+    let helpText = isSyntaxError && fileLocation === 'unknown'
+      ? `\n⚠️  The error is in a module imported by ${entryUrl.split('/').pop()}.\nCheck browser DevTools > Sources or Network tab to find the file.`
+      : '';
+    
+    alert(`Failed to load game module:\n\n` +
+          `Entry: ${entryUrl}\n` +
+          (fileLocation !== 'unknown' ? `📍 Actual location: ${fileLocation}\n` : '') +
+          `Error: ${errorMsg}${helpText}\n\n` +
+          `Check DevTools Console for details.`);
     BootLoader.hide();
     try {
-      diagPush('scriptLoadError', { src: String(entryUrl || ''), version: version.id, message: String(e && e.message ? e.message : e) });
+      // Include the actual file location in the diagnostic push
+      diagPush('scriptLoadError', { 
+        src: String(entryUrl || ''), 
+        version: version.id, 
+        message: String(e && e.message ? e.message : e),
+        location: fileLocation !== 'unknown' ? fileLocation : String(entryUrl || ''),
+        actualFile: fileLocation !== 'unknown' ? fileLocation : undefined,
+        stack: errorStack,
+        isSyntaxError,
+        importChain: importChain.failedImports || [],
+        note: isSyntaxError && fileLocation === 'unknown' ? 'Syntax error in imported module - check DevTools Sources tab' : undefined
+      });
       if (window.PQ_BOOT_DIAG && window.PQ_BOOT_DIAG.renderOverlay) window.PQ_BOOT_DIAG.renderOverlay();
     } catch (_) {}
     BootLoader.hide();
