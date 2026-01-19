@@ -15,6 +15,7 @@ const trees = [];
 const buildings = [];
 const rocks = [];
 const paths = [];
+const hills = []; // Terrain elevation features
 const grassPattern = []; // Pre-generated grass texture positions
 
 // Touch controls state
@@ -23,6 +24,24 @@ let touchStartY = 0;
 let touchMoveX = 0;
 let touchMoveY = 0;
 let isTouching = false;
+
+/**
+ * Get terrain height at a given position
+ */
+function getTerrainHeight(x, z) {
+  let height = 0;
+  // Add elevation from hills
+  hills.forEach(hill => {
+    const dx = x - hill.x;
+    const dz = z - hill.z;
+    const dist = Math.sqrt(dx * dx + dz * dz);
+    if (dist < hill.radius) {
+      const factor = 1 - (dist / hill.radius);
+      height += hill.height * factor * factor; // Smooth falloff
+    }
+  });
+  return height;
+}
 
 /**
  * Initialize the 3D world
@@ -51,15 +70,25 @@ export function init3DWorld(container) {
 }
 
 /**
- * Initialize world objects (trees, buildings, rocks, paths)
+ * Initialize world objects (trees, buildings, rocks, paths, hills)
  */
 function initWorldObjects() {
-  // Create some trees with variety
+  // Create hills for terrain variation
+  hills.push({ x: -20, z: -20, radius: 15, height: 2 });
+  hills.push({ x: 25, z: 15, radius: 12, height: 1.5 });
+  hills.push({ x: -15, z: 20, radius: 10, height: 1.2 });
+  hills.push({ x: 30, z: -25, radius: 14, height: 1.8 });
+  
+  // Create trees with variety and place them on terrain
   for (let i = 0; i < 50; i++) {
+    const x = (Math.random() - 0.5) * 60;
+    const z = (Math.random() - 0.5) * 60;
     trees.push({
-      x: (Math.random() - 0.5) * 60,
-      z: (Math.random() - 0.5) * 60,
+      x: x,
+      z: z,
+      groundHeight: getTerrainHeight(x, z),
       height: 3 + Math.random() * 2,
+      trunkRadius: 0.15 + Math.random() * 0.1,
       type: Math.random() > 0.5 ? 'pine' : 'oak'
     });
   }
@@ -70,9 +99,12 @@ function initWorldObjects() {
     for (let j = 0; j < 6; j++) {
       randomValues.push(0.8 + Math.random() * 0.4);
     }
+    const x = (Math.random() - 0.5) * 60;
+    const z = (Math.random() - 0.5) * 60;
     rocks.push({
-      x: (Math.random() - 0.5) * 60,
-      z: (Math.random() - 0.5) * 60,
+      x: x,
+      z: z,
+      groundHeight: getTerrainHeight(x, z),
       size: 0.3 + Math.random() * 0.5,
       randomValues: randomValues
     });
@@ -82,12 +114,21 @@ function initWorldObjects() {
   paths.push({ x1: -20, z1: 0, x2: 20, z2: 0 }); // Horizontal path
   paths.push({ x1: 0, z1: -20, x2: 0, z2: 20 }); // Vertical path
   
-  // Create buildings with more variety
-  buildings.push({ x: 10, z: 5, width: 4, depth: 3, height: 4, name: 'Tavern', color: '#a0826d' });
-  buildings.push({ x: -10, z: 5, width: 4, depth: 4, height: 3, name: 'Shop', color: '#8b7355' });
-  buildings.push({ x: 0, z: -15, width: 5, depth: 5, height: 5, name: 'Town Hall', color: '#9a8a7a' });
-  buildings.push({ x: 15, z: -10, width: 3, depth: 3, height: 3.5, name: 'House', color: '#b8a490' });
-  buildings.push({ x: -15, z: -8, width: 3.5, depth: 3, height: 3, name: 'Cottage', color: '#a89580' });
+  // Create buildings with more variety - place on flat-ish ground
+  const buildingData = [
+    { x: 10, z: 5, width: 4, depth: 3, height: 4, name: 'Tavern', color: '#a0826d' },
+    { x: -10, z: 5, width: 4, depth: 4, height: 3, name: 'Shop', color: '#8b7355' },
+    { x: 0, z: -15, width: 5, depth: 5, height: 5, name: 'Town Hall', color: '#9a8a7a' },
+    { x: 15, z: -10, width: 3, depth: 3, height: 3.5, name: 'House', color: '#b8a490' },
+    { x: -15, z: -8, width: 3.5, depth: 3, height: 3, name: 'Cottage', color: '#a89580' }
+  ];
+  
+  buildingData.forEach(b => {
+    buildings.push({
+      ...b,
+      groundHeight: getTerrainHeight(b.x, b.z)
+    });
+  });
   
   // Pre-generate grass texture pattern (done once for consistent appearance)
   for (let i = 0; i < 100; i++) {
@@ -243,8 +284,9 @@ function render() {
   
   // Add trees
   trees.forEach(tree => {
-    const base = project(tree.x, 0, tree.z);
-    const top = project(tree.x, tree.height, tree.z);
+    const groundY = tree.groundHeight || 0;
+    const base = project(tree.x, groundY, tree.z);
+    const top = project(tree.x, groundY + tree.height, tree.z);
     if (base && top) {
       renderables.push({
         type: 'tree',
@@ -258,11 +300,12 @@ function render() {
   
   // Add buildings
   buildings.forEach(building => {
+    const groundY = building.groundHeight || 0;
     const corners = [
-      project(building.x - building.width/2, 0, building.z - building.depth/2),
-      project(building.x + building.width/2, 0, building.z - building.depth/2),
-      project(building.x + building.width/2, 0, building.z + building.depth/2),
-      project(building.x - building.width/2, 0, building.z + building.depth/2)
+      project(building.x - building.width/2, groundY, building.z - building.depth/2),
+      project(building.x + building.width/2, groundY, building.z - building.depth/2),
+      project(building.x + building.width/2, groundY, building.z + building.depth/2),
+      project(building.x - building.width/2, groundY, building.z + building.depth/2)
     ];
     
     if (corners.every(c => c !== null)) {
@@ -357,68 +400,109 @@ function renderRock(obj) {
 }
 
 /**
- * Render a tree
+ * Render a tree with 3D volume
  */
 function renderTree(obj) {
   const { base, top, tree } = obj;
   
-  // Trunk with texture
-  const trunkWidth = Math.max(1, 3 * base.scale / 100);
-  ctx.strokeStyle = '#8b4513';
-  ctx.lineWidth = trunkWidth;
+  // Calculate trunk dimensions with proper perspective
+  const trunkRadius = tree.trunkRadius || 0.2;
+  const trunkWidthBottom = Math.max(2, trunkRadius * 60 * base.scale / 100);
+  const trunkWidthTop = Math.max(1, trunkRadius * 40 * base.scale / 100);
+  
+  // Draw trunk as 3D cylinder (two sides visible)
+  // Left side of trunk (darker)
+  ctx.fillStyle = '#654321';
   ctx.beginPath();
-  ctx.moveTo(base.x, base.y);
-  ctx.lineTo(top.x, top.y);
-  ctx.stroke();
+  ctx.moveTo(base.x - trunkWidthBottom / 2, base.y);
+  ctx.lineTo(top.x - trunkWidthTop / 2, top.y);
+  ctx.lineTo(top.x, top.y - trunkWidthTop / 4);
+  ctx.lineTo(base.x, base.y - trunkWidthBottom / 4);
+  ctx.closePath();
+  ctx.fill();
+  
+  // Right side of trunk (lighter)
+  ctx.fillStyle = '#8b4513';
+  ctx.beginPath();
+  ctx.moveTo(base.x + trunkWidthBottom / 2, base.y);
+  ctx.lineTo(top.x + trunkWidthTop / 2, top.y);
+  ctx.lineTo(top.x, top.y - trunkWidthTop / 4);
+  ctx.lineTo(base.x, base.y - trunkWidthBottom / 4);
+  ctx.closePath();
+  ctx.fill();
   
   // Add bark texture lines
-  ctx.strokeStyle = '#654321';
-  ctx.lineWidth = Math.max(0.5, trunkWidth * 0.3);
-  for (let i = 0; i < 3; i++) {
-    const y = base.y - i * (base.y - top.y) / 4;
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+  ctx.lineWidth = 1;
+  for (let i = 1; i < 4; i++) {
+    const ratio = i / 4;
+    const y = base.y + (top.y - base.y) * ratio;
+    const leftX = base.x - trunkWidthBottom / 2 + (top.x - trunkWidthTop / 2 - (base.x - trunkWidthBottom / 2)) * ratio;
+    const rightX = base.x + trunkWidthBottom / 2 + (top.x + trunkWidthTop / 2 - (base.x + trunkWidthBottom / 2)) * ratio;
     ctx.beginPath();
-    ctx.moveTo(base.x - trunkWidth / 2, y);
-    ctx.lineTo(base.x + trunkWidth / 2, y);
+    ctx.moveTo(leftX, y);
+    ctx.lineTo(rightX, y);
     ctx.stroke();
   }
   
-  // Foliage with variation
-  const foliageY = top.y - 10 * base.scale / 100;
-  const foliageRadius = Math.max(2, 20 * base.scale / 100);
+  // Foliage with 3D layering
+  const foliageRadius = Math.max(3, 25 * base.scale / 100);
+  const foliageBase = top.y - foliageRadius * 0.3;
   
   if (tree.type === 'pine') {
-    // Pine tree (triangle shape)
-    ctx.fillStyle = '#1a4d1a';
-    ctx.beginPath();
-    ctx.moveTo(top.x, foliageY - foliageRadius);
-    ctx.lineTo(top.x - foliageRadius, foliageY + foliageRadius);
-    ctx.lineTo(top.x + foliageRadius, foliageY + foliageRadius);
-    ctx.closePath();
-    ctx.fill();
-    
-    // Add layers
-    ctx.fillStyle = '#228b22';
-    ctx.beginPath();
-    ctx.moveTo(top.x, foliageY - foliageRadius * 0.5);
-    ctx.lineTo(top.x - foliageRadius * 0.7, foliageY + foliageRadius * 0.5);
-    ctx.lineTo(top.x + foliageRadius * 0.7, foliageY + foliageRadius * 0.5);
-    ctx.closePath();
-    ctx.fill();
+    // Pine tree with multiple 3D cone layers
+    const layers = 3;
+    for (let layer = 0; layer < layers; layer++) {
+      const layerRatio = layer / layers;
+      const layerY = foliageBase - foliageRadius * 1.5 * (1 - layerRatio);
+      const layerRadius = foliageRadius * (1 - layerRatio * 0.3);
+      
+      // Back layer (darker)
+      ctx.fillStyle = layer % 2 === 0 ? '#1a4d1a' : '#146b14';
+      ctx.beginPath();
+      ctx.moveTo(top.x, layerY - layerRadius * 0.8);
+      ctx.lineTo(top.x - layerRadius * 1.2, layerY + layerRadius * 0.4);
+      ctx.lineTo(top.x + layerRadius * 1.2, layerY + layerRadius * 0.4);
+      ctx.closePath();
+      ctx.fill();
+      
+      // Add highlights
+      ctx.fillStyle = layer % 2 === 0 ? '#228b22' : '#2a9d2a';
+      ctx.beginPath();
+      ctx.moveTo(top.x, layerY - layerRadius * 0.8);
+      ctx.lineTo(top.x - layerRadius * 0.7, layerY + layerRadius * 0.2);
+      ctx.lineTo(top.x + layerRadius * 0.7, layerY + layerRadius * 0.2);
+      ctx.closePath();
+      ctx.fill();
+    }
   } else {
-    // Oak tree (round)
-    ctx.fillStyle = '#228b22';
-    ctx.beginPath();
-    ctx.arc(top.x, foliageY, foliageRadius, 0, Math.PI * 2);
-    ctx.fill();
+    // Oak tree with 3D spherical foliage clusters
+    const clusters = [
+      { x: 0, y: -0.3, scale: 1.0, color: '#1a4d1a' },
+      { x: -0.4, y: 0, scale: 0.8, color: '#228b22' },
+      { x: 0.4, y: 0, scale: 0.8, color: '#228b22' },
+      { x: -0.2, y: 0.3, scale: 0.7, color: '#2a9d2a' },
+      { x: 0.2, y: 0.3, scale: 0.7, color: '#2a9d2a' },
+      { x: 0, y: 0.1, scale: 0.9, color: '#1e7a1e' }
+    ];
     
-    // Add darker spots for depth
-    ctx.fillStyle = 'rgba(26, 77, 26, 0.3)';
-    ctx.beginPath();
-    ctx.arc(top.x - foliageRadius * 0.3, foliageY, foliageRadius * 0.4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(top.x + foliageRadius * 0.3, foliageY + foliageRadius * 0.2, foliageRadius * 0.3, 0, Math.PI * 2);
-    ctx.fill();
+    clusters.forEach(cluster => {
+      const clusterX = top.x + cluster.x * foliageRadius;
+      const clusterY = foliageBase + cluster.y * foliageRadius;
+      const clusterRadius = foliageRadius * cluster.scale;
+      
+      // Main cluster
+      ctx.fillStyle = cluster.color;
+      ctx.beginPath();
+      ctx.arc(clusterX, clusterY, clusterRadius, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Highlight for 3D effect
+      ctx.fillStyle = 'rgba(34, 139, 34, 0.4)';
+      ctx.beginPath();
+      ctx.arc(clusterX - clusterRadius * 0.3, clusterY - clusterRadius * 0.3, clusterRadius * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+    });
   }
 }
 
@@ -428,19 +512,76 @@ function renderTree(obj) {
 function renderBuilding(obj) {
   const { corners, building } = obj;
   
-  // Project the top corners of the building
+  // Project the top corners of the building (accounting for ground height)
+  const groundY = building.groundHeight || 0;
   const topCorners = [
-    project(building.x - building.width/2, building.height, building.z - building.depth/2),
-    project(building.x + building.width/2, building.height, building.z - building.depth/2),
-    project(building.x + building.width/2, building.height, building.z + building.depth/2),
-    project(building.x - building.width/2, building.height, building.z + building.depth/2)
+    project(building.x - building.width/2, groundY + building.height, building.z - building.depth/2),
+    project(building.x + building.width/2, groundY + building.height, building.z - building.depth/2),
+    project(building.x + building.width/2, groundY + building.height, building.z + building.depth/2),
+    project(building.x - building.width/2, groundY + building.height, building.z + building.depth/2)
   ];
   
   // Check if all corners are visible
   const allVisible = corners.every(c => c !== null) && topCorners.every(c => c !== null);
   if (!allVisible) return;
   
-  // Draw front wall (facing camera) - base quadrilateral
+  // Determine which walls are visible based on camera position
+  const dx = building.x - player.x;
+  const dz = building.z - player.z;
+  const angleToBuilding = Math.atan2(dx, dz);
+  const relativeAngle = angleToBuilding - player.angle;
+  
+  // Normalize angle to -PI to PI
+  let normAngle = relativeAngle;
+  while (normAngle > Math.PI) normAngle -= Math.PI * 2;
+  while (normAngle < -Math.PI) normAngle += Math.PI * 2;
+  
+  // Draw back wall first if visible (furthest from camera)
+  if (normAngle > Math.PI * 0.5 || normAngle < -Math.PI * 0.5) {
+    ctx.fillStyle = shadeColor(building.color || '#a0826d', -25);
+    ctx.strokeStyle = '#6b5d50';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(corners[2].x, corners[2].y);
+    ctx.lineTo(corners[3].x, corners[3].y);
+    ctx.lineTo(topCorners[3].x, topCorners[3].y);
+    ctx.lineTo(topCorners[2].x, topCorners[2].y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+  
+  // Draw left wall if visible
+  if (normAngle < 0) {
+    ctx.fillStyle = shadeColor(building.color || '#a0826d', -20);
+    ctx.strokeStyle = '#6b5d50';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(corners[0].x, corners[0].y);
+    ctx.lineTo(corners[3].x, corners[3].y);
+    ctx.lineTo(topCorners[3].x, topCorners[3].y);
+    ctx.lineTo(topCorners[0].x, topCorners[0].y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+  
+  // Draw right wall if visible
+  if (normAngle > 0) {
+    ctx.fillStyle = shadeColor(building.color || '#a0826d', -15);
+    ctx.strokeStyle = '#6b5d50';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(corners[1].x, corners[1].y);
+    ctx.lineTo(corners[2].x, corners[2].y);
+    ctx.lineTo(topCorners[2].x, topCorners[2].y);
+    ctx.lineTo(topCorners[1].x, topCorners[1].y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+  
+  // Draw front wall (always visible, facing camera)
   ctx.fillStyle = building.color || '#a0826d';
   ctx.strokeStyle = '#6b5d50';
   ctx.lineWidth = 2;
@@ -450,17 +591,6 @@ function renderBuilding(obj) {
   ctx.lineTo(corners[1].x, corners[1].y);
   ctx.lineTo(topCorners[1].x, topCorners[1].y);
   ctx.lineTo(topCorners[0].x, topCorners[0].y);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-  
-  // Draw right wall (slightly darker for depth)
-  ctx.fillStyle = shadeColor(building.color || '#a0826d', -15);
-  ctx.beginPath();
-  ctx.moveTo(corners[1].x, corners[1].y);
-  ctx.lineTo(corners[2].x, corners[2].y);
-  ctx.lineTo(topCorners[2].x, topCorners[2].y);
-  ctx.lineTo(topCorners[1].x, topCorners[1].y);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
@@ -485,11 +615,11 @@ function renderBuilding(obj) {
   for (let i = 1; i < 4; i++) {
     const ratio = i / 4;
     const x = corners[0].x + (corners[1].x - corners[0].x) * ratio;
-    const y1 = corners[0].y + (topCorners[0].y - corners[0].y) * ratio;
-    const y2 = topCorners[0].y + (topCorners[1].y - topCorners[0].y) * ratio;
+    const yBottom = corners[0].y + (corners[1].y - corners[0].y) * ratio;
+    const yTop = topCorners[0].y + (topCorners[1].y - topCorners[0].y) * ratio;
     ctx.beginPath();
-    ctx.moveTo(x, corners[0].y);
-    ctx.lineTo(x, y2);
+    ctx.moveTo(x, yBottom);
+    ctx.lineTo(x, yTop);
     ctx.stroke();
   }
   
