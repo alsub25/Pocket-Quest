@@ -7,7 +7,13 @@ let canvas, ctx;
 let player = { x: 0, y: 0, angle: 0, targetX: 0, targetY: 0, isMoving: false };
 let moveState = { forward: false, backward: false, left: false, right: false, rotateLeft: false, rotateRight: false };
 const MOVE_SPEED = 0.1;
-const ZOOM = 30; // Pixels per world unit (increased for better visibility)
+
+// Responsive zoom - smaller on mobile for better view
+const getZoom = () => {
+  const isMobile = window.innerWidth < 768;
+  return isMobile ? 15 : 30; // Pixels per world unit
+};
+let ZOOM = getZoom();
 
 // Current area/map
 let currentArea = 'town';
@@ -47,7 +53,6 @@ export function init3DWorld(container) {
   
   // Start render loop
   animate();
-  
   console.log('2D Top-Down World initialized');
 }
 
@@ -156,6 +161,9 @@ function onWindowResize() {
   
   canvas.width = container.clientWidth;
   canvas.height = container.clientHeight;
+  
+  // Update zoom for mobile/desktop
+  ZOOM = getZoom();
 }
 
 /**
@@ -439,93 +447,6 @@ function animate() {
   updateMovement();
   render();
   requestAnimationFrame(animate);
-}
-
-/**
- * Set up keyboard and touch controls
- */
-export function setupControls() {
-  // Keyboard controls
-  document.addEventListener('keydown', (event) => {
-    switch (event.key.toLowerCase()) {
-      case 'w':
-      case 'arrowup':
-        moveState.forward = true;
-        break;
-      case 's':
-      case 'arrowdown':
-        moveState.backward = true;
-        break;
-      case 'a':
-        moveState.left = true;
-        break;
-      case 'd':
-        moveState.right = true;
-        break;
-      case 'arrowleft':
-        moveState.rotateLeft = true;
-        break;
-      case 'arrowright':
-        moveState.rotateRight = true;
-        break;
-    }
-  });
-  
-  document.addEventListener('keyup', (event) => {
-    switch (event.key.toLowerCase()) {
-      case 'w':
-      case 'arrowup':
-        moveState.forward = false;
-        break;
-      case 's':
-      case 'arrowdown':
-        moveState.backward = false;
-        break;
-      case 'a':
-        moveState.left = false;
-        break;
-      case 'd':
-        moveState.right = false;
-        break;
-      case 'arrowleft':
-        moveState.rotateLeft = false;
-        break;
-      case 'arrowright':
-        moveState.rotateRight = false;
-        break;
-    }
-  });
-  
-  // Touch controls
-  if (canvas) {
-    canvas.addEventListener('touchstart', (event) => {
-      event.preventDefault();
-      if (event.touches.length > 0) {
-        touchStartX = event.touches[0].clientX;
-        touchStartY = event.touches[0].clientY;
-        touchMoveX = touchStartX;
-        touchMoveY = touchStartY;
-        isTouching = true;
-      }
-    }, { passive: false });
-    
-    canvas.addEventListener('touchmove', (event) => {
-      event.preventDefault();
-      if (event.touches.length > 0 && isTouching) {
-        touchMoveX = event.touches[0].clientX;
-        touchMoveY = event.touches[0].clientY;
-      }
-    }, { passive: false });
-    
-    canvas.addEventListener('touchend', (event) => {
-      event.preventDefault();
-      isTouching = false;
-      touchStartX = 0;
-      touchStartY = 0;
-      touchMoveX = 0;
-      touchMoveY = 0;
-    }, { passive: false });
-  }
 }
 
 /**
