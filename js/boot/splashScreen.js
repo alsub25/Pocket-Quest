@@ -42,7 +42,12 @@ export async function showSplashSequence() {
   const engineLogo = _el(ENGINE_LOGO_ID);
 
   if (!splash || !studioLogo || !engineLogo) {
-    console.warn('[splashScreen] Elements not found, skipping splash');
+    console.warn('[splashScreen] ⚠️ Elements not found, skipping splash');
+    console.warn('  Missing elements:', {
+      splash: splash ? '✓' : '✗ #splashScreen',
+      studioLogo: studioLogo ? '✓' : '✗ #studioLogo', 
+      engineLogo: engineLogo ? '✓' : '✗ #engineLogo'
+    });
     return;
   }
 
@@ -52,7 +57,7 @@ export async function showSplashSequence() {
   const skipSplash = () => {
     if (!skipped) {
       skipped = true;
-      console.log('[splashScreen] Splash sequence skipped by user');
+      console.log('[splashScreen] ⏭️ Splash sequence skipped by user');
       hideSplashImmediate();
     }
   };
@@ -110,7 +115,16 @@ export async function showSplashSequence() {
     // Hide splash screen
     splash.classList.add('hidden');
   } catch (e) {
-    console.error('[splashScreen] Error during splash sequence:', e);
+    const errorMsg = e && e.message ? e.message : String(e);
+    const errorStack = e && e.stack ? e.stack : '';
+    
+    console.error('[splashScreen] ❌ Error during splash sequence');
+    console.error(`  Error: ${errorMsg}`);
+    if (errorStack) {
+      const stackLines = errorStack.split('\n').slice(0, 3); // Show first 3 lines of stack
+      console.error(`  Stack:\n${stackLines.join('\n')}`);
+    }
+    
     // Ensure splash is hidden on error
     if (splash) {
       splash.classList.add('hidden');
