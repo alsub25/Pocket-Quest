@@ -104,21 +104,22 @@ export function generateTurnPreview(player, enemy, action) {
   // Apply status effect modifiers
   if (enemy.statusEffects) {
     const exposed = enemy.statusEffects.find(s => s.id === 'exposed');
-    if (exposed) {
-      estimatedDamage = Math.round(estimatedDamage * 1.5);
+    if (exposed && STATUS_EFFECTS.exposed) {
+      estimatedDamage = Math.round(estimatedDamage * STATUS_EFFECTS.exposed.damageMultiplier);
     }
     
     const fortified = enemy.statusEffects.filter(s => s.id === 'fortified');
-    if (fortified.length > 0) {
-      const reduction = 0.25 * Math.min(fortified.length, 3);
+    if (fortified.length > 0 && STATUS_EFFECTS.fortified) {
+      const maxStacks = STATUS_EFFECTS.fortified.maxStacks || 3;
+      const reduction = STATUS_EFFECTS.fortified.damageReduction * Math.min(fortified.length, maxStacks);
       estimatedDamage = Math.round(estimatedDamage * (1 - reduction));
     }
   }
   
   if (player.statusEffects) {
     const dazed = player.statusEffects.find(s => s.id === 'dazed');
-    if (dazed) {
-      estimatedDamage = Math.round(estimatedDamage * 0.7);
+    if (dazed && STATUS_EFFECTS.dazed) {
+      estimatedDamage = Math.round(estimatedDamage * (1 - STATUS_EFFECTS.dazed.accuracyReduction));
     }
   }
   

@@ -4,6 +4,13 @@
 // This service manages companion state including loyalty, unlocking,
 // and progression through immutable state updates and event emissions.
 
+// Loyalty system constants
+const LOYALTY_CONFIG = {
+  INITIAL_MAX_POINTS: 100,
+  MAX_LEVEL: 10,
+  LEVEL_UP_MULTIPLIER: 1.2
+};
+
 /**
  * Creates an engine-integrated companion system service.
  * All companion state mutations go through engine.setState() with immutable updates.
@@ -53,7 +60,7 @@ export function createCompanionSystemService(engine) {
         [companionId]: {
           level: 0,
           points: 0,
-          maxPoints: 100
+          maxPoints: LOYALTY_CONFIG.INITIAL_MAX_POINTS
         }
       }
     };
@@ -116,22 +123,26 @@ export function createCompanionSystemService(engine) {
       return state;
     }
 
-    const currentLoyalty = companions.loyalty[companionId] || { level: 0, points: 0, maxPoints: 100 };
+    const currentLoyalty = companions.loyalty[companionId] || { 
+      level: 0, 
+      points: 0, 
+      maxPoints: LOYALTY_CONFIG.INITIAL_MAX_POINTS 
+    };
     let newPoints = currentLoyalty.points + points;
     let newLevel = currentLoyalty.level;
     let newMaxPoints = currentLoyalty.maxPoints;
     let leveledUp = false;
 
     // Process level ups (may level up multiple times if enough points)
-    while (newPoints >= newMaxPoints && newLevel < 10) {
+    while (newPoints >= newMaxPoints && newLevel < LOYALTY_CONFIG.MAX_LEVEL) {
       newPoints -= newMaxPoints;
       newLevel++;
-      newMaxPoints = Math.floor(newMaxPoints * 1.2);
+      newMaxPoints = Math.floor(newMaxPoints * LOYALTY_CONFIG.LEVEL_UP_MULTIPLIER);
       leveledUp = true;
     }
 
     // Cap points at max if already at max level
-    if (newLevel >= 10) {
+    if (newLevel >= LOYALTY_CONFIG.MAX_LEVEL) {
       newPoints = Math.min(newPoints, newMaxPoints);
     }
 
@@ -183,7 +194,11 @@ export function createCompanionSystemService(engine) {
       id: companionId,
       unlocked: companions.unlocked.includes(companionId),
       active: companions.active === companionId,
-      loyalty: companions.loyalty[companionId] || { level: 0, points: 0, maxPoints: 100 }
+      loyalty: companions.loyalty[companionId] || { 
+        level: 0, 
+        points: 0, 
+        maxPoints: LOYALTY_CONFIG.INITIAL_MAX_POINTS 
+      }
     };
   }
 
