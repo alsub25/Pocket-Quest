@@ -135,6 +135,22 @@ export const CHANGELOG = [
             ]
           }
         ]
+      },
+      {
+        "heading": "Responsive Design Improvements",
+        "items": [
+          {
+            "title": "Desktop Screen Support",
+            "bullets": [
+              "Increased max-width for game container on desktop screens while maintaining mobile-first approach",
+              "Added responsive breakpoints: 520px (tablets), 768px (medium desktops), 1024px (large desktops)",
+              "Game container now scales from 480px (mobile) to 540px, 680px, and 800px on larger screens",
+              "Added subtle typography scaling on desktop for improved readability",
+              "Settings screen now utilizes full available width on desktop devices",
+              "Maintains phone-first approach with progressive enhancement for larger screens"
+            ]
+          }
+        ]
       }
     ]
   },

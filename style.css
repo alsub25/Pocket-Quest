@@ -239,6 +239,13 @@ h1{ font-size:1.3rem; }
 h2{ font-size:1.05rem; }
 h3{ font-size:0.95rem; }
 
+/* Desktop: slightly larger typography for better readability */
+@media (min-width:768px){
+  h1{ font-size:1.4rem; }
+  h2{ font-size:1.1rem; }
+  h3{ font-size:1rem; }
+}
+
 .center{ text-align:center; }
 
 .hint{
@@ -2642,11 +2649,27 @@ body.no-motion .spell-card.meter-buffed::after{
   to{ opacity:1; transform:translateY(0) scale(1); }
 }
 
+/* Desktop/Tablet responsive improvements - gradual width expansion */
 @media (min-width:520px){
   #app{
+    max-width:540px;
     margin:10px auto;
     border-radius:16px;
     border:1px solid #14172b;
+  }
+}
+
+@media (min-width:768px){
+  #app{
+    max-width:680px;
+    padding:14px;
+  }
+}
+
+@media (min-width:1024px){
+  #app{
+    max-width:800px;
+    padding:16px;
   }
 }
 
@@ -2981,6 +3004,13 @@ body.no-motion .spell-card.meter-buffed::after{
   display:flex;
   flex-direction:column;
   min-height:0;
+}
+
+/* Desktop: wider settings card */
+@media (min-width:768px){
+  #settingsScreen .settings-card{
+    max-width:100%;
+  }
 }
 #settingsScreen .settings-sections{
   flex:1;
