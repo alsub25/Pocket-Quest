@@ -117,24 +117,29 @@ export function createCompanionSystemService(engine) {
     }
 
     const currentLoyalty = companions.loyalty[companionId] || { level: 0, points: 0, maxPoints: 100 };
-    const newPoints = currentLoyalty.points + points;
-    const newLevel = currentLoyalty.level;
+    let newPoints = currentLoyalty.points + points;
+    let newLevel = currentLoyalty.level;
+    let newMaxPoints = currentLoyalty.maxPoints;
     let leveledUp = false;
 
-    let updatedLoyalty = {
-      ...currentLoyalty,
-      points: Math.min(newPoints, currentLoyalty.maxPoints)
-    };
-
-    // Check for level up
-    if (newPoints >= currentLoyalty.maxPoints && currentLoyalty.level < 10) {
-      updatedLoyalty = {
-        level: currentLoyalty.level + 1,
-        points: newPoints - currentLoyalty.maxPoints,
-        maxPoints: Math.floor(currentLoyalty.maxPoints * 1.2)
-      };
+    // Process level ups (may level up multiple times if enough points)
+    while (newPoints >= newMaxPoints && newLevel < 10) {
+      newPoints -= newMaxPoints;
+      newLevel++;
+      newMaxPoints = Math.floor(newMaxPoints * 1.2);
       leveledUp = true;
     }
+
+    // Cap points at max if already at max level
+    if (newLevel >= 10) {
+      newPoints = Math.min(newPoints, newMaxPoints);
+    }
+
+    const updatedLoyalty = {
+      level: newLevel,
+      points: newPoints,
+      maxPoints: newMaxPoints
+    };
 
     const newCompanions = {
       ...companions,

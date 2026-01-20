@@ -158,7 +158,14 @@ export function showTooltip(content, element) {
     document.body.appendChild(tooltip);
   }
   
-  tooltip.innerHTML = content;
+  // Use DOMParser for safer HTML parsing to prevent XSS
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(content, 'text/html');
+  tooltip.innerHTML = '';
+  while (doc.body.firstChild) {
+    tooltip.appendChild(doc.body.firstChild);
+  }
+  
   tooltip.classList.add('visible');
   
   if (element) {
