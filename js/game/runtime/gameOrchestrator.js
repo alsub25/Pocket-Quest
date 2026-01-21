@@ -4275,7 +4275,11 @@ function buildCharacterCreationOptions() {
       <button class="class-info-btn" title="View class details" aria-label="View ${cls.name} details">?</button>
     `
 
-        div.addEventListener('click', () => {
+        div.addEventListener('click', (e) => {
+            // Don't select if clicking the info button
+            if (e.target.classList.contains('class-info-btn')) {
+                return
+            }
             document
                 .querySelectorAll('#classOptions .class-card')
                 .forEach((el) => el.classList.remove('selected'))
@@ -4287,8 +4291,16 @@ function buildCharacterCreationOptions() {
         if (infoBtn) {
             infoBtn.addEventListener('click', (e) => {
                 e.stopPropagation() // Don't select the class when clicking info button
-                showClassInfoModal(cls)
+                e.preventDefault() // Prevent any default button behavior
+                console.log('Info button clicked for', cls.name) // Debug log
+                try {
+                    showClassInfoModal(cls)
+                } catch (error) {
+                    console.error('Error showing class info modal:', error)
+                }
             })
+        } else {
+            console.warn('Info button not found for', cls.name)
         }
 
         classRow.appendChild(div)
@@ -4322,9 +4334,14 @@ function buildCharacterCreationOptions() {
 
 // Show detailed class information in a modal
 function showClassInfoModal(cls) {
-    if (!cls) return
+    console.log('showClassInfoModal called with:', cls)
+    if (!cls) {
+        console.error('showClassInfoModal: cls is null or undefined')
+        return
+    }
 
-    openModal(`${cls.name} Details`, (body) => {
+    try {
+        openModal(`${cls.name} Details`, (body) => {
         body.innerHTML = `
             <div style="max-width: 600px; margin: 0 auto;">
                 <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
@@ -4402,6 +4419,10 @@ function showClassInfoModal(cls) {
             </div>
         `
     })
+    } catch (error) {
+        console.error('Error in showClassInfoModal:', error)
+        alert('Error showing class details. Check console for details.')
+    }
 }
 
 // Reset the character-creation dev-cheats UI so it never "sticks"
