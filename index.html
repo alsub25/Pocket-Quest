@@ -74,10 +74,10 @@
             <!-- CHARACTER CREATION -->
             <div id="characterScreen" class="screen hidden">
                 <div class="card">
-                    <h2>Create Hero</h2>
+                    <h2 data-i18n="char.create_hero">Create Hero</h2>
 
                     <div class="field">
-                        <label for="inputName">Name</label>
+                        <label for="inputName" data-i18n="char.name">Name</label>
                         <div class="name-input-row">
                             <input
                                 id="inputName"
@@ -95,7 +95,7 @@
                     </div>
 
                     <div class="field">
-                        <label>Class</label>
+                        <label data-i18n="char.class">Class</label>
                         <!-- Scrollable container -->
                         <div id="classScrollContainer">
                             <div id="classOptions"></div>
@@ -103,12 +103,12 @@
                     </div>
 
                     <div class="field">
-                        <label>Difficulty</label>
+                        <label data-i18n="char.difficulty">Difficulty</label>
                         <div class="option-row" id="difficultyOptions"></div>
                     </div>
 
                     <div class="field">
-                        <label>Developer Cheats</label>
+                        <label data-i18n="char.dev_cheats">Developer Cheats</label>
 
                         <div class="option-row">
                             <div class="pill-option dev-cheats-pill">
@@ -116,11 +116,11 @@
                                     <input
                                         type="checkbox"
                                         id="devCheatsToggle" />
-                                    <span class="dev-cheats-title"
+                                    <span class="dev-cheats-title" data-i18n="char.enable_cheats"
                                         >Enable developer cheats</span
                                     >
                                 </label>
-                                <div class="dev-cheats-subtitle">
+                                <div class="dev-cheats-subtitle" data-i18n="char.cheats_subtitle">
                                     Shows the Cheat menu in-game for this
                                     character (testing only).
                                 </div>
@@ -128,10 +128,10 @@
                         </div>
                     </div>
 
-                    <button class="btn outline" id="btnStartGame">
+                    <button class="btn outline" id="btnStartGame" data-i18n="char.begin_adventure">
                         Begin Adventure
                     </button>
-                    <button class="btn outline" id="btnBackToMenu">Back</button>
+                    <button class="btn outline" id="btnBackToMenu" data-i18n="ui.back">Back</button>
                 </div>
             </div>
 
@@ -214,37 +214,37 @@
 
                     <div id="questBox">
                         <div id="questTitle" class="panel-header">
-                            <span id="questTitleText">Quests</span>
+                            <span id="questTitleText" data-i18n="quest.quests">Quests</span>
                             <span class="panel-chevron" aria-hidden="true">▾</span>
                         </div>
-                        <div id="questDesc">None yet.</div>
+                        <div id="questDesc" data-i18n="quest.none">None yet.</div>
                     </div>
 
                     <!-- NEW: Log Filter as its own panel -->
                     <div id="logFilterPanel">
                         <div id="logFilters" class="log-filter-row">
-                            <button class="log-chip" data-log-filter="all">
+                            <button class="log-chip" data-log-filter="all" data-i18n="log.all">
                                 All
                             </button>
-                            <button class="log-chip" data-log-filter="system">
+                            <button class="log-chip" data-log-filter="system" data-i18n="log.system">
                                 System
                             </button>
-                            <button class="log-chip" data-log-filter="good">
+                            <button class="log-chip" data-log-filter="good" data-i18n="log.player">
                                 Player
                             </button>
-                            <button class="log-chip" data-log-filter="danger">
+                            <button class="log-chip" data-log-filter="danger" data-i18n="log.enemy">
                                 Enemy
                             </button>
-                            <button class="log-chip" data-log-filter="combat">
+                            <button class="log-chip" data-log-filter="combat" data-i18n="log.combat">
                                 Combat
                             </button>
-                            <button class="log-chip" data-log-filter="damage">
+                            <button class="log-chip" data-log-filter="damage" data-i18n="log.damage">
                                 Damage
                             </button>
-                            <button class="log-chip" data-log-filter="procs">
+                            <button class="log-chip" data-log-filter="procs" data-i18n="log.procs">
                                 Procs
                             </button>
-                            <button class="log-chip" data-log-filter="status">
+                            <button class="log-chip" data-log-filter="status" data-i18n="log.status">
                                 Status
                             </button>
                         </div>
@@ -252,7 +252,7 @@
 
                     <div id="logBox">
                         <div id="logHeader" class="panel-header">
-                            Log
+                            <span data-i18n="quest.log">Log</span>
                             <span class="panel-chevron" aria-hidden="true">▾</span>
                         </div>
                         <div id="log"></div>
@@ -267,65 +267,65 @@
             <div id="settingsScreen" class="screen hidden">
                 <div class="card settings-card settings-compact">
                     <div class="settings-header">
-                        <h2>Settings</h2>
-                        <p class="hint">Personalize visuals, audio, and accessibility.</p>
+                        <h2 data-i18n="settings.title">Settings</h2>
+                        <p class="hint" data-i18n="settings.subtitle">Personalize visuals, audio, and accessibility.</p>
                     </div>
 
                     <div class="settings-sections">
                         <!-- Display / UI -->
                         <div class="settings-section">
-                            <div class="settings-section-title">Display</div>
+                            <div class="settings-section-title" data-i18n="settings.display">Display</div>
 
                             <div class="settings-row">
                                 <div class="settings-left">
-                                    <div class="settings-label">Theme</div>
-                                    <div class="settings-desc">Changes the overall UI palette.</div>
+                                    <div class="settings-label" data-i18n="settings.theme">Theme</div>
+                                    <div class="settings-desc" data-i18n="settings.theme_desc">Changes the overall UI palette.</div>
                                 </div>
                                 <div class="settings-control">
                                     <select id="themeSelect" class="settings-select">
-                                        <option value="default">Default</option>
-                                        <option value="arcane">Arcane</option>
-                                        <option value="inferno">Inferno</option>
-                                        <option value="forest">Forest</option>
-                                        <option value="holy">Holy</option>
-                                        <option value="shadow">Shadow</option>
+                                        <option value="default" data-i18n="settings.theme_default">Default</option>
+                                        <option value="arcane" data-i18n="settings.theme_arcane">Arcane</option>
+                                        <option value="inferno" data-i18n="settings.theme_inferno">Inferno</option>
+                                        <option value="forest" data-i18n="settings.theme_forest">Forest</option>
+                                        <option value="holy" data-i18n="settings.theme_holy">Holy</option>
+                                        <option value="shadow" data-i18n="settings.theme_shadow">Shadow</option>
                                     </select>
                                 </div>
                             </div>
 
                             <div class="settings-row">
                                 <div class="settings-left">
-                                    <div class="settings-label">Color scheme</div>
-                                    <div class="settings-desc">Light or dark mode for the UI.</div>
+                                    <div class="settings-label" data-i18n="settings.color_scheme">Color scheme</div>
+                                    <div class="settings-desc" data-i18n="settings.color_scheme_desc">Light or dark mode for the UI.</div>
                                 </div>
                                 <div class="settings-control">
                                     <select id="settingsColorScheme" class="settings-select" aria-label="Color scheme">
-                                        <option value="auto" selected>Auto</option>
-                                        <option value="light">Light</option>
-                                        <option value="dark">Dark</option>
+                                        <option value="auto" selected data-i18n="settings.color_auto">Auto</option>
+                                        <option value="light" data-i18n="settings.color_light">Light</option>
+                                        <option value="dark" data-i18n="settings.color_dark">Dark</option>
                                     </select>
                                 </div>
                             </div>
 
                             <div class="settings-row">
                                 <div class="settings-left">
-                                    <div class="settings-label">UI scale</div>
-                                    <div class="settings-desc">Adjusts the size of all UI elements.</div>
+                                    <div class="settings-label" data-i18n="settings.ui_scale">UI scale</div>
+                                    <div class="settings-desc" data-i18n="settings.ui_scale_desc">Adjusts the size of all UI elements.</div>
                                 </div>
                                 <div class="settings-control">
                                     <select id="settingsUiScale" class="settings-select" aria-label="UI scale">
-                                        <option value="0.9">Small</option>
-                                        <option value="1" selected>Default</option>
-                                        <option value="1.1">Large</option>
-                                        <option value="1.2">Extra Large</option>
+                                        <option value="0.9" data-i18n="settings.size_small">Small</option>
+                                        <option value="1" selected data-i18n="settings.size_default">Default</option>
+                                        <option value="1.1" data-i18n="settings.size_large">Large</option>
+                                        <option value="1.2" data-i18n="settings.size_xlarge">Extra Large</option>
                                     </select>
                                 </div>
                             </div>
 
                             <div class="settings-row">
                                 <div class="settings-left">
-                                    <div class="settings-label">Text speed</div>
-                                    <div class="settings-desc">How quickly story text advances.</div>
+                                    <div class="settings-label" data-i18n="settings.text_speed">Text speed</div>
+                                    <div class="settings-desc" data-i18n="settings.text_speed_desc">How quickly story text advances.</div>
                                 </div>
                                 <div class="settings-control">
                                     <input type="range" id="settingsTextSpeed" min="0" max="100" value="100" />
@@ -335,12 +335,12 @@
 
                         <!-- Audio -->
                         <div class="settings-section">
-                            <div class="settings-section-title">Audio</div>
+                            <div class="settings-section-title" data-i18n="settings.audio">Audio</div>
 
                             <div class="settings-row">
                                 <div class="settings-left">
-                                    <div class="settings-label">Master volume</div>
-                                    <div class="settings-desc">Overall volume level.</div>
+                                    <div class="settings-label" data-i18n="settings.master_volume">Master volume</div>
+                                    <div class="settings-desc" data-i18n="settings.master_volume_desc">Overall volume level.</div>
                                 </div>
                                 <div class="settings-control">
                                     <input type="range" id="settingsVolume" min="0" max="100" value="80" />
@@ -349,8 +349,8 @@
 
                             <div class="settings-row">
                                 <div class="settings-left">
-                                    <div class="settings-label">Music</div>
-                                    <div class="settings-desc">Background music during play.</div>
+                                    <div class="settings-label" data-i18n="settings.music">Music</div>
+                                    <div class="settings-desc" data-i18n="settings.music_desc">Background music during play.</div>
                                 </div>
                                 <div class="settings-control">
                                     <label class="switch" aria-label="Toggle music">
@@ -362,8 +362,8 @@
 
                             <div class="settings-row">
                                 <div class="settings-left">
-                                    <div class="settings-label">SFX</div>
-                                    <div class="settings-desc">Combat and UI sound effects.</div>
+                                    <div class="settings-label" data-i18n="settings.sfx">SFX</div>
+                                    <div class="settings-desc" data-i18n="settings.sfx_desc">Combat and UI sound effects.</div>
                                 </div>
                                 <div class="settings-control">
                                     <label class="switch" aria-label="Toggle sound effects">
@@ -376,27 +376,27 @@
 
                         <!-- Gameplay -->
                         <div class="settings-section">
-                            <div class="settings-section-title">Gameplay</div>
+                            <div class="settings-section-title" data-i18n="settings.gameplay">Gameplay</div>
 
                             <div class="settings-row">
                                 <div class="settings-left">
-                                    <div class="settings-label">Difficulty</div>
-                                    <div class="settings-desc">Adjust challenge and enemy scaling.</div>
+                                    <div class="settings-label" data-i18n="settings.difficulty_setting">Difficulty</div>
+                                    <div class="settings-desc" data-i18n="settings.difficulty_desc">Adjust challenge and enemy scaling.</div>
                                 </div>
                                 <div class="settings-control">
                                     <select id="settingsDifficulty" class="settings-select">
-                                        <option value="easy">Easy</option>
-                                        <option value="normal" selected>Normal</option>
-                                        <option value="hard">Hard</option>
-                                        <option value="dynamic">Dynamic</option>
+                                        <option value="easy" data-i18n="settings.difficulty_easy">Easy</option>
+                                        <option value="normal" selected data-i18n="settings.difficulty_normal">Normal</option>
+                                        <option value="hard" data-i18n="settings.difficulty_hard">Hard</option>
+                                        <option value="dynamic" data-i18n="settings.difficulty_dynamic">Dynamic</option>
                                     </select>
                                 </div>
                             </div>
 
                             <div class="settings-row">
                                 <div class="settings-left">
-                                    <div class="settings-label">Show combat numbers</div>
-                                    <div class="settings-desc">Display damage and healing numbers in combat.</div>
+                                    <div class="settings-label" data-i18n="settings.combat_numbers">Show combat numbers</div>
+                                    <div class="settings-desc" data-i18n="settings.combat_numbers_desc">Display damage and healing numbers in combat.</div>
                                 </div>
                                 <div class="settings-control">
                                     <label class="switch" aria-label="Toggle combat numbers">
@@ -408,8 +408,8 @@
 
                             <div class="settings-row">
                                 <div class="settings-left">
-                                    <div class="settings-label">Auto-save</div>
-                                    <div class="settings-desc">Automatically save your progress periodically.</div>
+                                    <div class="settings-label" data-i18n="settings.auto_save">Auto-save</div>
+                                    <div class="settings-desc" data-i18n="settings.auto_save_desc">Automatically save your progress periodically.</div>
                                 </div>
                                 <div class="settings-control">
                                     <label class="switch" aria-label="Toggle auto-save">
@@ -422,12 +422,12 @@
 
                         <!-- Accessibility -->
                         <div class="settings-section">
-                            <div class="settings-section-title">Accessibility</div>
+                            <div class="settings-section-title" data-i18n="settings.accessibility">Accessibility</div>
 
                             <div class="settings-row">
                                 <div class="settings-left">
-                                    <div class="settings-label">Reduce motion</div>
-                                    <div class="settings-desc">Turns off animated HUD effects.</div>
+                                    <div class="settings-label" data-i18n="settings.reduce_motion">Reduce motion</div>
+                                    <div class="settings-desc" data-i18n="settings.reduce_motion_desc">Turns off animated HUD effects.</div>
                                 </div>
                                 <div class="settings-control">
                                     <label class="switch" aria-label="Toggle reduce motion">
@@ -439,36 +439,36 @@
 
                             <div class="settings-row">
                                 <div class="settings-left">
-                                    <div class="settings-label">Text size</div>
-                                    <div class="settings-desc">Scales UI text for readability.</div>
+                                    <div class="settings-label" data-i18n="settings.text_size">Text size</div>
+                                    <div class="settings-desc" data-i18n="settings.text_size_desc">Scales UI text for readability.</div>
                                 </div>
                                 <div class="settings-control">
                                     <select id="settingsTextSize" class="settings-select" aria-label="Text size">
-                                        <option value="small">Small</option>
-                                        <option value="default" selected>Default</option>
-                                        <option value="large">Large</option>
-                                        <option value="xlarge">Extra Large</option>
+                                        <option value="small" data-i18n="settings.size_small">Small</option>
+                                        <option value="default" selected data-i18n="settings.size_default">Default</option>
+                                        <option value="large" data-i18n="settings.size_large">Large</option>
+                                        <option value="xlarge" data-i18n="settings.size_xlarge">Extra Large</option>
                                     </select>
                                 </div>
                             </div>
 
                             <div class="settings-row">
                                 <div class="settings-left">
-                                    <div class="settings-label">High contrast</div>
-                                    <div class="settings-desc">Boosts contrast to improve readability.</div>
+                                    <div class="settings-label" data-i18n="settings.high_contrast">High contrast</div>
+                                    <div class="settings-desc" data-i18n="settings.high_contrast_desc">Boosts contrast to improve readability.</div>
                                 </div>
                                 <div class="settings-control">
                                     <select id="settingsHighContrast" class="settings-select" aria-label="High contrast">
-                                        <option value="auto" selected>Auto</option>
-                                        <option value="on">On</option>
-                                        <option value="off">Off</option>
+                                        <option value="auto" selected data-i18n="settings.color_auto">Auto</option>
+                                        <option value="on" data-i18n="settings.high_contrast_on">On</option>
+                                        <option value="off" data-i18n="settings.high_contrast_off">Off</option>
                                     </select>
                                 </div>
                             </div>
                             <div class="settings-row">
                                 <div class="settings-left">
-                                    <div class="settings-label">Auto-equip loot</div>
-                                    <div class="settings-desc">When you gain a new weapon or armor piece and the slot is empty, equip it automatically.</div>
+                                    <div class="settings-label" data-i18n="settings.auto_equip">Auto-equip loot</div>
+                                    <div class="settings-desc" data-i18n="settings.auto_equip_desc">When you gain a new weapon or armor piece and the slot is empty, equip it automatically.</div>
                                 </div>
                                 <div class="settings-control">
                                     <label class="switch" aria-label="Toggle auto-equip loot">
@@ -481,12 +481,12 @@
 
                         <!-- Language / Localization -->
                         <div class="settings-section">
-                            <div class="settings-section-title">Language</div>
+                            <div class="settings-section-title" data-i18n="settings.language_section">Language</div>
 
                             <div class="settings-row">
                                 <div class="settings-left">
-                                    <div class="settings-label">Language</div>
-                                    <div class="settings-desc">Choose your preferred language for the game interface.</div>
+                                    <div class="settings-label" data-i18n="settings.language">Language</div>
+                                    <div class="settings-desc" data-i18n="settings.language_desc">Choose your preferred language for the game interface.</div>
                                 </div>
                                 <div class="settings-control">
                                     <select id="settingsLanguage" class="settings-select" aria-label="Language">
@@ -506,8 +506,8 @@
 
                             <div class="settings-row">
                                 <div class="settings-left">
-                                    <div class="settings-label">AI translation</div>
-                                    <div class="settings-desc">Enable AI-powered translation for dynamic game content (requires API key).</div>
+                                    <div class="settings-label" data-i18n="settings.ai_translation">AI translation</div>
+                                    <div class="settings-desc" data-i18n="settings.ai_translation_desc">Enable AI-powered translation for dynamic game content (requires API key).</div>
                                 </div>
                                 <div class="settings-control">
                                     <label class="switch" aria-label="Toggle AI translation">
@@ -520,7 +520,7 @@
                     </div>
 
                     <div class="settings-footer">
-                        <button class="btn outline" id="btnSettingsBack">Back</button>
+                        <button class="btn outline" id="btnSettingsBack" data-i18n="ui.back">Back</button>
                     </div>
                 </div>
             </div>
