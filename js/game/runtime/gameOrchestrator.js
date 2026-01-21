@@ -4255,16 +4255,11 @@ function buildCharacterCreationOptions() {
         div.className = 'class-card'
         div.dataset.classId = cls.id
 
-        const meter = CLASS_METERS[cls.id]
-            ? `<div class="class-card-meter" style="font-size:0.72rem;color:var(--muted);margin-top:4px;">Combat Meter (HUD): ${CLASS_METERS[cls.id]}</div>`
-            : ''
-
         div.innerHTML = `
       <div class="class-card-icon">${CLASS_ICONS[cls.id] || '🎭'}</div>
       <div class="class-card-content">
         <div class="class-card-name">${cls.name}</div>
         <div class="class-card-desc">${cls.desc}</div>
-        ${meter}
       </div>
       <button class="class-info-btn" title="View class details" aria-label="View ${cls.name} details">?</button>
     `
