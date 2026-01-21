@@ -4,6 +4,103 @@
 export const CHANGELOG = [
   {
     "version": "1.2.90",
+    "title": "AI-Powered Localization & Multi-Language Support",
+    "sections": [
+      {
+        "heading": "Localization System",
+        "items": [
+          {
+            "title": "AI-Powered Translation Service",
+            "bullets": [
+              "✅ Integrated AI translation service with support for OpenAI and Google Translate APIs",
+              "✅ Intelligent caching system to minimize API calls and improve performance",
+              "✅ Fallback to local translations when AI is unavailable",
+              "✅ Context-aware translations optimized for fantasy RPG content",
+              "✅ Batch translation support for efficient processing of multiple texts"
+            ]
+          },
+          {
+            "title": "Multi-Language Support",
+            "bullets": [
+              "🌐 Added support for 10 languages: English, Spanish, French, German, Japanese, Chinese, Portuguese, Russian, Korean, and Italian",
+              "🌐 Language selector UI component with native language names",
+              "🌐 Automatic language detection based on browser settings",
+              "🌐 Persistent language preferences saved in game settings",
+              "🌐 Real-time language switching without game restart"
+            ]
+          },
+          {
+            "title": "Translation Infrastructure",
+            "bullets": [
+              "Created comprehensive locale data system with translation key structure",
+              "Enhanced i18n plugin to integrate with AI translation services",
+              "Added translation settings to game configuration",
+              "Implemented UI components for language selection",
+              "Created translation utilities for dynamic content"
+            ]
+          },
+          {
+            "title": "Developer Features",
+            "bullets": [
+              "Translation API with simple `i18n.t()` and `translateWithAI()` methods",
+              "Support for translation parameters and string interpolation",
+              "Automatic translation of UI elements with `data-i18n` attributes",
+              "Cache management tools (export, import, clear)",
+              "Translation statistics and monitoring",
+              "Comprehensive documentation for adding new languages"
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "Settings & Configuration",
+        "items": [
+          {
+            "title": "Localization Settings",
+            "bullets": [
+              "Added language preference setting with persistence",
+              "AI translation toggle for enabling/disabling AI-powered translations",
+              "Translation provider selection (Local, OpenAI, Google Translate)",
+              "Secure API key storage for translation services",
+              "Translation cache management from settings"
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "Technical Improvements",
+        "items": [
+          {
+            "title": "Architecture Enhancements",
+            "bullets": [
+              "Created modular translation service architecture",
+              "Implemented provider pattern for multiple translation backends",
+              "Added translation caching layer for performance optimization",
+              "Enhanced settings plugin to support localization preferences",
+              "Integrated language system with game engine services"
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "Documentation",
+        "items": [
+          {
+            "title": "Localization Documentation",
+            "bullets": [
+              "Comprehensive README for the localization system",
+              "Usage guide for players and developers",
+              "API documentation for translation services",
+              "Best practices for adding new languages",
+              "Configuration guide for AI translation providers"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "version": "1.2.85",
     "title": "Enhanced Class Complexity & Depth",
     "sections": [
       {

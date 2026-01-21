@@ -41,6 +41,16 @@ export function createSettingsPlugin({ getState } = {}) {
           autoEquipLoot: false,
           showCombatNumbers: true,
           autoSave: true
+        },
+        localization: {
+          // Current language (ISO 639-1 with country code)
+          language: 'en-US',
+          // AI translation enabled
+          aiTranslationEnabled: false,
+          // Translation provider ('local', 'openai', 'google')
+          translationProvider: 'local',
+          // API key for translation service (stored separately for security)
+          translationApiKey: null
         }
       })
 
@@ -87,6 +97,17 @@ export function createSettingsPlugin({ getState } = {}) {
           else if (ae === '0') settings.set('gameplay.autoEquipLoot', false, { persist: false })
         } catch (_) {}
 
+        try {
+          const lang = safeStorageGet('pq-language')
+          if (lang) settings.set('localization.language', String(lang), { persist: false })
+        } catch (_) {}
+
+        try {
+          const aiTrans = safeStorageGet('pq-ai-translation')
+          if (aiTrans === '1') settings.set('localization.aiTranslationEnabled', true, { persist: false })
+          else if (aiTrans === '0') settings.set('localization.aiTranslationEnabled', false, { persist: false })
+        } catch (_) {}
+
         // Persist migrated snapshot.
         settings.save()
       }
@@ -127,6 +148,16 @@ export function createSettingsPlugin({ getState } = {}) {
         try {
           const as = settings.get('gameplay.autoSave', state.settingsAutoSave)
           if (typeof as === 'boolean') state.settingsAutoSave = as
+        } catch (_) {}
+
+        try {
+          const lang = settings.get('localization.language', state.settingsLanguage)
+          if (typeof lang === 'string') state.settingsLanguage = lang
+        } catch (_) {}
+
+        try {
+          const aiTrans = settings.get('localization.aiTranslationEnabled', state.settingsAiTranslation)
+          if (typeof aiTrans === 'boolean') state.settingsAiTranslation = aiTrans
         } catch (_) {}
 
         // reduceMotion is still stored in state; keep it in sync.
@@ -173,6 +204,12 @@ export function createSettingsPlugin({ getState } = {}) {
             if (v === true) st.settingsReduceMotion = true
             else if (v === false) st.settingsReduceMotion = false
             // 'auto' => don't force a stored bool
+          }
+          if (k === 'localization.language') {
+            if (typeof v === 'string') st.settingsLanguage = v
+          }
+          if (k === 'localization.aiTranslationEnabled') {
+            if (typeof v === 'boolean') st.settingsAiTranslation = v
           }
         })
       } catch (_) {}
