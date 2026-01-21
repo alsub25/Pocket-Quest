@@ -4339,6 +4339,13 @@ function showClassInfoModal(cls) {
                     </div>
                     ` : ''}
 
+                    ${CLASS_METERS[cls.id] ? `
+                    <div>
+                        <h4 style="margin: 0 0 6px 0; color: var(--accent); font-size: 0.95rem;">📊 Combat Meter (HUD)</h4>
+                        <p style="margin: 0; padding: 8px 12px; background: rgba(var(--accent-rgb), 0.1); border-radius: 4px; font-size: 0.9rem;">${CLASS_METERS[cls.id]}</p>
+                    </div>
+                    ` : ''}
+
                     ${cls.strengths && cls.strengths.length ? `
                     <div>
                         <h4 style="margin: 0 0 6px 0; color: #4ade80; font-size: 0.95rem;">💪 Strengths</h4>
