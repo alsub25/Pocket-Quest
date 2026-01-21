@@ -4260,6 +4260,102 @@ function buildCharacterCreationOptions() {
         vampire: 'Hunger — above 55% Essence your Hungering Vein bonuses are active.'
     }
 
+    // Function to show class info modal (defined here to ensure proper scope)
+    const showClassInfo = (cls) => {
+        console.log('[showClassInfo] Called for:', cls.name)
+        if (!cls) {
+            console.error('[showClassInfo] No class provided')
+            return
+        }
+
+        try {
+            console.log('[showClassInfo] About to call openModal')
+            openModal(`${cls.name} Details`, (body) => {
+                console.log('[showClassInfo] Modal body callback called')
+                body.innerHTML = `
+                    <div style="max-width: 600px; margin: 0 auto;">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                            <div style="font-size: 2.5rem;">${CLASS_ICONS[cls.id] || '🎭'}</div>
+                            <div>
+                                <h3 style="margin: 0; font-size: 1.2rem;">${cls.name}</h3>
+                                <p style="margin: 4px 0 0 0; color: var(--muted);">${cls.desc}</p>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; gap: 16px;">
+                            ${cls.passive ? `
+                            <div>
+                                <h4 style="margin: 0 0 6px 0; color: var(--accent); font-size: 0.95rem;">✨ Passive Ability</h4>
+                                <p style="margin: 0; padding: 8px 12px; background: rgba(var(--accent-rgb), 0.1); border-radius: 4px; font-size: 0.9rem;">${cls.passive}</p>
+                            </div>
+                            ` : ''}
+
+                            ${cls.specialMechanic ? `
+                            <div>
+                                <h4 style="margin: 0 0 6px 0; color: var(--accent); font-size: 0.95rem;">⚙️ Special Mechanic</h4>
+                                <p style="margin: 0; padding: 8px 12px; background: rgba(var(--accent-rgb), 0.1); border-radius: 4px; font-size: 0.9rem;">${cls.specialMechanic}</p>
+                            </div>
+                            ` : ''}
+
+                            ${CLASS_METERS[cls.id] ? `
+                            <div>
+                                <h4 style="margin: 0 0 6px 0; color: var(--accent); font-size: 0.95rem;">📊 Combat Meter (HUD)</h4>
+                                <p style="margin: 0; padding: 8px 12px; background: rgba(var(--accent-rgb), 0.1); border-radius: 4px; font-size: 0.9rem;">${CLASS_METERS[cls.id]}</p>
+                            </div>
+                            ` : ''}
+
+                            ${cls.strengths && cls.strengths.length ? `
+                            <div>
+                                <h4 style="margin: 0 0 6px 0; color: #4ade80; font-size: 0.95rem;">💪 Strengths</h4>
+                                <ul style="margin: 0; padding: 8px 12px 8px 32px; background: rgba(74, 222, 128, 0.1); border-radius: 4px; font-size: 0.9rem;">
+                                    ${cls.strengths.map(s => `<li>${s}</li>`).join('')}
+                                </ul>
+                            </div>
+                            ` : ''}
+
+                            ${cls.weaknesses && cls.weaknesses.length ? `
+                            <div>
+                                <h4 style="margin: 0 0 6px 0; color: #f87171; font-size: 0.95rem;">⚠️ Weaknesses</h4>
+                                <ul style="margin: 0; padding: 8px 12px 8px 32px; background: rgba(248, 113, 113, 0.1); border-radius: 4px; font-size: 0.9rem;">
+                                    ${cls.weaknesses.map(w => `<li>${w}</li>`).join('')}
+                                </ul>
+                            </div>
+                            ` : ''}
+
+                            <div>
+                                <h4 style="margin: 0 0 6px 0; color: var(--muted); font-size: 0.95rem;">📊 Base Stats</h4>
+                                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 8px 12px; background: rgba(255, 255, 255, 0.05); border-radius: 4px; font-size: 0.9rem;">
+                                    <div>HP: <strong>${cls.baseStats.maxHp}</strong></div>
+                                    <div>Attack: <strong>${cls.baseStats.attack}</strong></div>
+                                    <div>Magic: <strong>${cls.baseStats.magic}</strong></div>
+                                    <div>Armor: <strong>${cls.baseStats.armor}</strong></div>
+                                    <div>Speed: <strong>${cls.baseStats.speed}</strong></div>
+                                    <div>Resource: <strong>${cls.resourceName}</strong></div>
+                                </div>
+                            </div>
+
+                            ${cls.startingSpells && cls.startingSpells.length ? `
+                            <div>
+                                <h4 style="margin: 0 0 6px 0; color: var(--muted); font-size: 0.95rem;">🎯 Starting Abilities</h4>
+                                <div style="padding: 8px 12px; background: rgba(255, 255, 255, 0.05); border-radius: 4px; font-size: 0.9rem;">
+                                    ${cls.startingSpells.map(spell => {
+                                        const ability = ABILITIES && ABILITIES[spell] ? ABILITIES[spell] : null
+                                        return ability ? `<div style="margin-bottom: 6px;"><strong>${ability.name}</strong>: ${ability.note || 'No description'}</div>` : ''
+                                    }).join('')}
+                                </div>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `
+            })
+            console.log('[showClassInfo] openModal call completed')
+        } catch (error) {
+            console.error('[showClassInfo] Error:', error)
+            alert(`Error showing class details: ${error.message}`)
+        }
+    }
+
     // Build one card per class in PLAYER_CLASSES
     Object.values(PLAYER_CLASSES).forEach((cls) => {
         const div = document.createElement('div')
@@ -4292,15 +4388,11 @@ function buildCharacterCreationOptions() {
             infoBtn.addEventListener('click', (e) => {
                 e.stopPropagation() // Don't select the class when clicking info button
                 e.preventDefault() // Prevent any default button behavior
-                console.log('Info button clicked for', cls.name) // Debug log
-                try {
-                    showClassInfoModal(cls)
-                } catch (error) {
-                    console.error('Error showing class info modal:', error)
-                }
+                console.log('[Event] Info button clicked for', cls.name) // Debug log
+                showClassInfo(cls)
             })
         } else {
-            console.warn('Info button not found for', cls.name)
+            console.warn('[Event] Info button not found for', cls.name)
         }
 
         classRow.appendChild(div)
@@ -4330,99 +4422,6 @@ function buildCharacterCreationOptions() {
         diffRow.appendChild(div)
         if (id === 'normal') div.classList.add('selected')
     })
-}
-
-// Show detailed class information in a modal
-function showClassInfoModal(cls) {
-    console.log('showClassInfoModal called with:', cls)
-    if (!cls) {
-        console.error('showClassInfoModal: cls is null or undefined')
-        return
-    }
-
-    try {
-        openModal(`${cls.name} Details`, (body) => {
-        body.innerHTML = `
-            <div style="max-width: 600px; margin: 0 auto;">
-                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-                    <div style="font-size: 2.5rem;">${CLASS_ICONS[cls.id] || '🎭'}</div>
-                    <div>
-                        <h3 style="margin: 0; font-size: 1.2rem;">${cls.name}</h3>
-                        <p style="margin: 4px 0 0 0; color: var(--muted);">${cls.desc}</p>
-                    </div>
-                </div>
-
-                <div style="display: grid; gap: 16px;">
-                    ${cls.passive ? `
-                    <div>
-                        <h4 style="margin: 0 0 6px 0; color: var(--accent); font-size: 0.95rem;">✨ Passive Ability</h4>
-                        <p style="margin: 0; padding: 8px 12px; background: rgba(var(--accent-rgb), 0.1); border-radius: 4px; font-size: 0.9rem;">${cls.passive}</p>
-                    </div>
-                    ` : ''}
-
-                    ${cls.specialMechanic ? `
-                    <div>
-                        <h4 style="margin: 0 0 6px 0; color: var(--accent); font-size: 0.95rem;">⚙️ Special Mechanic</h4>
-                        <p style="margin: 0; padding: 8px 12px; background: rgba(var(--accent-rgb), 0.1); border-radius: 4px; font-size: 0.9rem;">${cls.specialMechanic}</p>
-                    </div>
-                    ` : ''}
-
-                    ${CLASS_METERS[cls.id] ? `
-                    <div>
-                        <h4 style="margin: 0 0 6px 0; color: var(--accent); font-size: 0.95rem;">📊 Combat Meter (HUD)</h4>
-                        <p style="margin: 0; padding: 8px 12px; background: rgba(var(--accent-rgb), 0.1); border-radius: 4px; font-size: 0.9rem;">${CLASS_METERS[cls.id]}</p>
-                    </div>
-                    ` : ''}
-
-                    ${cls.strengths && cls.strengths.length ? `
-                    <div>
-                        <h4 style="margin: 0 0 6px 0; color: #4ade80; font-size: 0.95rem;">💪 Strengths</h4>
-                        <ul style="margin: 0; padding: 8px 12px 8px 32px; background: rgba(74, 222, 128, 0.1); border-radius: 4px; font-size: 0.9rem;">
-                            ${cls.strengths.map(s => `<li>${s}</li>`).join('')}
-                        </ul>
-                    </div>
-                    ` : ''}
-
-                    ${cls.weaknesses && cls.weaknesses.length ? `
-                    <div>
-                        <h4 style="margin: 0 0 6px 0; color: #f87171; font-size: 0.95rem;">⚠️ Weaknesses</h4>
-                        <ul style="margin: 0; padding: 8px 12px 8px 32px; background: rgba(248, 113, 113, 0.1); border-radius: 4px; font-size: 0.9rem;">
-                            ${cls.weaknesses.map(w => `<li>${w}</li>`).join('')}
-                        </ul>
-                    </div>
-                    ` : ''}
-
-                    <div>
-                        <h4 style="margin: 0 0 6px 0; color: var(--muted); font-size: 0.95rem;">📊 Base Stats</h4>
-                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 8px 12px; background: rgba(255, 255, 255, 0.05); border-radius: 4px; font-size: 0.9rem;">
-                            <div>HP: <strong>${cls.baseStats.maxHp}</strong></div>
-                            <div>Attack: <strong>${cls.baseStats.attack}</strong></div>
-                            <div>Magic: <strong>${cls.baseStats.magic}</strong></div>
-                            <div>Armor: <strong>${cls.baseStats.armor}</strong></div>
-                            <div>Speed: <strong>${cls.baseStats.speed}</strong></div>
-                            <div>Resource: <strong>${cls.resourceName}</strong></div>
-                        </div>
-                    </div>
-
-                    ${cls.startingSpells && cls.startingSpells.length ? `
-                    <div>
-                        <h4 style="margin: 0 0 6px 0; color: var(--muted); font-size: 0.95rem;">🎯 Starting Abilities</h4>
-                        <div style="padding: 8px 12px; background: rgba(255, 255, 255, 0.05); border-radius: 4px; font-size: 0.9rem;">
-                            ${cls.startingSpells.map(spell => {
-                                const ability = ABILITIES && ABILITIES[spell] ? ABILITIES[spell] : null
-                                return ability ? `<div style="margin-bottom: 6px;"><strong>${ability.name}</strong>: ${ability.note || 'No description'}</div>` : ''
-                            }).join('')}
-                        </div>
-                    </div>
-                    ` : ''}
-                </div>
-            </div>
-        `
-    })
-    } catch (error) {
-        console.error('Error in showClassInfoModal:', error)
-        alert('Error showing class details. Check console for details.')
-    }
 }
 
 // Reset the character-creation dev-cheats UI so it never "sticks"
