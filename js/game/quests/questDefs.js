@@ -481,6 +481,120 @@ export const QUEST_DEFS = {
                     dropsFrom: ['rootboundMagistrate'],
                     dropChance: 1
                 }
+            ],
+
+            // --- Chapter V: interactive objectives ----------------------
+            33: [
+                {
+                    type: 'kill',
+                    label: 'Investigate Thornweaver murders',
+                    required: 5,
+                    enemyIds: ['thornweaver']
+                },
+                {
+                    type: 'collect',
+                    label: 'Gather Crimson Thread samples',
+                    required: 3,
+                    itemId: 'crimsonThread',
+                    dropsFrom: ['thornweaver'],
+                    dropChance: 0.7
+                }
+            ],
+            35: [
+                {
+                    type: 'kill',
+                    label: 'Clear Blightspawn corruption',
+                    required: 6,
+                    enemyIds: ['blightspawn', 'corruptedDryad']
+                },
+                {
+                    type: 'collect',
+                    label: 'Recover Grotto Heart Shards',
+                    required: 2,
+                    itemId: 'grottoHeartShard',
+                    dropsFrom: ['blightspawn', 'thornhulk'],
+                    dropChance: 0.5
+                }
+            ],
+            36: [
+                {
+                    type: 'kill',
+                    label: 'Defeat the Thornheart Queen',
+                    required: 1,
+                    enemyIds: ['thornheartQueen']
+                },
+                {
+                    type: 'collect',
+                    label: 'Claim the Queen\'s Crown Fragment',
+                    required: 1,
+                    itemId: 'queenCrownFragment',
+                    dropsFrom: ['thornheartQueen'],
+                    dropChance: 1
+                }
+            ],
+            39: [
+                {
+                    type: 'kill',
+                    label: 'Defeat Stormcaller Shamans',
+                    required: 5,
+                    enemyIds: ['stormcaller']
+                },
+                {
+                    type: 'collect',
+                    label: 'Collect Storm Totems',
+                    required: 3,
+                    itemId: 'stormTotem',
+                    dropsFrom: ['stormcaller'],
+                    dropChance: 0.75
+                }
+            ],
+            40: [
+                {
+                    type: 'kill',
+                    label: 'Challenge the Storm Sovereign',
+                    required: 1,
+                    enemyIds: ['stormSovereign']
+                },
+                {
+                    type: 'collect',
+                    label: 'Take the Sovereign\'s Sigil',
+                    required: 1,
+                    itemId: 'sovereignSigil',
+                    dropsFrom: ['stormSovereign'],
+                    dropChance: 1
+                }
+            ],
+            43: [
+                {
+                    type: 'kill',
+                    label: 'Defeat Ashguard Sentinels',
+                    required: 4,
+                    enemyIds: ['ashguard']
+                },
+                {
+                    type: 'collect',
+                    label: 'Gather Trials of Ash Tokens',
+                    required: 4,
+                    itemId: 'ashTrialToken',
+                    dropsFrom: ['ashguard'],
+                    dropChance: 1
+                }
+            ],
+            45: [
+                {
+                    type: 'kill',
+                    label: 'Defeat the Eternitykeeper',
+                    required: 1,
+                    enemyIds: ['eternitykeeper']
+                },
+                {
+                    type: 'collect',
+                    label: 'Hold the Eternal Flame Shard',
+                    required: 1,
+                    itemId: 'eternalFlameShard',
+                    dropsFrom: ['eternitykeeper'],
+                    dropChance: 1
+                }
             ]
         }
     },
