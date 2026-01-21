@@ -29,7 +29,7 @@ export const SUPPORTED_LANGUAGES = {
 /**
  * Create AI Translation Service
  * @param {Object} options - Configuration options
- * @param {string} options.apiProvider - AI provider ('openai', 'google', 'deepl', 'local')
+ * @param {string} options.apiProvider - AI provider ('openai', 'google', 'local')
  * @param {string} options.apiKey - API key for the provider
  * @param {Object} options.cache - Translation cache storage
  * @returns {Object} Translation service interface
@@ -52,6 +52,8 @@ export function createAiTranslationService({
 
   /**
    * Translate using OpenAI API
+   * Note: The model is currently hardcoded to gpt-3.5-turbo but can be made
+   * configurable in future versions by adding a model option to the service config.
    */
   async function translateWithOpenAI(text, targetLang, sourceLang = 'en-US') {
     if (!key) {

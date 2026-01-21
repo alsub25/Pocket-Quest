@@ -226,16 +226,29 @@ export function formatGold(engine, amount) {
 /**
  * Show language change notification toast
  * @param {string} languageName - Name of the new language
+ * @param {Object} engine - Optional engine instance for i18n
  */
-export function showLanguageChangeToast(languageName) {
+export function showLanguageChangeToast(languageName, engine = null) {
   // Remove existing toasts
   const existing = document.querySelectorAll('.language-change-toast')
   existing.forEach(toast => toast.remove())
 
+  // Try to get localized message
+  let message = `Language changed to ${languageName}`
+  if (engine) {
+    const i18n = engine.getService?.('i18n') || engine.i18n
+    if (i18n) {
+      const template = i18n.t('msg.language_changed')
+      if (template && template.includes('{language}')) {
+        message = template.replace('{language}', languageName)
+      }
+    }
+  }
+
   // Create new toast
   const toast = document.createElement('div')
   toast.className = 'language-change-toast'
-  toast.textContent = `Language changed to ${languageName}`
+  toast.textContent = message
   
   document.body.appendChild(toast)
 

@@ -54,7 +54,9 @@ export function createI18nPlugin({
       if (i18n && !i18n.translateWithAI) {
         i18n.translateWithAI = async function(text, targetLang = null) {
           if (!aiTranslationEnabled) {
-            return i18n.t(text)
+            // Try translation key first, then return text as-is
+            const translated = i18n.t(text)
+            return translated !== text ? translated : text
           }
 
           const target = targetLang || i18n.getLocale()
@@ -83,6 +85,13 @@ export function createI18nPlugin({
       if (i18n && !i18n.setAITranslationEnabled) {
         i18n.setAITranslationEnabled = function(enabled) {
           aiTranslationEnabled = enabled
+          // Persist to settings if available
+          if (engine.getService) {
+            const settings = engine.getService('settings')
+            if (settings) {
+              settings.set('localization.aiTranslationEnabled', enabled, { persist: true })
+            }
+          }
         }
       }
     }

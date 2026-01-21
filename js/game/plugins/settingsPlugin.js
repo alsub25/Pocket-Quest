@@ -152,12 +152,20 @@ export function createSettingsPlugin({ getState } = {}) {
 
         try {
           const lang = settings.get('localization.language', 'en-US')
-          if (typeof lang === 'string') state.settingsLanguage = lang
+          if (typeof lang === 'string') {
+            state.settingsLanguage = lang
+          } else if (state.settingsLanguage === undefined) {
+            state.settingsLanguage = 'en-US'
+          }
         } catch (_) {}
 
         try {
           const aiTrans = settings.get('localization.aiTranslationEnabled', false)
-          if (typeof aiTrans === 'boolean') state.settingsAiTranslation = aiTrans
+          if (typeof aiTrans === 'boolean') {
+            state.settingsAiTranslation = aiTrans
+          } else if (state.settingsAiTranslation === undefined) {
+            state.settingsAiTranslation = false
+          }
         } catch (_) {}
 
         // reduceMotion is still stored in state; keep it in sync.
