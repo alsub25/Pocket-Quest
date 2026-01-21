@@ -151,12 +151,12 @@ export function createSettingsPlugin({ getState } = {}) {
         } catch (_) {}
 
         try {
-          const lang = settings.get('localization.language', state.settingsLanguage)
+          const lang = settings.get('localization.language', 'en-US')
           if (typeof lang === 'string') state.settingsLanguage = lang
         } catch (_) {}
 
         try {
-          const aiTrans = settings.get('localization.aiTranslationEnabled', state.settingsAiTranslation)
+          const aiTrans = settings.get('localization.aiTranslationEnabled', false)
           if (typeof aiTrans === 'boolean') state.settingsAiTranslation = aiTrans
         } catch (_) {}
 
