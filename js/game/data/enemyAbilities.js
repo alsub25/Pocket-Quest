@@ -228,73 +228,7 @@ export const ENEMY_ABILITIES = {
         guardTurns: 2,
         armorBonus: 5,
         healPct: 0.1
-    }
-}
-
-export const ENEMY_ABILITY_SETS = {
-    basic: ['enemyStrike', 'heavyCleave', 'guardUp', 'sunderArmor'],
-    aggressive: ['heavyCleave', 'skewerBleed', 'enrageHowl', 'shatterShield'],
-    cunning: ['enemyStrike', 'poisonSpit', 'sunderArmor', 'guardUp'],
-    caster: ['arcaneBurst', 'voidBreath', 'lifeDrain', 'witchHex'],
-
-    bossGoblin: [
-        'heavyCleave',
-        'skewerBleed',
-        'enrageHowl',
-        'guardUp',
-        'shatterShield',
-        'sunderArmor'
-    ],
-    bossDragon: [
-        'voidBreath',
-        'dragonInferno',
-        'tailSwipe',
-        'guardUp',
-        'lifeDrain',
-        'enrageHowl'
-    ],
-    bossWitch: [
-        'witchHex',
-        'arcaneBurst',
-        'voidBreath',
-        'lifeDrain',
-        'guardUp',
-        'sunderArmor'
-    ],
-    bossGiant: [
-        'giantStomp',
-        'heavyCleave',
-        'shatterShield',
-        'guardUp',
-        'enrageHowl',
-        'skewerBleed'
-    ],
-    bossLich: [
-        'arcaneBurst',
-        'lichCurse',
-        'lifeDrain',
-        'boneArmor',
-        'voidBreath',
-        'sunderArmor'
-    ],
-    bossKing: [
-        'royalThrust',
-        'royalAegis',
-        'heavyCleave',
-        'sunderArmor',
-        'shatterShield',
-        'enrageHowl'
-    ],
-
-    // Chapter III (Patch 1.2.42): The Hollow Regent
-    bossRegent: [
-        'royalThrust',
-        'royalAegis',
-        'voidBreath',
-        'lichCurse',
-        'lifeDrain',
-        'shatterShield'
-    ],
+    },
 
     // NEW ABILITIES - Patch 1.2.90
     frostBite: {
@@ -369,9 +303,75 @@ export const ENEMY_ABILITY_SETS = {
         damageType: 'magic',
         elementType: 'holy',
         potency: 1.55
-    },
+    }
+}
 
-    // New boss ability set for future content
+export const ENEMY_ABILITY_SETS = {
+    basic: ['enemyStrike', 'heavyCleave', 'guardUp', 'sunderArmor'],
+    aggressive: ['heavyCleave', 'skewerBleed', 'enrageHowl', 'shatterShield'],
+    cunning: ['enemyStrike', 'poisonSpit', 'sunderArmor', 'guardUp'],
+    caster: ['arcaneBurst', 'voidBreath', 'lifeDrain', 'witchHex'],
+
+    bossGoblin: [
+        'heavyCleave',
+        'skewerBleed',
+        'enrageHowl',
+        'guardUp',
+        'shatterShield',
+        'sunderArmor'
+    ],
+    bossDragon: [
+        'voidBreath',
+        'dragonInferno',
+        'tailSwipe',
+        'guardUp',
+        'lifeDrain',
+        'enrageHowl'
+    ],
+    bossWitch: [
+        'witchHex',
+        'arcaneBurst',
+        'voidBreath',
+        'lifeDrain',
+        'guardUp',
+        'sunderArmor'
+    ],
+    bossGiant: [
+        'giantStomp',
+        'heavyCleave',
+        'shatterShield',
+        'guardUp',
+        'enrageHowl',
+        'skewerBleed'
+    ],
+    bossLich: [
+        'arcaneBurst',
+        'lichCurse',
+        'lifeDrain',
+        'boneArmor',
+        'voidBreath',
+        'sunderArmor'
+    ],
+    bossKing: [
+        'royalThrust',
+        'royalAegis',
+        'heavyCleave',
+        'sunderArmor',
+        'shatterShield',
+        'enrageHowl'
+    ],
+
+    // Chapter III (Patch 1.2.42): The Hollow Regent
+    bossRegent: [
+        'royalThrust',
+        'royalAegis',
+        'voidBreath',
+        'lichCurse',
+        'lifeDrain',
+        'shatterShield'
+    ],
+
+    // NEW BOSS - Patch 1.2.90
     bossForestGuardian: [
         'heavyCleave',
         'earthShatter',
