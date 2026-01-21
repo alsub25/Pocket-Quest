@@ -57,7 +57,26 @@ export const QUEST_DEFS = {
             28: 'In the Obsidian Keep, defeat the Oathbinder and take the Seal of Verdict.',
             29: 'At night, return to the Blackbark Gate and face the Rootbound Magistrate.',
             30: 'Return to Emberwood and decide how you answer the Court’s judgement.',
-            31: 'The road forward is unwritten… (to be continued)'
+            
+            // Chapter V — The Crimson Pact
+            31: 'A Voice-Keeper appears at the village gate. Listen to the forest\'s call.',
+            32: 'Journey to the Crimson Canopy. Meet Seraph Thornwind and the Canopy Council.',
+            32.5: 'CHOICE: Accept or refuse membership in the Canopy Council. Your decision shapes alliances.',
+            33: 'Break the Canopy patrols and recover Crimson Seals to prove your worth.',
+            34: 'Descend to the Thornheart Grotto. Seek Warden Mycellia and learn of the corruption below.',
+            35: 'Thin the Thornheart thralls and collect Corruption Samples for Warden Mycellia.',
+            36: 'CHOICE: Face the Thornheart Queen. Purge her corruption or bind her power for your own?',
+            37: 'Climb to the Whisperwind Plateau. The storm calls and old powers stir.',
+            38: 'At the Wind Shrine, speak with Sage Aeris. Learn of the Storm Sovereign and ancient treaties.',
+            39: 'Challenge the Storm Cultists. Defeat them and gather their Storm Totems.',
+            40: 'Face the Storm Sovereign in battle. Claim the Sovereign\'s Crown and end the tempest.',
+            41: 'CHOICE: Side with Sage Aeris (diplomacy and balance) or Seraph Thornwind (conquest and power)?',
+            42: 'Travel to Emberfall Sanctum. The ancient temple guards the secret of the Eternal Flame.',
+            43: 'Pass the Trials of Ash. Defeat the Ashguard Sentinels and prove your resolve.',
+            44: 'CHOICE: Keeper Pyralis asks what you will do with the Eternal Flame—rekindle it, extinguish it, or reshape it?',
+            45: 'Enter the Sanctum\'s heart. Face The Eternitykeeper and claim the Eternal Flame Shard.',
+            46: 'FINAL CHOICE: Return to Emberwood. Accept the crown, break all oaths, or forge a new path for the village.',
+            47: 'The legend of Emberwood is complete. Your choices have shaped the forest\'s fate forever.'
         },
 
         // Optional objective metadata used by the quest system to track
