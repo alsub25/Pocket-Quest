@@ -52,7 +52,7 @@ export const PLAYER_CLASSES = {
         resourceName: 'Fury',
         baseStats: { maxHp: 95, attack: 13, magic: 5, armor: 4, speed: 12 },
         startingSpells: ['piercingShot', 'twinArrows', 'markedPrey'],
-        passive: 'Hunter\'s Mark - Deal 10% bonus damage to bleeding targets',
+        passive: "Hunter's Mark - Deal 10% bonus damage to bleeding targets",
         strengths: ['Physical ranged', 'Bleed effects'],
         weaknesses: ['Low armor', 'Close combat'],
         specialMechanic: 'Focus Aim - Critical strike chance increases with consecutive attacks'
@@ -82,7 +82,7 @@ export const PLAYER_CLASSES = {
         resourceName: 'Fury',
         baseStats: { maxHp: 85, attack: 15, magic: 3, armor: 3, speed: 13 },
         startingSpells: ['backstab', 'poisonedBlade', 'shadowstep'],
-        passive: 'Assassin\'s Edge - 15% increased critical strike damage',
+        passive: "Assassin's Edge - 15% increased critical strike damage",
         strengths: ['Critical strikes', 'Poison', 'High speed'],
         weaknesses: ['Very low armor', 'Sustained fights'],
         specialMechanic: 'Combo Points - Build points with attacks for devastating finishers'
