@@ -42,24 +42,6 @@ export const CHANGELOG = [
         ]
       },
       {
-        "heading": "New Talent Options",
-        "items": [
-          {
-            "title": "Shared Talent Pool",
-            "bullets": [
-              "Added Lightning Focus (Tier 2) - Increase lightning spell damage by 10%",
-              "Added Earth Mastery (Tier 2) - Increase earth spell damage by 10%",
-              "Added Poison Ward (Tier 3) - Gain 15% poison resistance",
-              "Added Storm Ward (Tier 3) - Gain 15% lightning resistance",
-              "Added Fortitude (Tier 3) - Increase maximum HP by 15",
-              "Added Swift Strikes (Tier 4) - Gain 5% haste bonus",
-              "New shared talents provide cross-class elemental customization options",
-              "Enhanced build diversity with new defensive and offensive talent choices"
-            ]
-          }
-        ]
-      },
-      {
         "heading": "Balance & Quality of Life",
         "items": [
           {
@@ -67,8 +49,8 @@ export const CHANGELOG = [
             "bullets": [
               "All new abilities follow existing cost and balance conventions",
               "New enemy abilities use standard telegraph and cooldown systems",
-              "Talents integrated into existing tier progression structure",
-              "New content prepared for future boss encounters and quest chains"
+              "New content prepared for future boss encounters and quest chains",
+              "Maintained existing talent system structure for compatibility"
             ]
           }
         ]
