@@ -1673,6 +1673,17 @@ function getEffectiveAbilityCost(p, abilityId) {
         cost.mana = Math.max(1, Math.round(cost.mana * 0.95))
     }
 
+    // ===== CLASS PASSIVE ABILITIES (Patch 1.2.90) =====
+
+    // Cleric: Sacred Blessing - Healing spells cost 10% less mana
+    if (p && p.classId === 'cleric' && cost.mana) {
+        // Check if this is a healing ability
+        const healingAbilities = ['holyHeal', 'purify', 'renewal', 'divineWord']
+        if (healingAbilities.includes(abilityId)) {
+            cost.mana = Math.max(1, Math.round(cost.mana * 0.90))
+        }
+    }
+
     return cost
 }
 
@@ -10113,6 +10124,21 @@ if (actx && typeof actx.lifeStealBonusPct === 'number' && Number.isFinite(actx.l
         p.resource = Math.min(p.maxResource, p.resource + 2)
     }
 
+    // ===== CLASS PASSIVE ABILITIES (Patch 1.2.90) =====
+
+    // Paladin: Divine Protection - Heal 3% max HP when dealing holy damage
+    if (p.classId === 'paladin' && resolvedElementType === 'holy' && damageDealt > 0) {
+        const heal = Math.max(1, Math.round(p.maxHp * 0.03))
+        p.hp = Math.min(p.maxHp, p.hp + heal)
+        addLog('Divine Protection restores ' + heal + ' HP.', 'system')
+    }
+
+    // Vampire: Vampiric Touch - Drain 5% of damage dealt as Essence
+    if (p.classId === 'vampire' && p.resourceKey === 'essence' && damageDealt > 0) {
+        const essenceGain = Math.max(1, Math.round(damageDealt * 0.05))
+        p.resource = Math.min(p.maxResource, p.resource + essenceGain)
+    }
+
     // Patch 1.1.7: Necromancer unlock (Lich Form) — siphon a bit of HP on shadow hits while active.
     if (p.status && (p.status.lichTurns || 0) > 0 && resolvedElementType === 'shadow' && damageDealt > 0) {
         const heal = Math.max(1, Math.round(damageDealt * 0.08))
@@ -11770,6 +11796,16 @@ function handleEnemyDefeat(enemyArg) {
 
     // Patch 1.2.0: apply on-kill equipment traits / talent triggers
     applyEquipmentOnKill(enemy)
+
+    // ===== CLASS PASSIVE ABILITIES (Patch 1.2.90) =====
+
+    // Necromancer: Soul Harvest - Gain 5 mana when an enemy dies
+    const p = state.player
+    if (p && p.classId === 'necromancer' && p.resourceKey === 'mana') {
+        const manaGain = 5
+        p.resource = Math.min(p.maxResource, p.resource + manaGain)
+        addLog('Soul Harvest grants ' + manaGain + ' mana.', 'system')
+    }
 
     const xp = enemy.xp
     const gold =
