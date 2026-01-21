@@ -10,19 +10,20 @@ export const CHANGELOG = [
         "heading": "Class System Enhancements",
         "items": [
           {
-            "title": "Added Class Passive Abilities",
+            "title": "Added Class Passive Abilities (FUNCTIONAL)",
             "bullets": [
-              "Mage: Arcane Mastery - Spell damage scales 15% better with Magic stat",
-              "Warrior: Battle Hardened - Gain 2% damage reduction per combat turn (max 10%)",
-              "Blood Knight: Crimson Pact - Deal 1% more damage per 10% missing HP",
-              "Ranger: Hunter's Mark - Deal 10% bonus damage to bleeding targets",
-              "Paladin: Divine Protection - Heal 3% max HP when dealing holy damage",
-              "Rogue: Assassin's Edge - 15% increased critical strike damage",
-              "Cleric: Sacred Blessing - Healing spells cost 10% less mana",
-              "Necromancer: Soul Harvest - Gain 5 mana when an enemy dies",
-              "Shaman: Elemental Attunement - Deal 8% more damage with Nature and Lightning",
-              "Berserker: Rage - Deal 2% more damage per 10% missing HP (max 20%)",
-              "Vampire: Vampiric Touch - Drain 5% of damage dealt as Essence"
+              "✅ Mage: Arcane Mastery - Spell damage scales 15% better with Magic stat (IMPLEMENTED)",
+              "✅ Warrior: Battle Hardened - Gain 2% damage reduction per combat turn (max 10%) (IMPLEMENTED)",
+              "✅ Blood Knight: Crimson Pact - Deal 1% more damage per 10% missing HP (IMPLEMENTED)",
+              "✅ Ranger: Hunter's Mark - Deal 10% bonus damage to bleeding targets (IMPLEMENTED)",
+              "✅ Paladin: Divine Protection - Heal 3% max HP when dealing holy damage (IMPLEMENTED)",
+              "✅ Rogue: Assassin's Edge - 15% increased critical strike damage (IMPLEMENTED)",
+              "✅ Cleric: Sacred Blessing - Healing spells cost 10% less mana (IMPLEMENTED)",
+              "✅ Necromancer: Soul Harvest - Gain 5 mana when an enemy dies (IMPLEMENTED)",
+              "✅ Shaman: Elemental Attunement - Deal 8% more damage with Nature and Lightning (IMPLEMENTED)",
+              "✅ Berserker: Rage - Deal 2% more damage per 10% missing HP (max 20%) (IMPLEMENTED)",
+              "✅ Vampire: Vampiric Touch - Drain 5% of damage dealt as Essence (IMPLEMENTED)",
+              "All passive abilities are now fully functional in combat!"
             ]
           },
           {
