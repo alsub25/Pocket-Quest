@@ -18596,6 +18596,10 @@ test('cheat: max level grants skill + talent points', () => {
             p.stats = p.stats || {}
             const snapBonuses = p.stats.elementalBonuses
             p.stats.elementalBonuses = {}
+            
+            // Ensure player is warrior to avoid class passive interference
+            const snapClass = p.classId
+            p.classId = 'warrior'
 
             const dmg = calcMagicDamage(100, 'fire')
             // 100 * 1.15 * (1 - 0.50) = 57.5 -> rounds to 58
@@ -18603,6 +18607,7 @@ test('cheat: max level grants skill + talent points', () => {
 
             // cleanup
             p.stats.elementalBonuses = snapBonuses
+            p.classId = snapClass
             state.currentEnemy = snapEnemy
             state.flags.alwaysCrit = snapFlags.alwaysCrit
             state.flags.neverCrit = snapFlags.neverCrit
@@ -18659,11 +18664,16 @@ test('cheat: max level grants skill + talent points', () => {
             p.stats = p.stats || {}
             const snapBonuses = p.stats.elementalBonuses
             p.stats.elementalBonuses = {}
+            
+            // Ensure player is warrior to avoid class passive interference
+            const snapClass = p.classId
+            p.classId = 'warrior'
 
             const dmg = calcMagicDamage(100, 'fire')
             assert(dmg === 50, 'expected 50% flat resist from 0.5, got ' + String(dmg))
 
             p.stats.elementalBonuses = snapBonuses
+            p.classId = snapClass
             state.currentEnemy = snapEnemy
             state.flags.alwaysCrit = snapFlags.alwaysCrit
             state.flags.neverCrit = snapFlags.neverCrit
