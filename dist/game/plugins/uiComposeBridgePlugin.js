@@ -37,4 +37,3 @@ export function createUiComposeBridgePlugin() {
         }
     };
 }
-//# sourceMappingURL=uiComposeBridgePlugin.js.map

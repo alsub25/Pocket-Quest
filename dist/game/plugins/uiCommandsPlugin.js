@@ -100,4 +100,3 @@ isEnemySheetOpen = null, closeEnemySheet = null, } = {}) {
         }
     };
 }
-//# sourceMappingURL=uiCommandsPlugin.js.map

@@ -73,4 +73,3 @@ export function handlePopulationDayTick(state, absoluteDay, hooks = {}) {
         ? { day: absoluteDay, delta, reasons }
         : { day: absoluteDay, delta: 0, reasons: [] };
 }
-//# sourceMappingURL=villagePopulation.js.map

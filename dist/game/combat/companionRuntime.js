@@ -504,4 +504,3 @@ export function createCompanionRuntime(deps) {
         tickCompanionCooldowns
     };
 }
-//# sourceMappingURL=companionRuntime.js.map

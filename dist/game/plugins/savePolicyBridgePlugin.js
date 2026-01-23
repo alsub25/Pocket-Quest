@@ -38,4 +38,3 @@ export function createSavePolicyBridgePlugin({ saveGame = null, getState = null,
         }
     };
 }
-//# sourceMappingURL=savePolicyBridgePlugin.js.map

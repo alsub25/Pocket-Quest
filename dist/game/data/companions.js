@@ -410,4 +410,3 @@ export const COMPANION_ABILITIES = {
         potency: 1.8
     }
 };
-//# sourceMappingURL=companions.js.map

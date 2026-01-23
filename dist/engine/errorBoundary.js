@@ -112,4 +112,3 @@ export function createErrorBoundary(engine, { enabled = true, maxErrors = 25 } =
     }
     return { install, uninstall, getErrors: () => errors.slice(), buildReport, isInstalled: () => installed };
 }
-//# sourceMappingURL=errorBoundary.js.map

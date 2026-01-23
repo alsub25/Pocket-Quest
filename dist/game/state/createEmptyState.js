@@ -90,4 +90,3 @@ export function createEmptyState() {
         }
     };
 }
-//# sourceMappingURL=createEmptyState.js.map

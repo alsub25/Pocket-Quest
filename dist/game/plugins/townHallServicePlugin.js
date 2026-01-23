@@ -49,4 +49,3 @@ export function createTownHallServicePlugin() {
         }
     };
 }
-//# sourceMappingURL=townHallServicePlugin.js.map

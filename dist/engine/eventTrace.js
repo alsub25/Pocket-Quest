@@ -18,4 +18,3 @@ export function createEventTrace({ maxRecords = 200 } = {}) {
     }
     return { push, getRecords: () => records.slice(), clear: () => { records.length = 0; } };
 }
-//# sourceMappingURL=eventTrace.js.map

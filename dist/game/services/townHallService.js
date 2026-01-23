@@ -117,4 +117,3 @@ export function createTownHallService(engine) {
         getSummary
     };
 }
-//# sourceMappingURL=townHallService.js.map

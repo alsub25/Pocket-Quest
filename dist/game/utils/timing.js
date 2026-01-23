@@ -199,4 +199,3 @@ export function scheduleAfter(engine, ms, fn, opts = null) {
     catch (_) { }
     return rafDelay(ms, fn);
 }
-//# sourceMappingURL=timing.js.map

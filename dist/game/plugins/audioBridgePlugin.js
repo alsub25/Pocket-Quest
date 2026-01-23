@@ -41,4 +41,3 @@ export function createAudioBridgePlugin({ playDoorOpenSfx = null, updateAreaMusi
         }
     };
 }
-//# sourceMappingURL=audioBridgePlugin.js.map

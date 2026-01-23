@@ -37,4 +37,3 @@ export function createTavernServicePlugin() {
         }
     };
 }
-//# sourceMappingURL=tavernServicePlugin.js.map

@@ -232,4 +232,3 @@ export function createVillageEconomyService(engine) {
         handleAfterPurchase
     };
 }
-//# sourceMappingURL=villageEconomyService.js.map

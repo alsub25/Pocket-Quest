@@ -100,4 +100,3 @@ export function createLootGeneratorService(engine) {
         getPowerScore
     };
 }
-//# sourceMappingURL=lootGeneratorService.js.map

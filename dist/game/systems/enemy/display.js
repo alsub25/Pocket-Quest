@@ -15,4 +15,3 @@ export function rebuildEnemyDisplayName(enemy) {
         parts.push(...affixLabels);
     enemy.name = parts.length > 0 ? parts.join(' ') + ' ' + enemy.baseName : enemy.baseName;
 }
-//# sourceMappingURL=display.js.map

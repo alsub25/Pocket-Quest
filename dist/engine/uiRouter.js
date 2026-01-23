@@ -59,4 +59,3 @@ export function createUiRouter({ emit = null, logger = null } = {}) {
     function clear() { stack.length = 0; }
     return { open, close, current, list, clear, setAdapter, getAdapter };
 }
-//# sourceMappingURL=uiRouter.js.map

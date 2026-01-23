@@ -190,4 +190,3 @@ export function createVillagePopulationService(engine) {
         handleDayTick
     };
 }
-//# sourceMappingURL=villagePopulationService.js.map

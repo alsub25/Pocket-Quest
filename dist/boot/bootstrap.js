@@ -717,4 +717,3 @@ function initBootstrap() {
     });
 }
 initBootstrap();
-//# sourceMappingURL=bootstrap.js.map

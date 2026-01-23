@@ -236,4 +236,3 @@ export function createBankService(engine) {
         getSummary
     };
 }
-//# sourceMappingURL=bankService.js.map

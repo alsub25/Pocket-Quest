@@ -97,4 +97,3 @@ export function createVillageServicesPlugin() {
         }
     };
 }
-//# sourceMappingURL=villageServicesPlugin.js.map

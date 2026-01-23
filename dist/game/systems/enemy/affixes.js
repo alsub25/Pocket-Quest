@@ -385,4 +385,3 @@ export function applyEnemyAffixesOnPlayerHit(enemy, player, damageDealt, ctx = {
         applyDirectDamageToPlayer(player, reflect, { source: enemy.name + ' thorns' });
     }
 }
-//# sourceMappingURL=affixes.js.map

@@ -1103,4 +1103,3 @@ export function openGambleModalImpl(deps) {
         setGame("dice");
     });
 }
-//# sourceMappingURL=tavernGames.js.map

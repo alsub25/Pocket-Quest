@@ -42,4 +42,3 @@ timeScale = 1, startMs = 0 } = {}) {
     };
     return api;
 }
-//# sourceMappingURL=clock.js.map

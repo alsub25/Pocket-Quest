@@ -513,4 +513,3 @@ initUserAcceptanceGate();
 if (typeof window !== "undefined") {
     window.PQ_ACCEPT = { hasUserAccepted, resetUserAcceptance };
 }
-//# sourceMappingURL=userAcceptance.js.map

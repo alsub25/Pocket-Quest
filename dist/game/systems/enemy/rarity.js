@@ -171,4 +171,3 @@ export function applyEnemyRarity(enemy, ctx = {}) {
         enemy._rarityApplied = true;
     }
 }
-//# sourceMappingURL=rarity.js.map

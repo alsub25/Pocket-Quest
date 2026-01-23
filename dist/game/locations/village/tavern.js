@@ -1106,4 +1106,3 @@ export function openTavernModalImpl(deps) {
         renderTavern();
     }, { owner: OWNER });
 }
-//# sourceMappingURL=tavern.js.map

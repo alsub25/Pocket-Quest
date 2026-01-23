@@ -38,4 +38,3 @@ export function createTelemetryPlugin({ getState } = {}) {
         }
     };
 }
-//# sourceMappingURL=telemetryPlugin.js.map

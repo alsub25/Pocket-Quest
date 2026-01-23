@@ -22,4 +22,3 @@ export function createCompanionRuntimePlugin(opts = {}) {
         }
     };
 }
-//# sourceMappingURL=companionRuntimePlugin.js.map

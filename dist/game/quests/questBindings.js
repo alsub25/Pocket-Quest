@@ -70,4 +70,3 @@ export function createQuestBindings(ctx) {
         })
     };
 }
-//# sourceMappingURL=questBindings.js.map

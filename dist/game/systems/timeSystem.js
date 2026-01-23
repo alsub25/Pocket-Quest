@@ -124,4 +124,3 @@ export function jumpToNextMorning(state) {
     normalizeTimeObject(time);
     return getTimeInfo(state);
 }
-//# sourceMappingURL=timeSystem.js.map

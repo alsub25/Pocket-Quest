@@ -110,4 +110,3 @@ export function createAutosavePlugin({ saveGame } = {}) {
         }
     };
 }
-//# sourceMappingURL=autosavePlugin.js.map

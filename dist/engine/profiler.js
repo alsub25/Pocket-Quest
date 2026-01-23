@@ -91,4 +91,3 @@ export function createProfiler({ slowFrameMs = 28, maxRecords = 200, emit = null
         stopWatchdog
     };
 }
-//# sourceMappingURL=profiler.js.map

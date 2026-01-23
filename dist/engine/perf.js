@@ -126,4 +126,3 @@ export async function perfWrapAsyncSub(s, subsystem, label, extra, fn) {
     }
     return await perfWrapAsync(s, label, ex, fn);
 }
-//# sourceMappingURL=perf.js.map

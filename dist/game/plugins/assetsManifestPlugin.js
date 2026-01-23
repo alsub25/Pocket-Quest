@@ -74,4 +74,3 @@ export function createAssetsManifestPlugin() {
         }
     };
 }
-//# sourceMappingURL=assetsManifestPlugin.js.map

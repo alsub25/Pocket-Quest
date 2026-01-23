@@ -176,4 +176,3 @@ export function createScheduler(clock, { maxTasks = 10000 } = {}) {
     }
     return { after, every, cancel, cancelOwner, clear, pump };
 }
-//# sourceMappingURL=scheduler.js.map

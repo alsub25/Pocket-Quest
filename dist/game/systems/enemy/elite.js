@@ -50,4 +50,3 @@ export function applyEliteModifiers(enemy, diffCfg, ctx = {}) {
     enemy.goldMin = Math.max(0, Math.round(finiteNumber(enemy.goldMin, 0) * finiteNumber(affix.goldMult, 1)));
     enemy.goldMax = Math.max(enemy.goldMin, Math.round(finiteNumber(enemy.goldMax, enemy.goldMin) * finiteNumber(affix.goldMult, 1)));
 }
-//# sourceMappingURL=elite.js.map

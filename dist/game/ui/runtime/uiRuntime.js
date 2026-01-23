@@ -1787,4 +1787,3 @@ export function updateEnemyPanel() {
     if (ep.status)
         ep.status.textContent = statusParts.join(' • ');
 }
-//# sourceMappingURL=uiRuntime.js.map

@@ -404,4 +404,3 @@ export function buildEnemyForBattle(template, ctx = {}) {
     rebuildEnemyDisplayName(enemy);
     return enemy;
 }
-//# sourceMappingURL=builder.js.map

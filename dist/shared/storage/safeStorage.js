@@ -45,4 +45,3 @@ export function safeStorageRemove(key, opts = {}) {
         return false;
     }
 }
-//# sourceMappingURL=safeStorage.js.map

@@ -208,4 +208,3 @@ export function createSettingsService({ emit = null, logger = null, storageGet =
         getAll
     };
 }
-//# sourceMappingURL=settings.js.map

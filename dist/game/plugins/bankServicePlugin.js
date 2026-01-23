@@ -49,4 +49,3 @@ export function createBankServicePlugin() {
         }
     };
 }
-//# sourceMappingURL=bankServicePlugin.js.map

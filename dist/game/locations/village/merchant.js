@@ -747,4 +747,3 @@ export function openMerchantModalImpl({ context = 'village', state, openModal, a
         });
     }
 }
-//# sourceMappingURL=merchant.js.map

@@ -7,4 +7,3 @@ export const GAME_PATCH = '1.2.90';
 export const GAME_PATCH_NAME = 'Enhanced Class Complexity & Depth';
 // Used by bootstrap version picker + some UI labels.
 export const GAME_FULL_LABEL = `Emberwood Patch V${GAME_PATCH} — ${GAME_PATCH_NAME}`;
-//# sourceMappingURL=version.js.map

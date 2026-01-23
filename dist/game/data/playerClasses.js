@@ -154,4 +154,3 @@ export const PLAYER_CLASSES = {
         specialMechanic: 'Hunger - Above 55% Essence, gain enhanced vampiric abilities'
     }
 };
-//# sourceMappingURL=playerClasses.js.map

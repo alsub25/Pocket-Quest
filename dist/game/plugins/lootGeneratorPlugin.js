@@ -43,4 +43,3 @@ export function createLootGeneratorPlugin() {
         }
     };
 }
-//# sourceMappingURL=lootGeneratorPlugin.js.map

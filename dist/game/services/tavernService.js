@@ -117,4 +117,3 @@ export function createTavernService(engine) {
         getSummary
     };
 }
-//# sourceMappingURL=tavernService.js.map

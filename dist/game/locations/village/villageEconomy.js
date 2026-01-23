@@ -268,4 +268,3 @@ function clamp(val, min, max) {
         return max;
     return rounded;
 }
-//# sourceMappingURL=villageEconomy.js.map

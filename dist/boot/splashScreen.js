@@ -180,4 +180,3 @@ export function hideSplashImmediate() {
         splash.classList.add('hidden');
     }
 }
-//# sourceMappingURL=splashScreen.js.map

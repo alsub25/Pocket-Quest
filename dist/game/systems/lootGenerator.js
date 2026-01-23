@@ -1877,4 +1877,3 @@ export function generateLootDrop({ area = 'forest', playerLevel = 1, enemy = nul
     }
     return drops;
 }
-//# sourceMappingURL=lootGenerator.js.map

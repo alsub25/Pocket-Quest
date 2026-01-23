@@ -49,4 +49,3 @@ export function createCombatRuntimePlugin(opts = {}) {
         }
     };
 }
-//# sourceMappingURL=combatRuntimePlugin.js.map

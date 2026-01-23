@@ -96,4 +96,3 @@ export function createUiCompose({ emit = null, schedule = null, logger = null } 
     }
     return { setAdapter, getAdapter, toast, setBusy, transition, setHudState };
 }
-//# sourceMappingURL=uiCompose.js.map

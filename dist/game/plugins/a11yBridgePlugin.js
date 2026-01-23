@@ -77,4 +77,3 @@ export function createA11yBridgePlugin() {
         }
     };
 }
-//# sourceMappingURL=a11yBridgePlugin.js.map

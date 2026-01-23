@@ -698,4 +698,3 @@ export function initUIBindings(api) {
         initLogAutoScroll();
     });
 }
-//# sourceMappingURL=uiBindings.js.map

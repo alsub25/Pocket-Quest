@@ -16,4 +16,3 @@ export function createItemCloner(itemDefs) {
         }
     };
 }
-//# sourceMappingURL=itemCloner.js.map

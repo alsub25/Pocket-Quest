@@ -49,4 +49,3 @@ export function createMerchantServicePlugin() {
         }
     };
 }
-//# sourceMappingURL=merchantServicePlugin.js.map

@@ -53,4 +53,3 @@ export function safeStorageSet(key, value, opts = {}) {
 export function safeStorageRemove(key, opts = {}) {
     return baseRemove(key, { ...opts, onError: _onError });
 }
-//# sourceMappingURL=storageRuntime.js.map

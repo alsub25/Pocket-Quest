@@ -114,4 +114,3 @@ setState = null // optional engine.setState
     }
     return { use, dispatch, getLog, clearLog, replay };
 }
-//# sourceMappingURL=commands.js.map

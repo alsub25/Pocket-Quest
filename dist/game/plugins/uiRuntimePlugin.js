@@ -70,4 +70,3 @@ export function createUiRuntimePlugin(opts = {}) {
         }
     };
 }
-//# sourceMappingURL=uiRuntimePlugin.js.map

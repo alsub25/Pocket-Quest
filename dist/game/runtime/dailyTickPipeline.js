@@ -247,4 +247,3 @@ export function advanceWorldDays(stateArg, days, hooks = {}) {
     advanceWorldTime(s, steps, 'days', hooks);
     return hooks.getTimeInfo && hooks.getTimeInfo(s);
 }
-//# sourceMappingURL=dailyTickPipeline.js.map

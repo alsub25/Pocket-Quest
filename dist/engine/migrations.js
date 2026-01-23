@@ -96,4 +96,3 @@ export function createMigrationRegistry() {
     }
     return { register, migrateState, getReport };
 }
-//# sourceMappingURL=migrations.js.map

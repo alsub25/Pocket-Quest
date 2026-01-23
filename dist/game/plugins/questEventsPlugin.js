@@ -52,4 +52,3 @@ export function createQuestEventsPlugin({ quests, getState } = {}) {
         }
     };
 }
-//# sourceMappingURL=questEventsPlugin.js.map

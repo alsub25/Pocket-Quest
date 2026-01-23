@@ -307,4 +307,3 @@ export function qaSampleFps(frames = 28, maxMs = 900) {
         }
     });
 }
-//# sourceMappingURL=perfSnapshot.js.map

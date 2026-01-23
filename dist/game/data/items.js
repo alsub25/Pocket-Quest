@@ -475,4 +475,3 @@ export const ITEM_DEFS = {
         desc: 'Warm with judgement. It refuses to cool until you decide what law means. (Quest Item)'
     }
 };
-//# sourceMappingURL=items.js.map

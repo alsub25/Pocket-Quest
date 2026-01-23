@@ -37,4 +37,3 @@ export function createWorldEventsPlugin() {
         }
     };
 }
-//# sourceMappingURL=worldEventsPlugin.js.map

@@ -31,4 +31,3 @@ export function createQaBridgePlugin(opts = {}) {
         }
     };
 }
-//# sourceMappingURL=qaBridgePlugin.js.map

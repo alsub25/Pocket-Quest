@@ -285,4 +285,3 @@ export function createQaService(engine, { maxTail = 140 } = {}) {
         qaSampleFps: (...a) => hooks.qaSampleFps?.(...a)
     };
 }
-//# sourceMappingURL=qa.js.map

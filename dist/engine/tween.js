@@ -217,4 +217,3 @@ export function createTweenService({ clock = null, emit = null, logger = null } 
     function count() { return _tweens.size; }
     return { to, cancel, cancelOwner, update, count, easings: Object.keys(EASINGS) };
 }
-//# sourceMappingURL=tween.js.map

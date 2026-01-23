@@ -70,4 +70,3 @@ export function createLogger({ maxRecords = 400, consoleEcho = true, level = 'in
     };
     return api;
 }
-//# sourceMappingURL=logger.js.map

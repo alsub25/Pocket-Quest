@@ -674,4 +674,3 @@ export function buildAbilityEffects(deps = {}) {
     };
     return ABILITY_EFFECTS;
 }
-//# sourceMappingURL=abilityEffects.js.map

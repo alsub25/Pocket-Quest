@@ -147,4 +147,3 @@ emit = null, logger = null } = {}) {
     }
     return { save, load, validate };
 }
-//# sourceMappingURL=snapshots.js.map

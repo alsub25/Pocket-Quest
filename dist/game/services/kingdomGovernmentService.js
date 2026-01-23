@@ -115,4 +115,3 @@ export function createKingdomGovernmentService(engine) {
         getVillageEffect
     };
 }
-//# sourceMappingURL=kingdomGovernmentService.js.map

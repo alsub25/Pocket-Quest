@@ -119,4 +119,3 @@ export function createDefaultQuestFlags() {
         chapter4Ending: null // 'accept' | 'defy' | 'rewrite'
     };
 }
-//# sourceMappingURL=questDefaults.js.map

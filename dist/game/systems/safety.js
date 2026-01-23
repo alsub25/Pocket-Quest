@@ -28,4 +28,3 @@ export function sanitizeGold(v) {
         return 0;
     return Math.max(0, Math.floor(n));
 }
-//# sourceMappingURL=safety.js.map

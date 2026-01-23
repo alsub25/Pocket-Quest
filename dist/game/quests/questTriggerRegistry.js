@@ -98,4 +98,3 @@ export function buildQuestTriggerRegistry(questDefs) {
     }
     return reg;
 }
-//# sourceMappingURL=questTriggerRegistry.js.map

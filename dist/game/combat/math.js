@@ -709,4 +709,3 @@ export function createCombatMath(deps) {
         calcEnemyDamage,
     };
 }
-//# sourceMappingURL=math.js.map

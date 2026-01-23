@@ -25,4 +25,3 @@ export function createFlagsPlugin({ defaults = null } = {}) {
         }
     };
 }
-//# sourceMappingURL=flagsPlugin.js.map

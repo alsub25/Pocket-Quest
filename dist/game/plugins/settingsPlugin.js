@@ -219,4 +219,3 @@ export function createSettingsPlugin({ getState } = {}) {
         }
     };
 }
-//# sourceMappingURL=settingsPlugin.js.map

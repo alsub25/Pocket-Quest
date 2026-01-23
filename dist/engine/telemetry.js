@@ -242,4 +242,3 @@ export function createTelemetry(engine, { maxEvents = 220, storageKeyLastCrash =
         setContextProvider
     };
 }
-//# sourceMappingURL=telemetry.js.map

@@ -117,4 +117,3 @@ export const TALENT_DEFS = {
         { id: 'vampire_mistward', tier: 4, levelReq: 12, name: 'Mistward', desc: 'Gain 15% Frost resistance.' }
     ]
 };
-//# sourceMappingURL=talents.js.map

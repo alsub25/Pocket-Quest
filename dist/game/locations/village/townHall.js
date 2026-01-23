@@ -1718,4 +1718,3 @@ export function openTownHallModalImpl({ state, openModal, addLog, handleGovernme
         });
     });
 }
-//# sourceMappingURL=townHall.js.map

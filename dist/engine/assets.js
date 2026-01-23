@@ -187,4 +187,3 @@ export function createAssetRegistry({ emit = null, logger = null } = {}) {
         listGroups
     };
 }
-//# sourceMappingURL=assets.js.map

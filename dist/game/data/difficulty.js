@@ -36,4 +36,3 @@ export const DIFFICULTY_CONFIG = {
     }
 };
 export const MAX_PLAYER_LEVEL = 50; // used by dev cheats; raise if you want a longer grind
-//# sourceMappingURL=difficulty.js.map

@@ -226,4 +226,3 @@ export function ensureEnemyRuntime(enemy, deps = {}) {
         };
     }
 }
-//# sourceMappingURL=runtime.js.map

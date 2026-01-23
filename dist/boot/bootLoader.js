@@ -68,4 +68,3 @@ export const BootLoader = {
     setProgress,
     nextFrame,
 };
-//# sourceMappingURL=bootLoader.js.map

@@ -584,4 +584,3 @@ export const ABILITIES = {
         note: 'A brutal eclipse: huge shadow damage and healing. (Unlocks at level 12)'
     },
 };
-//# sourceMappingURL=abilities.js.map

@@ -147,4 +147,3 @@ export function createDiagnosticsOverlayPlugin(opts = {}) {
         }
     };
 }
-//# sourceMappingURL=diagnosticsOverlayPlugin.js.map

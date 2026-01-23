@@ -51,4 +51,3 @@ export function createI18nService({ defaultLocale = 'en-US' } = {}) {
     }
     return { register, setLocale, getLocale, t };
 }
-//# sourceMappingURL=i18n.js.map

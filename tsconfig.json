@@ -10,7 +10,7 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "removeComments": false,
-    "sourceMap": true,
+    "sourceMap": false,
     "declaration": false,
     "noEmitOnError": false,
     

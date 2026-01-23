@@ -1020,4 +1020,3 @@ export function openBankModalImpl({ state, openModal, addLog, recordInput, updat
         body.appendChild(footer);
     });
 }
-//# sourceMappingURL=bank.js.map

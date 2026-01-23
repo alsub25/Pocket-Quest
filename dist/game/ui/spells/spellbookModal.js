@@ -883,4 +883,3 @@ export function createSpellbookModal(deps) {
     }
     return { openSpellsModal };
 }
-//# sourceMappingURL=spellbookModal.js.map

@@ -729,4 +729,3 @@ function buildVillageInfluenceDescription(village, government, popSnapshot) {
 // And when saving/loading, just allow state.government to be serialized the
 // same way you already do for state.bank, state.villageEconomy, etc.
 // -----------------------------------------------------------------------------
-//# sourceMappingURL=kingdomGovernment.js.map

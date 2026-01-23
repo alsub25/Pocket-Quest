@@ -35,4 +35,3 @@ export function createI18nPlugin({ locale = null, dictByLocale = null } = {}) {
         }
     };
 }
-//# sourceMappingURL=i18nPlugin.js.map
