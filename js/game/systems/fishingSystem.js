@@ -34,6 +34,13 @@ export function initFishing(state) {
 }
 
 /**
+ * Configuration constants
+ */
+const BASE_SUCCESS_RATE = 0.7; // 70% base success rate
+const SKILL_BONUS_PER_LEVEL = 0.02; // +2% per level
+const MAX_SUCCESS_RATE = 0.95; // 95% maximum
+
+/**
  * Attempt to catch a fish
  * Returns result with caught fish or failure
  */
@@ -66,10 +73,8 @@ export function attemptFishing(state, locationId, rngFunction = Math.random) {
   const playerSkill = state.player.level; // Could be a dedicated fishing skill
   const roll = rngFunction(); // 0-1
   
-  // 70% base success rate, modified by skill
-  const baseSuccessRate = 0.7;
-  const skillBonus = playerSkill * 0.02; // +2% per level
-  const successRate = Math.min(0.95, baseSuccessRate + skillBonus);
+  const skillBonus = playerSkill * SKILL_BONUS_PER_LEVEL;
+  const successRate = Math.min(MAX_SUCCESS_RATE, BASE_SUCCESS_RATE + skillBonus);
   
   if (roll > successRate) {
     return { success: false, error: 'The fish got away!' };

@@ -42,7 +42,8 @@ export function createWorldEventsService(engine) {
     const state = engine.getState();
     const tempState = JSON.parse(JSON.stringify(state));
     
-    const rng = engine.rng?.roll ? () => engine.rng.roll(0, 100) / 100 : Math.random;
+    // Use proper 0-1 range for RNG
+    const rng = engine.rng?.roll ? () => engine.rng.roll(1, 100) / 100 : Math.random;
     
     // Tick the system
     tickWorldEvents(tempState, rng);
@@ -73,7 +74,8 @@ export function createWorldEventsService(engine) {
     const state = engine.getState();
     const tempState = JSON.parse(JSON.stringify(state));
     
-    const rng = engine.rng?.roll ? () => engine.rng.roll(0, 100) / 100 : Math.random;
+    // Use proper 0-1 range for RNG
+    const rng = engine.rng?.roll ? () => engine.rng.roll(1, 100) / 100 : Math.random;
     const event = triggerRandomEvent(tempState, rng);
     
     engine.setState(tempState);

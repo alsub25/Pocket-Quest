@@ -6,6 +6,11 @@
 import { craftingRecipes, craftingMaterials, enchantmentRecipes, canCraft } from '../data/crafting.js';
 
 /**
+ * Configuration constants
+ */
+const DISMANTLE_RETURN_RATE = 0.5; // 50% material return rate
+
+/**
  * Initialize crafting state
  */
 export function initCrafting(state) {
@@ -235,10 +240,10 @@ export function dismantleItem(state, item) {
     return { success: false, error: 'Cannot dismantle this item' };
   }
   
-  // Return 50% of materials (rounded down)
+  // Return materials based on dismantle return rate
   const materials = {};
   for (const [materialId, quantity] of Object.entries(matchingRecipe.materials)) {
-    const returned = Math.floor(quantity * 0.5);
+    const returned = Math.floor(quantity * DISMANTLE_RETURN_RATE);
     if (returned > 0) {
       addMaterial(state, materialId, returned);
       materials[materialId] = returned;

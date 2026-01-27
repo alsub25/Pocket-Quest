@@ -6,6 +6,13 @@
 import { worldEvents, eventRarityWeights } from '../data/worldEvents.js';
 
 /**
+ * Configuration constants
+ */
+const MIN_COOLDOWN_DAYS = 3;
+const MAX_COOLDOWN_DAYS = 7;
+const TRIGGER_CHANCE_PER_DAY = 0.3; // 30% chance when cooldown is up
+
+/**
  * Initialize world events state
  */
 export function initWorldEvents(state) {
@@ -42,12 +49,12 @@ export function tickWorldEvents(state, rngFunction = Math.random) {
     // No active event - check if we should trigger one
     if (state.worldEvents.daysUntilNext <= 0) {
       // Try to trigger an event (not guaranteed)
-      const triggerChance = 0.3; // 30% chance per day when cooldown is up
-      if (rngFunction() < triggerChance) {
+      if (rngFunction() < TRIGGER_CHANCE_PER_DAY) {
         triggerRandomEvent(state, rngFunction);
       } else {
         // Didn't trigger, set new cooldown
-        state.worldEvents.daysUntilNext = Math.floor(rngFunction() * 3) + 2; // 2-4 days
+        const cooldownRange = MAX_COOLDOWN_DAYS - MIN_COOLDOWN_DAYS;
+        state.worldEvents.daysUntilNext = Math.floor(rngFunction() * cooldownRange) + MIN_COOLDOWN_DAYS;
       }
     } else {
       // Countdown to next possible event
@@ -144,7 +151,8 @@ export function endWorldEvent(state) {
   state.worldEvents.active = null;
   
   // Set cooldown until next event
-  state.worldEvents.daysUntilNext = Math.floor(Math.random() * 5) + 3; // 3-7 days
+  const cooldownRange = MAX_COOLDOWN_DAYS - MIN_COOLDOWN_DAYS;
+  state.worldEvents.daysUntilNext = Math.floor(Math.random() * cooldownRange) + MIN_COOLDOWN_DAYS;
 }
 
 /**

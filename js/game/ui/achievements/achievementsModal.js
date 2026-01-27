@@ -93,7 +93,7 @@ export function createAchievementsModal(deps) {
     }
     
     html += `
-        <button onclick="window.closeAchievementsModal()">Close</button>
+        <button class="close-achievements-btn">Close</button>
       </div>
     `;
     
@@ -205,13 +205,18 @@ export function createAchievementsModal(deps) {
       document.head.appendChild(style);
     }
     
-    // Set global close function
-    window.closeAchievementsModal = () => {
-      closeModal();
-      delete window.closeAchievementsModal;
-    };
-    
+    // Open modal and attach event listener
     openModal(html);
+    
+    // Attach close button event listener after modal is opened
+    setTimeout(() => {
+      const closeBtn = document.querySelector('.close-achievements-btn');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+          closeModal();
+        });
+      }
+    }, 0);
   }
 
   // Public API
