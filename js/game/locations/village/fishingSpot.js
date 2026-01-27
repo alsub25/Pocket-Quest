@@ -15,12 +15,13 @@ export function openFishingSpotModalImpl({
   engine
 }) {
   const _open = () => {
-    const player = state.player;
-    const fishing = state.fishing || {};
-    const unlockedLocations = fishing.unlockedLocations || ['villageRiver'];
-    const timeOfDay = state.time?.dayPart || 'morning';
-    
-    let html = `
+    openModal('🎣 Fishing Spot', (body) => {
+      const player = state.player;
+      const fishing = state.fishing || {};
+      const unlockedLocations = fishing.unlockedLocations || ['villageRiver'];
+      const timeOfDay = state.time?.dayPart || 'morning';
+      
+      let html = `
       <div class="fishing-modal">
         <h3>🎣 Fishing Spot</h3>
         <p class="hint">Cast your line and catch fish! Different fish appear at different times.</p>
@@ -91,11 +92,12 @@ export function openFishingSpotModalImpl({
         <button class="close-fishing-btn">Close</button>
       </div>
     `;
-    
-    openModal(html);
-    
-    // Attach event listeners
-    setTimeout(() => {
+      
+      // Set the HTML content
+      body.innerHTML = html;
+      
+      // Attach event listeners
+      setTimeout(() => {
       const fishBtns = document.querySelectorAll('.fish-btn');
       fishBtns.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -144,6 +146,7 @@ export function openFishingSpotModalImpl({
         });
       }
     }, 0);
+    });
   };
   
   return _open();
@@ -153,7 +156,8 @@ export function openFishingSpotModalImpl({
  * Show fish caught result modal
  */
 function showFishCaughtModal(fish, convertedToMaterial, openModal, closeModal) {
-  let html = `
+  openModal('🎣 Fish Caught!', (body) => {
+    let html = `
     <div class="fish-caught-modal">
       <h3>🎣 Fish Caught!</h3>
       <div class="fish-display">
@@ -178,10 +182,11 @@ function showFishCaughtModal(fish, convertedToMaterial, openModal, closeModal) {
       <button class="close-result-btn">Continue Fishing</button>
     </div>
   `;
-  
-  openModal(html);
-  
-  setTimeout(() => {
+    
+    // Set the HTML content
+    body.innerHTML = html;
+    
+    setTimeout(() => {
     const closeBtn = document.querySelector('.close-result-btn');
     if (closeBtn) {
       closeBtn.addEventListener('click', () => {
@@ -189,4 +194,5 @@ function showFishCaughtModal(fish, convertedToMaterial, openModal, closeModal) {
       });
     }
   }, 0);
+  });
 }

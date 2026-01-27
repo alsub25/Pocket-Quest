@@ -15,12 +15,13 @@ export function openWorkshopModalImpl({
   engine
 }) {
   const _open = () => {
-    const player = state.player;
-    const crafting = state.crafting || {};
-    const materials = crafting.materials || {};
-    const unlockedRecipes = crafting.unlockedRecipes || [];
-    
-    let html = `
+    openModal('🔨 Crafting Workshop', (body) => {
+      const player = state.player;
+      const crafting = state.crafting || {};
+      const materials = crafting.materials || {};
+      const unlockedRecipes = crafting.unlockedRecipes || [];
+      
+      let html = `
       <div class="workshop-modal">
         <h3>🔨 Crafting Workshop</h3>
         <p class="hint">Craft items, process materials, and enchant equipment</p>
@@ -184,11 +185,12 @@ export function openWorkshopModalImpl({
         <button class="close-workshop-btn">Close</button>
       </div>
     `;
-    
-    openModal(html);
-    
-    // Attach event listeners after modal is opened
-    setTimeout(() => {
+      
+      // Set the HTML content
+      body.innerHTML = html;
+      
+      // Attach event listeners after modal is opened
+      setTimeout(() => {
       // Tab switching
       const tabs = document.querySelectorAll('.workshop-tab');
       const panels = document.querySelectorAll('.workshop-panel');
@@ -269,8 +271,9 @@ export function openWorkshopModalImpl({
         closeBtn.addEventListener('click', () => {
           closeModal();
         });
-      }
-    }, 0);
+        }
+      }, 0);
+    });
   };
   
   return _open();

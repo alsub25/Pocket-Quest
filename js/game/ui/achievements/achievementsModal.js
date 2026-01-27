@@ -205,18 +205,20 @@ export function createAchievementsModal(deps) {
       document.head.appendChild(style);
     }
     
-    // Open modal and attach event listener
-    openModal(html);
-    
-    // Attach close button event listener after modal is opened
-    setTimeout(() => {
-      const closeBtn = document.querySelector('.close-achievements-btn');
-      if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
-          closeModal();
-        });
-      }
-    }, 0);
+    // Open modal with builder function
+    openModal('🏆 Achievements', (body) => {
+      body.innerHTML = html;
+      
+      // Attach close button event listener after modal is opened
+      setTimeout(() => {
+        const closeBtn = body.querySelector('.close-achievements-btn');
+        if (closeBtn) {
+          closeBtn.addEventListener('click', () => {
+            closeModal();
+          });
+        }
+      }, 0);
+    });
   }
 
   // Public API
